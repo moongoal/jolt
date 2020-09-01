@@ -16,7 +16,7 @@ namespace jolt {
                 m_alloc_sz(alloc_sz), m_alloc_offset(offset) {}
         };
 
-        class JLTAPI Stack : Heap {
+        class JLTAPI Stack : public Heap {
             char *m_ptr_top; // Pointer to the top of the stack
 
           public:
@@ -47,6 +47,8 @@ namespace jolt {
             size_t get_allocated_size() const {
                 return m_ptr_top - reinterpret_cast<char *>(get_base());
             }
+
+            void *get_top() const { return m_ptr_top; }
         };
     } // namespace memory
 } // namespace jolt

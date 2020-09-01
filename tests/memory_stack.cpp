@@ -11,34 +11,34 @@ TEST(allocate) {
     Stack stack(test_heap_size);
 
     // Create blocks
-    unsigned char * const b1 = reinterpret_cast<unsigned char *>(stack.allocate(256, ALLOC_NONE, 16));
-    unsigned char * const b2 = reinterpret_cast<unsigned char *>(stack.allocate(256, ALLOC_NONE, 16));
+    unsigned char *const b1 =
+        reinterpret_cast<unsigned char *>(stack.allocate(256, ALLOC_NONE, 16));
+    void *const before_alloc = stack.get_top();
+    unsigned char *const b2 =
+        reinterpret_cast<unsigned char *>(stack.allocate(256, ALLOC_NONE, 16));
+    void *const after_alloc = stack.get_top();
 
     assert(b1);
     assert(b2);
     assert(b2 > b1);
 
-    // Fill blocks
-    for(int i = 0; i < 256; ++i) {
-        b1[i] = 0xfe;
-    }
+    assert(after_alloc > before_alloc);
 
-    for(int i = 0; i < 256; ++i) {
-        b2[i] = 0xab;
-    }
+    // Fill blocks
+    for(int i = 0; i < 256; ++i) { b1[i] = 0xfe; }
+
+    for(int i = 0; i < 256; ++i) { b2[i] = 0xab; }
 
     // Check block integrity
-    for(int i = 0; i < 256; ++i) {
-        assert(b1[i] == 0xfe);
-    }
+    for(int i = 0; i < 256; ++i) { assert(b1[i] == 0xfe); }
 
-    for(int i = 0; i < 256; ++i) {
-        assert(b2[i] == 0xab);
-    }
+    for(int i = 0; i < 256; ++i) { assert(b2[i] == 0xab); }
 
     // Check allocation headers
-    StackAllocHeader * const h1 = reinterpret_cast<StackAllocHeader*>(b1 - sizeof(StackAllocHeader));
-    StackAllocHeader * const h2 = reinterpret_cast<StackAllocHeader*>(b2 - sizeof(StackAllocHeader));
+    StackAllocHeader *const h1 =
+        reinterpret_cast<StackAllocHeader *>(b1 - sizeof(StackAllocHeader));
+    StackAllocHeader *const h2 =
+        reinterpret_cast<StackAllocHeader *>(b2 - sizeof(StackAllocHeader));
 
     // Ensure padding is within limits
     assert(h1->m_alloc_offset >= 0 && h1->m_alloc_offset < 16);
@@ -47,4 +47,45 @@ TEST(allocate) {
     // Ensure allocation size is correct
     assert(h1->m_alloc_sz == 256);
     assert(h2->m_alloc_sz == 256);
+}
+
+TEST(free) {
+    Stack stack(test_heap_size);
+
+    unsigned char *const b1 =
+        reinterpret_cast<unsigned char *>(stack.allocate(256, ALLOC_NONE, 16));
+
+    void *const top_before_alloc = stack.get_top();
+    size_t const allocated_before_alloc = stack.get_allocated_size();
+
+    unsigned char *const b2 =
+        reinterpret_cast<unsigned char *>(stack.allocate(256, ALLOC_NONE, 16));
+
+    size_t const committed_after_alloc = stack.get_committed_size();
+
+    stack.free(b2);
+
+    void *const top_after_free = stack.get_top();
+    size_t const allocated_after_free = stack.get_allocated_size();
+    size_t const committed_after_free = stack.get_committed_size();
+
+    assert(top_before_alloc == top_after_free);
+    assert(allocated_before_alloc == allocated_after_free);
+    assert(committed_after_alloc == committed_after_free);
+}
+
+TEST(free2) {
+    Stack stack(test_heap_size);
+
+    unsigned char *const b1 =
+        reinterpret_cast<unsigned char *>(stack.allocate(256, ALLOC_NONE, 16));
+    unsigned char *const b2 =
+        reinterpret_cast<unsigned char *>(stack.allocate(256, ALLOC_NONE, 16));
+    
+    stack.free(b2);
+    stack.free(b1);
+
+    assert(stack.get_allocated_size() == 0);
+    assert(stack.get_committed_size() > 0);
+    assert(stack.get_top() == stack.get_base());
 }
