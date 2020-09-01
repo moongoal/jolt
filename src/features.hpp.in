@@ -1,0 +1,6 @@
+#ifndef JLT_FEATURES_HPP
+#define JLT_FEATURES_HPP
+
+#cmakedefine JLT_WITH_OVERLOAD_NEW
+
+#endif // JLT_FEATURES_HPP

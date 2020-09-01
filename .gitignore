@@ -1,0 +1,6 @@
+.clangd/
+build/
+
+compile_commands.json
+src/version.hpp
+src/features.hpp
