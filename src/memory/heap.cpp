@@ -1,6 +1,8 @@
 #include <Windows.h>
 #include <debug.hpp>
 #include <util.hpp>
+#include <features.hpp>
+#include "checks.hpp"
 #include "heap.hpp"
 
 namespace jolt {
@@ -13,17 +15,21 @@ namespace jolt {
 
         Heap::~Heap() { ::VirtualFree((LPVOID)get_base(), (SIZE_T)0, MEM_RELEASE); }
 
-        void *Heap::extend(size_t const ext_sz) {
+        void *Heap::commit(size_t const ext_sz) {
             jltassert(get_committed_size() + ext_sz <= get_size());
             size_t const real_ext_sz = choose(MIN_ALLOC_SIZE, ext_sz, ext_sz < MIN_ALLOC_SIZE);
+            void *const commit_ptr = reinterpret_cast<uint8_t *>(get_base()) + get_committed_size();
 
-            void *const ptr =
-                ::VirtualAlloc(reinterpret_cast<char *>(get_base()) + get_committed_size(),
-                               static_cast<SIZE_T>(real_ext_sz),
-                               MEM_COMMIT,
-                               PAGE_READWRITE);
+            void *const ptr = ::VirtualAlloc(commit_ptr,
+                                             static_cast<SIZE_T>(real_ext_sz),
+                                             MEM_COMMIT,
+                                             PAGE_READWRITE);
 
             jltassert(ptr);
+
+#ifdef JLT_WITH_MEM_CHECKS
+            JLT_FILL_AFTER_FREE(commit_ptr, real_ext_sz);
+#endif // JLT_WITH_MEM_CHECKS
 
             m_committed_size += real_ext_sz;
 

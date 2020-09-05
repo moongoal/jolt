@@ -9,7 +9,7 @@ constexpr size_t test_heap_size = (1024 > Heap::MIN_ALLOC_SIZE) ? 1024 : Heap::M
 struct HeapExtendTest : Heap {
     HeapExtendTest(size_t const sz) : Heap(sz) {}
 
-    void *redirect_extend(size_t const sz) { return extend(sz); }
+    void *redirect_extend(size_t const sz) { return commit(sz); }
 };
 
 TEST(ctor) {
@@ -20,7 +20,7 @@ TEST(ctor) {
     assert(heap.get_committed_size() == 0);
 }
 
-TEST(extend) {
+TEST(commit) {
     HeapExtendTest heap(test_heap_size);
 
     assert(heap.get_committed_size() == 0);

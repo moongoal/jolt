@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <util.hpp>
 #include "heap.hpp"
+#include "checks.hpp"
 #include "defs.hpp"
 
 namespace jolt {
@@ -17,15 +18,15 @@ namespace jolt {
         };
 
         class JLTAPI Stack : public Heap {
-            char *m_ptr_top; // Pointer to the top of the stack
+            uint8_t *m_ptr_top; // Pointer to the top of the stack
 
           public:
-            Stack(size_t const memory_size) : Heap(memory_size) {
-                m_ptr_top = reinterpret_cast<char *>(get_base());
+            explicit Stack(size_t const memory_size) : Heap(memory_size) {
+                m_ptr_top = reinterpret_cast<uint8_t *>(get_base());
             }
 
             /**
-             * The real allocation function.
+             * Allocation function.
              *
              * @param size The total size of the memory to allocate.
              * @param flags The allocation flags.
@@ -45,10 +46,30 @@ namespace jolt {
              * Get the amount of memory that is currently allocated.
              */
             size_t get_allocated_size() const {
-                return m_ptr_top - reinterpret_cast<char *>(get_base());
+                return m_ptr_top - reinterpret_cast<uint8_t *>(get_base());
             }
 
+            /**
+             * Get a pointer to the top of the stack.
+             */
             void *get_top() const { return m_ptr_top; }
+
+            /**
+             * Get the size of free committed memory.
+             */
+            size_t get_free_committed_size() const {
+                return get_committed_size() - get_allocated_size();
+            }
+
+            /**
+             * Ensure the free memory is consistent. If not, abort.
+             *
+             * @param ptr The pointer to the memory region to check.
+             * @param size The size of the memory region.
+             */
+            void ensure_free_memory_consistency(void *const ptr, size_t const size) const {
+                jltassert(JLT_CHECK_MEM_USE_AFTER_FREE(ptr, size));
+            }
         };
     } // namespace memory
 } // namespace jolt

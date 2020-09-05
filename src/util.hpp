@@ -21,7 +21,19 @@ namespace jolt {
                               (static_cast<uint64_t>(a) & ~mask));
     }
 
+    template<typename T>
+    constexpr T *choose(T *const a, T *const b, bool const condition) {
+        return reinterpret_cast<T *>(
+            choose(reinterpret_cast<uintptr_t>(a), reinterpret_cast<uintptr_t>(b), condition));
+    }
+
     void *align_raw_ptr(void *const ptr, size_t const alignment) JLTAPI;
+
+    template<typename T>
+    constexpr T max(T const a, T const b) {
+        return choose(a, b, a > b);
+    }
+
 } // namespace jolt
 
 #endif /* JLT_UTIL_HPP */

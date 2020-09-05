@@ -1,6 +1,8 @@
 #include <test.hpp>
 #include <memory/stack.hpp>
 #include <memory/heap.hpp>
+#include <features.hpp>
+#include <memory/checks.hpp>
 
 using namespace jolt;
 using namespace jolt::memory;
@@ -11,11 +13,9 @@ TEST(allocate) {
     Stack stack(test_heap_size);
 
     // Create blocks
-    unsigned char *const b1 =
-        reinterpret_cast<unsigned char *>(stack.allocate(256, ALLOC_NONE, 16));
+    uint8_t *const b1 = reinterpret_cast<uint8_t *>(stack.allocate(256, ALLOC_NONE, 16));
     void *const before_alloc = stack.get_top();
-    unsigned char *const b2 =
-        reinterpret_cast<unsigned char *>(stack.allocate(256, ALLOC_NONE, 16));
+    uint8_t *const b2 = reinterpret_cast<uint8_t *>(stack.allocate(256, ALLOC_NONE, 16));
     void *const after_alloc = stack.get_top();
 
     assert(b1);
@@ -40,6 +40,14 @@ TEST(allocate) {
     StackAllocHeader *const h2 =
         reinterpret_cast<StackAllocHeader *>(b2 - sizeof(StackAllocHeader));
 
+    // Ensure overflow guards are in place
+#ifdef JLT_WITH_MEM_CHECKS
+    assert2(*reinterpret_cast<JLT_MEM_CANARY_VALUE_TYPE *>(b1 + 256) == JLT_MEM_CANARY_VALUE,
+            "Allocation 1 overflow guard has to be in place");
+    assert2(*reinterpret_cast<JLT_MEM_CANARY_VALUE_TYPE *>(b2 + 256) == JLT_MEM_CANARY_VALUE,
+            "Allocation 2 overflow guard has to be in place");
+#endif // JLT_WITH_MEM_CHECKS
+
     // Ensure padding is within limits
     assert(h1->m_alloc_offset >= 0 && h1->m_alloc_offset < 16);
     assert(h2->m_alloc_offset >= 0 && h2->m_alloc_offset < 16);
@@ -52,15 +60,11 @@ TEST(allocate) {
 TEST(free) {
     Stack stack(test_heap_size);
 
-    unsigned char *const b1 =
-        reinterpret_cast<unsigned char *>(stack.allocate(256, ALLOC_NONE, 16));
+    uint8_t *const b1 = reinterpret_cast<uint8_t *>(stack.allocate(256, ALLOC_NONE, 16));
 
     void *const top_before_alloc = stack.get_top();
     size_t const allocated_before_alloc = stack.get_allocated_size();
-
-    unsigned char *const b2 =
-        reinterpret_cast<unsigned char *>(stack.allocate(256, ALLOC_NONE, 16));
-
+    uint8_t *const b2 = reinterpret_cast<uint8_t *>(stack.allocate(256, ALLOC_NONE, 16));
     size_t const committed_after_alloc = stack.get_committed_size();
 
     stack.free(b2);
@@ -77,15 +81,23 @@ TEST(free) {
 TEST(free2) {
     Stack stack(test_heap_size);
 
-    unsigned char *const b1 =
-        reinterpret_cast<unsigned char *>(stack.allocate(256, ALLOC_NONE, 16));
-    unsigned char *const b2 =
-        reinterpret_cast<unsigned char *>(stack.allocate(256, ALLOC_NONE, 16));
-    
+    uint8_t *const b1 = reinterpret_cast<uint8_t *>(stack.allocate(256, ALLOC_NONE, 16));
+    uint8_t *const b2 = reinterpret_cast<uint8_t *>(stack.allocate(256, ALLOC_NONE, 16));
+
     stack.free(b2);
     stack.free(b1);
 
     assert(stack.get_allocated_size() == 0);
     assert(stack.get_committed_size() > 0);
     assert(stack.get_top() == stack.get_base());
+}
+
+TEST(ensure_free_memory_consistency) {
+    Stack stack(test_heap_size);
+
+    uint8_t *const b1 = reinterpret_cast<uint8_t *>(stack.allocate(256, ALLOC_NONE, 16));
+    uint8_t *const b2 = reinterpret_cast<uint8_t *>(stack.allocate(256, ALLOC_NONE, 16));
+
+    stack.free(b2);
+    // stack.ensure_free_memory_consistency(); // This is going to abort upon failure
 }

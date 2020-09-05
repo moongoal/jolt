@@ -39,7 +39,7 @@ namespace jolt {
              * Finalize and destroy an instance of this class.
              * Upon finalization, the memory is released.
              */
-            ~Heap();
+            virtual ~Heap();
 
             /**
              * Return the base virtual address of the heap.
@@ -62,7 +62,7 @@ namespace jolt {
              *
              * @return The address to the newly committed m_size.
              */
-            void *extend(size_t const ext_sz);
+            void *commit(size_t const ext_sz);
         };
     } // namespace memory
 } // namespace jolt
