@@ -9,7 +9,7 @@
 namespace jolt {
     namespace memory {
         struct ArenaAllocHeader {
-            uint32_t const m_alloc_sz;
+            uint32_t m_alloc_sz;
             uint32_t const m_alloc_offset;
 
 #ifdef JLT_WITH_MEM_CHECKS
@@ -91,6 +91,13 @@ namespace jolt {
              */
             ArenaFreeListNode *get_free_list() const { return m_free_list; }
 
+            /**
+             * Ensure that a block of unallocated memory has not been written to.
+             * This method will abort upon failure.
+             *
+             * @param node A pointer to the free list node representing the block of unallocated
+             * memory to check.
+             */
             void ensure_free_memory_consistency(ArenaFreeListNode *const node) const;
 
             /**
@@ -102,7 +109,7 @@ namespace jolt {
              *
              * @return A pointer to the new allocation.
              */
-            void *reallocate(void *const ptr, size_t const new_size, size_t const alignment) const;
+            void *reallocate(void *const ptr, size_t const new_size, size_t const alignment);
 
             /**
              * Return the allocation header for a given pointer.
