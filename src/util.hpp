@@ -34,6 +34,11 @@ namespace jolt {
         return choose(a, b, a > b);
     }
 
+    template<typename T>
+    constexpr T min(T const a, T const b) {
+        return choose(a, b, a < b);
+    }
+
 } // namespace jolt
 
 #endif /* JLT_UTIL_HPP */

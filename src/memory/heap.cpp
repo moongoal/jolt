@@ -17,7 +17,7 @@ namespace jolt {
 
         void *Heap::commit(size_t const ext_sz) {
             jltassert(get_committed_size() + ext_sz <= get_size());
-            size_t const real_ext_sz = choose(MIN_ALLOC_SIZE, ext_sz, ext_sz < MIN_ALLOC_SIZE);
+            size_t const real_ext_sz = max(MIN_ALLOC_SIZE, ext_sz);
             void *const commit_ptr = reinterpret_cast<uint8_t *>(get_base()) + get_committed_size();
 
             void *const ptr = ::VirtualAlloc(commit_ptr,
