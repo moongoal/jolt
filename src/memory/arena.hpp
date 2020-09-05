@@ -99,8 +99,58 @@ namespace jolt {
              * @param ptr Pointer to the memory to reallocate.
              * @param new_size Size of the new allocation.
              * @param alignment Alignment of the new allocation.
+             *
+             * @return A pointer to the new allocation.
              */
-            void reallocate(void *const ptr, size_t const new_size, size_t const alignment) const;
+            void *reallocate(void *const ptr, size_t const new_size, size_t const alignment) const;
+
+            /**
+             * Return the allocation header for a given pointer.
+             *
+             * @param ptr Pointer to the base of a memory allocation.
+             *
+             * @note This function will not check whether the pointer represents
+             * the base of the allocation or not and will return garbage if it
+             * doesn't.
+             */
+            static ArenaAllocHeader *get_header(void *const ptr) {
+                return reinterpret_cast<ArenaAllocHeader *>(ptr) - 1;
+            }
+
+            /**
+             * Return the total allocation size for a given pointer.
+             *
+             * @param ptr Pointer to the base of a memory allocation.
+             *
+             * @return The sum of padding, allocation size, header and overflow canary.
+             * @note This function will not check whether the pointer represents
+             * the base of the allocation or not and will return garbage if it
+             * doesn't.
+             */
+            static size_t get_total_allocation_size(void *const ptr) {
+                ArenaAllocHeader *const ptr_hdr = get_header(ptr);
+
+                return get_total_allocation_size(ptr_hdr->m_alloc_sz, ptr_hdr->m_alloc_offset);
+            }
+
+            /**
+             * Return the total allocation size for a given set of parameters.
+             *
+             * @param size The size of the allocation (data only).
+             * @param padding The amount of padding used to align the allocation.
+             *
+             * @return The sum of padding, allocation size, header and overflow canary.
+             * @note This function will not check whether the pointer represents
+             * the base of the allocation or not and will return garbage if it
+             * doesn't.
+             */
+            static size_t get_total_allocation_size(size_t const size, size_t const padding) {
+                return size + padding + sizeof(ArenaAllocHeader)
+#ifdef JLT_WITH_MEM_CHECKS
+                       + JLT_MEM_CANARY_VALUE_SIZE
+#endif // JLT_WITH_MEM_CHECKS
+                    ;
+            }
         };
     } // namespace memory
 } // namespace jolt

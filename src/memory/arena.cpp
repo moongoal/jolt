@@ -123,11 +123,7 @@ namespace jolt {
         }
 
         void *Arena::allocate(uint32_t const size, flags_t const flags, uint32_t const alignment) {
-            uint32_t adjusted_size = size + sizeof(ArenaAllocHeader)
-#ifdef JLT_WITH_MEM_CHECKS
-                                     + JLT_MEM_CANARY_VALUE_SIZE;
-#endif // JLT_WITH_MEM_CHECKS
-            ;
+            uint32_t adjusted_size = get_total_allocation_size(size, 0);
             adjusted_size = max(adjusted_size, static_cast<uint32_t>(sizeof(ArenaFreeListNode)));
 
             // Allocation meta
@@ -145,7 +141,7 @@ namespace jolt {
             auto const raw_alloc_ptr = reinterpret_cast<uint8_t *>(free_slot);
             auto const alloc_ptr = reinterpret_cast<uint8_t *>(
                 align_raw_ptr(raw_alloc_ptr + sizeof(ArenaAllocHeader), alignment));
-            auto const hdr_ptr = reinterpret_cast<ArenaAllocHeader *>(alloc_ptr) - 1;
+            auto const hdr_ptr = get_header(alloc_ptr);
             uint32_t const padding =
                 reinterpret_cast<uint8_t *>(alloc_ptr) - raw_alloc_ptr - sizeof(ArenaAllocHeader);
             auto const alloc_end_ptr = reinterpret_cast<uint8_t *>(hdr_ptr) + adjusted_size;
@@ -192,27 +188,20 @@ namespace jolt {
                                           ,
                                           padding);
 
-#ifdef JLT_WITH_MEM_CHECKS
             JLT_FILL_OVERFLOW(alloc_ptr, size);
-#endif // JLT_WITH_MEM_CHECKS
 
             return alloc_ptr;
         }
 
         void Arena::free(void *const ptr) {
-            auto const hdr_ptr = reinterpret_cast<ArenaAllocHeader *>(ptr) - 1;
+            auto const hdr_ptr = get_header(ptr);
 
 #ifdef JLT_WITH_MEM_CHECKS
             jltassert(hdr_ptr->m_free_canary == JLT_MEM_CANARY_VALUE);
+#endif // JLT_WITH_MEM_CHECKS
             JLT_CHECK_OVERFLOW(ptr, hdr_ptr->m_alloc_sz);
-#endif // JLT_WITH_MEM_CHECKS
 
-            size_t const total_alloc_size = hdr_ptr->m_alloc_sz + hdr_ptr->m_alloc_offset +
-                                            sizeof(ArenaAllocHeader)
-#ifdef JLT_WITH_MEM_CHECKS
-                                            + JLT_MEM_CANARY_VALUE_SIZE
-#endif // JLT_WITH_MEM_CHECKS
-                ;
+            size_t const total_alloc_size = get_total_allocation_size(ptr);
             void *const raw_alloc_ptr =
                 reinterpret_cast<uint8_t *>(hdr_ptr) - hdr_ptr->m_alloc_offset;
             auto const node = reinterpret_cast<ArenaFreeListNode *>(raw_alloc_ptr);
@@ -275,6 +264,11 @@ namespace jolt {
             }
 
             jltassert(JLT_CHECK_MEM_USE_AFTER_FREE(free_mem_ptr, size_to_check));
+        }
+
+        void *
+        Arena::reallocate(void *const ptr, size_t const new_size, size_t const alignment) const {
+            return nullptr;
         }
     } // namespace memory
 } // namespace jolt
