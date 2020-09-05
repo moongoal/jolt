@@ -35,18 +35,12 @@ TEST(allocate) {
     for(int i = 0; i < 256; ++i) { assert(b2[i] == 0xab); }
 
     // Check allocation headers
-    StackAllocHeader *const h1 =
-        reinterpret_cast<StackAllocHeader *>(b1 - sizeof(StackAllocHeader));
-    StackAllocHeader *const h2 =
-        reinterpret_cast<StackAllocHeader *>(b2 - sizeof(StackAllocHeader));
+    StackAllocHeader *const h1 = Stack::get_header(b1);
+    StackAllocHeader *const h2 = Stack::get_header(b2);
 
     // Ensure overflow guards are in place
-#ifdef JLT_WITH_MEM_CHECKS
-    assert2(*reinterpret_cast<JLT_MEM_CANARY_VALUE_TYPE *>(b1 + 256) == JLT_MEM_CANARY_VALUE,
-            "Allocation 1 overflow guard has to be in place");
-    assert2(*reinterpret_cast<JLT_MEM_CANARY_VALUE_TYPE *>(b2 + 256) == JLT_MEM_CANARY_VALUE,
-            "Allocation 2 overflow guard has to be in place");
-#endif // JLT_WITH_MEM_CHECKS
+    JLT_CHECK_OVERFLOW(b1, 256);
+    JLT_CHECK_OVERFLOW(b2, 256);
 
     // Ensure padding is within limits
     assert(h1->m_alloc_offset >= 0 && h1->m_alloc_offset < 16);
@@ -99,5 +93,47 @@ TEST(ensure_free_memory_consistency) {
     uint8_t *const b2 = reinterpret_cast<uint8_t *>(stack.allocate(256, ALLOC_NONE, 16));
 
     stack.free(b2);
-    // stack.ensure_free_memory_consistency(); // This is going to abort upon failure
+    stack.ensure_free_memory_consistency(b2, 256); // This is going to abort upon failure
+}
+
+TEST(reallocate_shrink) {
+    Stack stack(test_heap_size);
+
+    uint8_t *const b1 = reinterpret_cast<uint8_t *>(stack.allocate(256, ALLOC_NONE, 16));
+    uint8_t *const b2 = reinterpret_cast<uint8_t *>(stack.allocate(256, ALLOC_NONE, 16));
+    StackAllocHeader *const ptr_hdr_b2 = Stack::get_header(b2);
+
+    stack.reallocate(b2, 128);
+
+    assert(ptr_hdr_b2->m_alloc_sz == 128);
+
+    JLT_CHECK_OVERFLOW(b2, 128);
+}
+
+TEST(reallocate_grow) {
+    Stack stack(test_heap_size * 2);
+
+    uint8_t *const b1 = reinterpret_cast<uint8_t *>(stack.allocate(256, ALLOC_NONE, 16));
+    uint8_t *const b2 = reinterpret_cast<uint8_t *>(stack.allocate(256, ALLOC_NONE, 16));
+    StackAllocHeader *const ptr_hdr_b2 = Stack::get_header(b2);
+
+    stack.reallocate(b2, test_heap_size);
+
+    assert(ptr_hdr_b2->m_alloc_sz == test_heap_size);
+
+    JLT_CHECK_OVERFLOW(b2, test_heap_size);
+}
+
+TEST(reallocate_nop) {
+    Stack stack(test_heap_size);
+
+    uint8_t *const b1 = reinterpret_cast<uint8_t *>(stack.allocate(256, ALLOC_NONE, 16));
+    uint8_t *const b2 = reinterpret_cast<uint8_t *>(stack.allocate(256, ALLOC_NONE, 16));
+    StackAllocHeader *const ptr_hdr_b2 = Stack::get_header(b2);
+
+    stack.reallocate(b2, 256);
+
+    assert(ptr_hdr_b2->m_alloc_sz == 256);
+
+    JLT_CHECK_OVERFLOW(b2, 256);
 }

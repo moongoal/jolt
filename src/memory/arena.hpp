@@ -92,6 +92,15 @@ namespace jolt {
             ArenaFreeListNode *get_free_list() const { return m_free_list; }
 
             void ensure_free_memory_consistency(ArenaFreeListNode *const node) const;
+
+            /**
+             * Reallocate a pre-allocated chunk of memory, resizing it.
+             *
+             * @param ptr Pointer to the memory to reallocate.
+             * @param new_size Size of the new allocation.
+             * @param alignment Alignment of the new allocation.
+             */
+            void reallocate(void *const ptr, size_t const new_size, size_t const alignment) const;
         };
     } // namespace memory
 } // namespace jolt
