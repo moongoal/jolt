@@ -5,7 +5,6 @@
 #include <util.hpp>
 #include "heap.hpp"
 #include "checks.hpp"
-#include "defs.hpp"
 
 namespace jolt {
     namespace memory {
@@ -29,10 +28,9 @@ namespace jolt {
              * Allocation function.
              *
              * @param size The total size of the memory to allocate.
-             * @param flags The allocation flags.
              * @param alignment The alignment requirements for the allocated memory.
              */
-            void *allocate(uint32_t const size, flags_t const flags, uint32_t const alignment);
+            void *allocate(uint32_t const size, uint32_t const alignment);
 
             /**
              * Free a location in memory given its pointer. Only the latest allocation on the stack

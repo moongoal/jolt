@@ -13,9 +13,9 @@ TEST(allocate) {
     Stack stack(test_heap_size);
 
     // Create blocks
-    uint8_t *const b1 = reinterpret_cast<uint8_t *>(stack.allocate(256, ALLOC_NONE, 16));
+    uint8_t *const b1 = reinterpret_cast<uint8_t *>(stack.allocate(256, 16));
     void *const before_alloc = stack.get_top();
-    uint8_t *const b2 = reinterpret_cast<uint8_t *>(stack.allocate(256, ALLOC_NONE, 16));
+    uint8_t *const b2 = reinterpret_cast<uint8_t *>(stack.allocate(256, 16));
     void *const after_alloc = stack.get_top();
 
     assert(b1);
@@ -54,11 +54,11 @@ TEST(allocate) {
 TEST(free) {
     Stack stack(test_heap_size);
 
-    uint8_t *const b1 = reinterpret_cast<uint8_t *>(stack.allocate(256, ALLOC_NONE, 16));
+    uint8_t *const b1 = reinterpret_cast<uint8_t *>(stack.allocate(256, 16));
 
     void *const top_before_alloc = stack.get_top();
     size_t const allocated_before_alloc = stack.get_allocated_size();
-    uint8_t *const b2 = reinterpret_cast<uint8_t *>(stack.allocate(256, ALLOC_NONE, 16));
+    uint8_t *const b2 = reinterpret_cast<uint8_t *>(stack.allocate(256, 16));
     size_t const committed_after_alloc = stack.get_committed_size();
 
     stack.free(b2);
@@ -75,8 +75,8 @@ TEST(free) {
 TEST(free2) {
     Stack stack(test_heap_size);
 
-    uint8_t *const b1 = reinterpret_cast<uint8_t *>(stack.allocate(256, ALLOC_NONE, 16));
-    uint8_t *const b2 = reinterpret_cast<uint8_t *>(stack.allocate(256, ALLOC_NONE, 16));
+    uint8_t *const b1 = reinterpret_cast<uint8_t *>(stack.allocate(256, 16));
+    uint8_t *const b2 = reinterpret_cast<uint8_t *>(stack.allocate(256, 16));
 
     stack.free(b2);
     stack.free(b1);
@@ -89,8 +89,8 @@ TEST(free2) {
 TEST(ensure_free_memory_consistency) {
     Stack stack(test_heap_size);
 
-    uint8_t *const b1 = reinterpret_cast<uint8_t *>(stack.allocate(256, ALLOC_NONE, 16));
-    uint8_t *const b2 = reinterpret_cast<uint8_t *>(stack.allocate(256, ALLOC_NONE, 16));
+    uint8_t *const b1 = reinterpret_cast<uint8_t *>(stack.allocate(256, 16));
+    uint8_t *const b2 = reinterpret_cast<uint8_t *>(stack.allocate(256, 16));
 
     stack.free(b2);
     stack.ensure_free_memory_consistency(b2, 256); // This is going to abort upon failure
@@ -99,8 +99,8 @@ TEST(ensure_free_memory_consistency) {
 TEST(reallocate_shrink) {
     Stack stack(test_heap_size);
 
-    uint8_t *const b1 = reinterpret_cast<uint8_t *>(stack.allocate(256, ALLOC_NONE, 16));
-    uint8_t *const b2 = reinterpret_cast<uint8_t *>(stack.allocate(256, ALLOC_NONE, 16));
+    uint8_t *const b1 = reinterpret_cast<uint8_t *>(stack.allocate(256, 16));
+    uint8_t *const b2 = reinterpret_cast<uint8_t *>(stack.allocate(256, 16));
     StackAllocHeader *const ptr_hdr_b2 = Stack::get_header(b2);
 
     stack.reallocate(b2, 128);
@@ -113,8 +113,8 @@ TEST(reallocate_shrink) {
 TEST(reallocate_grow) {
     Stack stack(test_heap_size * 2);
 
-    uint8_t *const b1 = reinterpret_cast<uint8_t *>(stack.allocate(256, ALLOC_NONE, 16));
-    uint8_t *const b2 = reinterpret_cast<uint8_t *>(stack.allocate(256, ALLOC_NONE, 16));
+    uint8_t *const b1 = reinterpret_cast<uint8_t *>(stack.allocate(256, 16));
+    uint8_t *const b2 = reinterpret_cast<uint8_t *>(stack.allocate(256, 16));
     StackAllocHeader *const ptr_hdr_b2 = Stack::get_header(b2);
 
     stack.reallocate(b2, test_heap_size);
@@ -127,8 +127,8 @@ TEST(reallocate_grow) {
 TEST(reallocate_nop) {
     Stack stack(test_heap_size);
 
-    uint8_t *const b1 = reinterpret_cast<uint8_t *>(stack.allocate(256, ALLOC_NONE, 16));
-    uint8_t *const b2 = reinterpret_cast<uint8_t *>(stack.allocate(256, ALLOC_NONE, 16));
+    uint8_t *const b1 = reinterpret_cast<uint8_t *>(stack.allocate(256, 16));
+    uint8_t *const b2 = reinterpret_cast<uint8_t *>(stack.allocate(256, 16));
     StackAllocHeader *const ptr_hdr_b2 = Stack::get_header(b2);
 
     stack.reallocate(b2, 256);

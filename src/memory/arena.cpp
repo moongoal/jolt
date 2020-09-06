@@ -123,7 +123,7 @@ namespace jolt {
             m_free_list = new(get_base()) ArenaFreeListNode(memory_size, nullptr, nullptr);
         }
 
-        void *Arena::allocate(uint32_t const size, flags_t const flags, uint32_t const alignment) {
+        void *Arena::allocate(uint32_t const size, uint32_t const alignment) {
             uint32_t adjusted_size = get_total_allocation_size(size, 0);
             adjusted_size = max(adjusted_size, static_cast<uint32_t>(sizeof(ArenaFreeListNode)));
 
@@ -306,7 +306,7 @@ namespace jolt {
                     find_right_closest_node(ptr, ptr_hdr->m_alloc_sz + JLT_MEM_CANARY_VALUE_SIZE);
 
                 if(!next_node || next_node != alloc_end_ptr || next_node->m_size < extent) {
-                    void *const new_alloc_ptr = allocate(new_size, ALLOC_NONE, alignment);
+                    void *const new_alloc_ptr = allocate(new_size, alignment);
 
                     memmove(new_alloc_ptr, ptr, ptr_hdr->m_alloc_sz);
                     free(ptr);

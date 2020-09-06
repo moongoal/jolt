@@ -4,7 +4,7 @@
 
 namespace jolt {
     namespace memory {
-        void *Stack::allocate(uint32_t const size, flags_t const flags, uint32_t const alignment) {
+        void *Stack::allocate(uint32_t const size, uint32_t const alignment) {
             size_t const sz_free = get_free_committed_size();
             void *const ptr_alloc = align_raw_ptr(m_ptr_top + sizeof(StackAllocHeader), alignment);
             StackAllocHeader *const ptr_hdr = get_header(ptr_alloc);
