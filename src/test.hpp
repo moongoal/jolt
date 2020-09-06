@@ -83,7 +83,6 @@ namespace jolt {
 
             void run() {
                 if(result() == test_result::NOT_RUN) {
-                    // TODO: Add timing support
                     set_result(test_result::SUCCESS);
                     test_func();
                 }

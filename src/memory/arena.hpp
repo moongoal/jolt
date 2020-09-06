@@ -8,7 +8,7 @@
 
 namespace jolt {
     namespace memory {
-        struct ArenaAllocHeader {
+        struct ArenaAllocHeader : AllocHeader {
             uint32_t m_alloc_sz;
             uint32_t const m_alloc_offset;
 
@@ -16,8 +16,8 @@ namespace jolt {
             JLT_MEM_CANARY_VALUE_TYPE m_free_canary = JLT_MEM_CANARY_VALUE;
 #endif // JLT_WITH_MEM_CHECKS
 
-            ArenaAllocHeader(uint32_t const alloc_sz, uint32_t const offset) :
-                m_alloc_sz(alloc_sz), m_alloc_offset(offset) {}
+            ArenaAllocHeader(uint32_t const alloc_sz, flags_t flags, uint32_t const offset) :
+                AllocHeader(flags), m_alloc_sz(alloc_sz), m_alloc_offset(offset) {}
         };
 
         struct ArenaFreeListNode {

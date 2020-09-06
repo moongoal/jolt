@@ -4,34 +4,27 @@
 #include <cstdint>
 #include <util.hpp>
 #include "defs.hpp"
+#include "arena.hpp"
+#include "stack.hpp"
 
 namespace jolt {
     namespace memory {
         constexpr size_t BIG_OBJECT_MIN_SIZE = 2 * 1024 * 1024; // 2 MiB
+        constexpr size_t ALLOCATOR_SLOTS = 4; // Number of slots available to the engine
+        constexpr size_t SMALL_HEAP_MEMORY_SIZE = 4LL * 1024 * 1024 * 1024; // 4 GiB
+        constexpr size_t BIG_HEAP_MEMORY_SIZE = 4LL * 1024 * 1024 * 1024;   // 4 GiB
+        constexpr size_t PERSISTENT_MEMORY_SIZE = 4LL * 1024 * 1024 * 1024; // 4 GiB
+        constexpr size_t SCRATCH_MEMORY_SIZE = 256LL * 1024 * 1024;         // 256 MiB
 
-        struct FreeListNode {
-            size_t size;
-            FreeListNode *prev;
-            FreeListNode *next;
+        /**
+         * Allocator slot. Each thread will share its slot with its siblings based
+         * on a hash function.
+         */
+        struct AllocatorSlot {
+            Arena m_sm_alloc, m_bg_alloc;
+            Stack m_persist, m_scratch;
 
-            FreeListNode(size_t const node_size,
-                         FreeListNode *const prev_node,
-                         FreeListNode *const next_node) :
-                size(node_size),
-                prev(prev_node), next(next_node) {}
-
-            FreeListNode(FreeListNode const &other) = delete;
-            FreeListNode &operator=(FreeListNode const &other) = delete;
-        };
-
-        struct Allocation {
-            uint32_t const m_size;   // The size of the allocation.
-            uint16_t const m_offset; // The offset from the origin of the raw allocation to the
-                                     // beginning of this structure.
-            flags_t const m_flags;   // The allocation flags. TODO: Is this needed?
-
-            Allocation(uint32_t size, uint16_t offset, flags_t flags) :
-                m_size(size), m_offset(offset), m_flags(flags) {}
+            AllocatorSlot();
         };
 
         /**
@@ -40,7 +33,7 @@ namespace jolt {
          * @param max_memory The total maximum memory available to the
          * application.
          */
-        void initialize(size_t const max_memory);
+        // void initialize(size_t const max_memory);
 
         /**
          * Finalize the allocator.
@@ -48,7 +41,7 @@ namespace jolt {
          * When calling this function, any memory allocated through this
          * allocator will be freed.
          */
-        void finalize();
+        // void finalize();
 
         /**
          * The real allocation function. Don't call this. Call `allocate()` instead.
@@ -110,6 +103,10 @@ namespace jolt {
         void free(T *const ptr) {
             ptr->~T();
             _free(ptr);
+        }
+
+        inline AllocHeader *get_alloc_header(void *const ptr) {
+            return reinterpret_cast<AllocHeader *>(ptr) - 1;
         }
     } // namespace memory
 } // namespace jolt

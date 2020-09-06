@@ -184,6 +184,7 @@ namespace jolt {
 
             new(hdr_ptr) ArenaAllocHeader(adjusted_size - sizeof(ArenaAllocHeader) -
                                               JLT_MEM_CANARY_VALUE_SIZE,
+                                          flags,
                                           padding);
 
             JLT_FILL_OVERFLOW(alloc_ptr, size);

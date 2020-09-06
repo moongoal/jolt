@@ -9,12 +9,12 @@
 
 namespace jolt {
     namespace memory {
-        struct StackAllocHeader {
+        struct StackAllocHeader : AllocHeader {
             uint32_t m_alloc_sz;
             uint32_t const m_alloc_offset;
 
-            StackAllocHeader(uint32_t const alloc_sz, uint32_t const offset) :
-                m_alloc_sz(alloc_sz), m_alloc_offset(offset) {}
+            StackAllocHeader(uint32_t const alloc_sz, flags_t flags, uint32_t const offset) :
+                AllocHeader(flags), m_alloc_sz(alloc_sz), m_alloc_offset(offset) {}
         };
 
         class JLTAPI Stack : public Heap {
