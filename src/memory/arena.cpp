@@ -182,11 +182,8 @@ namespace jolt {
             // actually *moving* the node to a different address.
             m_free_list = choose(m_free_list, cur_slot, m_free_list != free_slot);
 
-            new(hdr_ptr) ArenaAllocHeader(adjusted_size - sizeof(ArenaAllocHeader)
-#ifdef JLT_WITH_MEM_CHECKS
-                                              - JLT_MEM_CANARY_VALUE_SIZE
-#endif // JLT_WITH_MEM_CHECKS
-                                          ,
+            new(hdr_ptr) ArenaAllocHeader(adjusted_size - sizeof(ArenaAllocHeader) -
+                                              JLT_MEM_CANARY_VALUE_SIZE,
                                           padding);
 
             JLT_FILL_OVERFLOW(alloc_ptr, size);
@@ -276,20 +273,14 @@ namespace jolt {
                 size_t const extent = ptr_hdr->m_alloc_sz - new_size;
 
                 if(extent >= sizeof(ArenaFreeListNode)) {
-                    void *const new_node_raw_ptr = reinterpret_cast<uint8_t *>(ptr) + new_size
-#ifdef JLT_WITH_MEM_CHECKS
-                                                   + JLT_MEM_CANARY_VALUE_SIZE
-#endif // JLT_WITH_MEM_CHECKS
-                        ;
+                    void *const new_node_raw_ptr =
+                        reinterpret_cast<uint8_t *>(ptr) + new_size + JLT_MEM_CANARY_VALUE_SIZE;
                     ArenaFreeListNode *const prev_node = find_left_closest_node(ptr);
                     ArenaFreeListNode *const next_node =
                         prev_node ? prev_node->m_next
                                   : find_right_closest_node(ptr,
-                                                            ptr_hdr->m_alloc_sz
-#ifdef JLT_WITH_MEM_CHECKS
-                                                                + JLT_MEM_CANARY_VALUE_SIZE
-#endif // JLT_WITH_MEM_CHECKS
-                                    );
+                                                            ptr_hdr->m_alloc_sz +
+                                                                JLT_MEM_CANARY_VALUE_SIZE);
                     auto const new_node_ptr =
                         reinterpret_cast<ArenaFreeListNode *>(new_node_raw_ptr);
                     ptr_hdr->m_alloc_sz = new_size;
@@ -309,18 +300,10 @@ namespace jolt {
                 }
             } else { // Grow
                 void *const alloc_end_ptr = reinterpret_cast<uint8_t *>(ptr) + ptr_hdr->m_alloc_sz +
-#ifdef JLT_WITH_MEM_CHECKS
-                                            +JLT_MEM_CANARY_VALUE_SIZE
-#endif // JLT_WITH_MEM_CHECKS
-                    ;
+                                            +JLT_MEM_CANARY_VALUE_SIZE;
                 size_t const extent = new_size - ptr_hdr->m_alloc_sz;
                 ArenaFreeListNode *next_node =
-                    find_right_closest_node(ptr,
-                                            ptr_hdr->m_alloc_sz
-#ifdef JLT_WITH_MEM_CHECKS
-                                                + JLT_MEM_CANARY_VALUE_SIZE
-#endif // JLT_WITH_MEM_CHECKS
-                    );
+                    find_right_closest_node(ptr, ptr_hdr->m_alloc_sz + JLT_MEM_CANARY_VALUE_SIZE);
 
                 if(!next_node || next_node != alloc_end_ptr || next_node->m_size < extent) {
                     void *const new_alloc_ptr = allocate(new_size, ALLOC_NONE, alignment);

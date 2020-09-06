@@ -10,11 +10,8 @@ namespace jolt {
             StackAllocHeader *const ptr_hdr = get_header(ptr_alloc);
             size_t const padding =
                 reinterpret_cast<uint8_t *>(ptr_alloc) - m_ptr_top - sizeof(StackAllocHeader);
-            size_t const total_alloc_sz = reinterpret_cast<uint8_t *>(ptr_alloc) + size - m_ptr_top
-#ifdef JLT_WITH_MEM_CHECKS
-                                          + JLT_MEM_CANARY_VALUE_SIZE
-#endif // JLT_WITH_MEM_CHECKS
-                ;
+            size_t const total_alloc_sz = reinterpret_cast<uint8_t *>(ptr_alloc) + size -
+                                          m_ptr_top + JLT_MEM_CANARY_VALUE_SIZE;
 
             ensure_free_memory_consistency(m_ptr_top, sz_free);
 
@@ -75,11 +72,9 @@ namespace jolt {
         bool Stack::is_top(void *const ptr) const {
             StackAllocHeader *const ptr_hdr = get_header(ptr);
 
-            return ptr_hdr->m_alloc_sz + reinterpret_cast<uint8_t *>(ptr)
-#ifdef JLT_WITH_MEM_CHECKS
-                       + JLT_MEM_CANARY_VALUE_SIZE
-#endif // JLT_WITH_MEM_CHECKS
-                   == m_ptr_top;
+            return ptr_hdr->m_alloc_sz + reinterpret_cast<uint8_t *>(ptr) +
+                       JLT_MEM_CANARY_VALUE_SIZE ==
+                   m_ptr_top;
         }
     } // namespace memory
 } // namespace jolt
