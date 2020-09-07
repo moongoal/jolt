@@ -276,3 +276,10 @@ TEST(reallocate__grow_no_move) {
     assert(!new_free_list->m_prev);
     assert(!new_free_list->m_next);
 }
+
+TEST(fill_after_free) {
+    Arena arena(test_heap_size);
+
+    void *const a = arena.allocate(sizeof(int) * 500, ALLOC_NONE, alignof(int));
+    arena.free(a); // This will crash if fill goes beyond committed memory
+}
