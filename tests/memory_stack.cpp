@@ -35,8 +35,8 @@ TEST(allocate) {
     for(int i = 0; i < 256; ++i) { assert(b2[i] == 0xab); }
 
     // Check allocation headers
-    StackAllocHeader *const h1 = Stack::get_header(b1);
-    StackAllocHeader *const h2 = Stack::get_header(b2);
+    AllocHeader *const h1 = Stack::get_header(b1);
+    AllocHeader *const h2 = Stack::get_header(b2);
 
     // Ensure overflow guards are in place
     JLT_CHECK_OVERFLOW(b1, 256);
@@ -101,7 +101,7 @@ TEST(reallocate_shrink) {
 
     uint8_t *const b1 = reinterpret_cast<uint8_t *>(stack.allocate(256, ALLOC_NONE, 16));
     uint8_t *const b2 = reinterpret_cast<uint8_t *>(stack.allocate(256, ALLOC_NONE, 16));
-    StackAllocHeader *const ptr_hdr_b2 = Stack::get_header(b2);
+    AllocHeader *const ptr_hdr_b2 = Stack::get_header(b2);
 
     stack.reallocate(b2, 128);
 
@@ -115,7 +115,7 @@ TEST(reallocate_grow) {
 
     uint8_t *const b1 = reinterpret_cast<uint8_t *>(stack.allocate(256, ALLOC_NONE, 16));
     uint8_t *const b2 = reinterpret_cast<uint8_t *>(stack.allocate(256, ALLOC_NONE, 16));
-    StackAllocHeader *const ptr_hdr_b2 = Stack::get_header(b2);
+    AllocHeader *const ptr_hdr_b2 = Stack::get_header(b2);
 
     stack.reallocate(b2, test_heap_size);
 
@@ -129,7 +129,7 @@ TEST(reallocate_nop) {
 
     uint8_t *const b1 = reinterpret_cast<uint8_t *>(stack.allocate(256, ALLOC_NONE, 16));
     uint8_t *const b2 = reinterpret_cast<uint8_t *>(stack.allocate(256, ALLOC_NONE, 16));
-    StackAllocHeader *const ptr_hdr_b2 = Stack::get_header(b2);
+    AllocHeader *const ptr_hdr_b2 = Stack::get_header(b2);
 
     stack.reallocate(b2, 256);
 

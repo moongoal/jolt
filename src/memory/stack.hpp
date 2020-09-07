@@ -9,14 +9,6 @@
 
 namespace jolt {
     namespace memory {
-        struct StackAllocHeader : AllocHeader {
-            uint32_t m_alloc_sz;
-            uint32_t const m_alloc_offset;
-
-            StackAllocHeader(uint32_t const alloc_sz, flags_t flags, uint32_t const offset) :
-                AllocHeader(flags), m_alloc_sz(alloc_sz), m_alloc_offset(offset) {}
-        };
-
         class JLTAPI Stack : public Heap {
             uint8_t *m_ptr_top; // Pointer to the top of the stack
 
@@ -98,8 +90,8 @@ namespace jolt {
              * the base of the allocation or not and will return garbage if it
              * doesn't.
              */
-            static StackAllocHeader *get_header(void *const ptr) {
-                return reinterpret_cast<StackAllocHeader *>(ptr) - 1;
+            static AllocHeader *get_header(void *const ptr) {
+                return reinterpret_cast<AllocHeader *>(ptr) - 1;
             }
 
             /**
@@ -113,7 +105,7 @@ namespace jolt {
              * doesn't.
              */
             static size_t get_total_allocation_size(void *const ptr) {
-                StackAllocHeader *const ptr_hdr = get_header(ptr);
+                AllocHeader *const ptr_hdr = get_header(ptr);
 
                 return get_total_allocation_size(ptr_hdr->m_alloc_sz, ptr_hdr->m_alloc_offset);
             }
@@ -130,7 +122,7 @@ namespace jolt {
              * doesn't.
              */
             static size_t get_total_allocation_size(size_t const size, size_t const padding) {
-                return size + padding + sizeof(StackAllocHeader)
+                return size + padding + sizeof(AllocHeader)
 #ifdef JLT_WITH_MEM_CHECKS
                        + JLT_MEM_CANARY_VALUE_SIZE
 #endif // JLT_WITH_MEM_CHECKS

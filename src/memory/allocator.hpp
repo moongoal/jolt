@@ -20,7 +20,7 @@ namespace jolt {
          * Allocator slot. Each thread will share its slot with its siblings based
          * on a hash function.
          */
-        struct AllocatorSlot {
+        struct JLTAPI AllocatorSlot {
             Arena m_sm_alloc, m_bg_alloc;
             Stack m_persist, m_scratch;
 
@@ -50,14 +50,14 @@ namespace jolt {
          * @param flags The allocation flags.
          * @param alignment The alignment requirements for the allocated memory.
          */
-        void *_allocate(size_t const size, flags_t const flags, size_t const alignment);
+        void *JLTAPI _allocate(size_t const size, flags_t const flags, size_t const alignment);
 
         /**
          * The real free function. Don't call this. Call `free()` instead.
          *
          * @param ptr A pointer to the beginning of the memory location to free.
          */
-        void _free(void *const ptr);
+        void JLTAPI _free(void *const ptr);
 
         /**
          * Allocate memory for an object of type T. This function will not construct the object. Use
@@ -108,6 +108,8 @@ namespace jolt {
         inline AllocHeader *get_alloc_header(void *const ptr) {
             return reinterpret_cast<AllocHeader *>(ptr) - 1;
         }
+
+        size_t JLTAPI get_allocated_size();
     } // namespace memory
 } // namespace jolt
 

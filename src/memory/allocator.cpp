@@ -41,7 +41,7 @@ namespace jolt {
             return slot.m_sm_alloc.allocate(size, flags, alignment);
         }
 
-        void free(void *const ptr) {
+        void _free(void *const ptr) {
             thread_id const tid = Thread::current().get_id();
             uint32_t const slot_idx = map_thread_id_to_allocator_slot(tid);
             AllocatorSlot &slot = g_alloc_slots[slot_idx];
@@ -58,6 +58,23 @@ namespace jolt {
             if(hdr_ptr->m_flags & ALLOC_BIG) {
                 return slot.m_bg_alloc.free(ptr);
             }
+
+            slot.m_sm_alloc.free(ptr);
+        }
+
+        size_t get_allocated_size() {
+            size_t sz = 0;
+
+            for(size_t i = 0; i < ALLOCATOR_SLOTS; ++i) {
+                AllocatorSlot const &slot = g_alloc_slots[i];
+
+                sz += slot.m_bg_alloc.get_allocated_size();
+                sz += slot.m_sm_alloc.get_allocated_size();
+                sz += slot.m_persist.get_allocated_size();
+                sz += slot.m_scratch.get_allocated_size();
+            }
+
+            return sz;
         }
     } // namespace memory
 } // namespace jolt

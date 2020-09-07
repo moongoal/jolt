@@ -19,11 +19,11 @@ TEST(ctor) {
 
 TEST(allocate1) { // Full allocation
     constexpr size_t alloc_size =
-        Heap::MIN_ALLOC_SIZE - sizeof(ArenaAllocHeader) - JLT_MEM_CANARY_VALUE_SIZE;
+        Heap::MIN_ALLOC_SIZE - sizeof(AllocHeader) - JLT_MEM_CANARY_VALUE_SIZE;
     Arena arena(Heap::MIN_ALLOC_SIZE);
 
     void *const b1 = arena.allocate(alloc_size, ALLOC_NONE, 1);
-    auto const h1 = reinterpret_cast<ArenaAllocHeader *>(b1) - 1;
+    auto const h1 = reinterpret_cast<AllocHeader *>(b1) - 1;
 
     assert(h1->m_alloc_offset ==
            reinterpret_cast<uint8_t *>(h1) - reinterpret_cast<uint8_t *>(arena.get_base()));
@@ -38,13 +38,13 @@ TEST(allocate2) {
     ArenaFreeListNode *const free_list = arena.get_free_list();
 
     void *const b1 = arena.allocate(1024, ALLOC_NONE, 16);
-    auto const h1 = reinterpret_cast<ArenaAllocHeader *>(b1) - 1;
+    auto const h1 = reinterpret_cast<AllocHeader *>(b1) - 1;
 
     void *const b2 = arena.allocate(256, ALLOC_NONE, 8);
-    auto const h2 = reinterpret_cast<ArenaAllocHeader *>(b2) - 1;
+    auto const h2 = reinterpret_cast<AllocHeader *>(b2) - 1;
 
     void *const b3 = arena.allocate(5, ALLOC_NONE, 64);
-    auto const h3 = reinterpret_cast<ArenaAllocHeader *>(b3) - 1;
+    auto const h3 = reinterpret_cast<AllocHeader *>(b3) - 1;
 
     auto const new_free_list = reinterpret_cast<ArenaFreeListNode *>(
         reinterpret_cast<uint8_t *>(b3) + h3->m_alloc_sz + JLT_MEM_CANARY_VALUE_SIZE);
@@ -66,7 +66,7 @@ TEST(allocate2) {
 
     assert(new_free_list != free_list);
     assert(new_free_list == arena.get_free_list());
-    assert(new_free_list->m_size == arena.get_size() - 3 * sizeof(ArenaAllocHeader) -
+    assert(new_free_list->m_size == arena.get_size() - 3 * sizeof(AllocHeader) -
                                         h1->m_alloc_offset - h1->m_alloc_sz - h2->m_alloc_offset -
                                         h2->m_alloc_sz - h3->m_alloc_offset - h3->m_alloc_sz -
                                         3 * JLT_MEM_CANARY_VALUE_SIZE);
@@ -91,7 +91,7 @@ TEST(free__right_free_node_available) { // Single free (only right free list nod
 
 TEST(free__no_free_node_available) { // Single free with full memory (no free list node available)
     constexpr size_t alloc_size =
-        Heap::MIN_ALLOC_SIZE - sizeof(ArenaAllocHeader) - JLT_MEM_CANARY_VALUE_SIZE;
+        Heap::MIN_ALLOC_SIZE - sizeof(AllocHeader) - JLT_MEM_CANARY_VALUE_SIZE;
     Arena arena(Heap::MIN_ALLOC_SIZE);
     ArenaFreeListNode *const free_list = arena.get_free_list();
     size_t const available_memory = free_list->m_size;
@@ -150,7 +150,7 @@ TEST(free__both_free_nodes_available) { // Free with both left & right free list
 
 TEST(reallocate__shrink__nop) { // Full allocation
     constexpr size_t alloc_size =
-        Heap::MIN_ALLOC_SIZE - sizeof(ArenaAllocHeader) - JLT_MEM_CANARY_VALUE_SIZE;
+        Heap::MIN_ALLOC_SIZE - sizeof(AllocHeader) - JLT_MEM_CANARY_VALUE_SIZE;
     Arena arena(Heap::MIN_ALLOC_SIZE);
 
     void *const b1 = arena.allocate(alloc_size, ALLOC_NONE, 1);
@@ -168,7 +168,7 @@ TEST(reallocate__shrink__nop) { // Full allocation
 
 TEST(reallocate__shrink__no_change) { // Full allocation
     constexpr size_t alloc_size =
-        Heap::MIN_ALLOC_SIZE - sizeof(ArenaAllocHeader) - JLT_MEM_CANARY_VALUE_SIZE;
+        Heap::MIN_ALLOC_SIZE - sizeof(AllocHeader) - JLT_MEM_CANARY_VALUE_SIZE;
     Arena arena(Heap::MIN_ALLOC_SIZE);
 
     void *const b1 = arena.allocate(alloc_size, ALLOC_NONE, 1);
@@ -186,7 +186,7 @@ TEST(reallocate__shrink__no_change) { // Full allocation
 
 TEST(reallocate__shrink__with_change) { // Full allocation
     constexpr size_t alloc_size =
-        Heap::MIN_ALLOC_SIZE - sizeof(ArenaAllocHeader) - JLT_MEM_CANARY_VALUE_SIZE;
+        Heap::MIN_ALLOC_SIZE - sizeof(AllocHeader) - JLT_MEM_CANARY_VALUE_SIZE;
     Arena arena(Heap::MIN_ALLOC_SIZE);
 
     void *const b1 = arena.allocate(alloc_size, ALLOC_NONE, 1);
@@ -216,7 +216,7 @@ TEST(reallocate__grow_with_move) {
     void *const b2 = arena.allocate(256, ALLOC_NONE, 8);
     auto const h2 = Arena::get_header(b2);
     void *const b2_raw_ptr =
-        reinterpret_cast<uint8_t *>(b2) - h2->m_alloc_offset - sizeof(ArenaAllocHeader);
+        reinterpret_cast<uint8_t *>(b2) - h2->m_alloc_offset - sizeof(AllocHeader);
 
     void *const b3 = arena.allocate(5, ALLOC_NONE, 64);
     auto const h3 = Arena::get_header(b3);

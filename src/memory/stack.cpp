@@ -6,10 +6,10 @@ namespace jolt {
     namespace memory {
         void *Stack::allocate(uint32_t const size, flags_t const flags, uint32_t const alignment) {
             size_t const sz_free = get_free_committed_size();
-            void *const ptr_alloc = align_raw_ptr(m_ptr_top + sizeof(StackAllocHeader), alignment);
-            StackAllocHeader *const ptr_hdr = get_header(ptr_alloc);
+            void *const ptr_alloc = align_raw_ptr(m_ptr_top + sizeof(AllocHeader), alignment);
+            AllocHeader *const ptr_hdr = get_header(ptr_alloc);
             size_t const padding =
-                reinterpret_cast<uint8_t *>(ptr_alloc) - m_ptr_top - sizeof(StackAllocHeader);
+                reinterpret_cast<uint8_t *>(ptr_alloc) - m_ptr_top - sizeof(AllocHeader);
             size_t const total_alloc_sz = reinterpret_cast<uint8_t *>(ptr_alloc) + size -
                                           m_ptr_top + JLT_MEM_CANARY_VALUE_SIZE;
 
@@ -19,7 +19,7 @@ namespace jolt {
                 commit(total_alloc_sz - sz_free); // Extend by the excess
             }
 
-            new(ptr_hdr) StackAllocHeader(size, flags, static_cast<uint32_t>(padding));
+            new(ptr_hdr) AllocHeader(size, flags, static_cast<uint32_t>(padding));
 
             m_ptr_top += get_total_allocation_size(size, padding);
 
@@ -31,7 +31,7 @@ namespace jolt {
         void Stack::free(void *const ptr) {
             jltassert(is_top(ptr));
 
-            StackAllocHeader *const ptr_hdr = get_header(ptr);
+            AllocHeader *const ptr_hdr = get_header(ptr);
             size_t const total_alloc_size = get_total_allocation_size(ptr);
 
             JLT_CHECK_OVERFLOW(ptr, ptr_hdr->m_alloc_sz);
@@ -46,7 +46,7 @@ namespace jolt {
             jltassert(new_size);
             jltassert(is_top(ptr));
 
-            StackAllocHeader *const ptr_hdr = get_header(ptr);
+            AllocHeader *const ptr_hdr = get_header(ptr);
 
             if(new_size < ptr_hdr->m_alloc_sz) {
                 size_t const top_diff = ptr_hdr->m_alloc_sz - new_size;
@@ -70,7 +70,7 @@ namespace jolt {
         }
 
         bool Stack::is_top(void *const ptr) const {
-            StackAllocHeader *const ptr_hdr = get_header(ptr);
+            AllocHeader *const ptr_hdr = get_header(ptr);
 
             return ptr_hdr->m_alloc_sz + reinterpret_cast<uint8_t *>(ptr) +
                        JLT_MEM_CANARY_VALUE_SIZE ==

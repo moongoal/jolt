@@ -16,6 +16,6 @@ namespace jolt {
             static Thread &current();
         };
 
-        void initialize();
+        void JLTAPI initialize();
     } // namespace threading
 } // namespace jolt
