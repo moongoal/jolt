@@ -3,8 +3,8 @@
 
 #include <util.hpp>
 #include "checks.hpp"
-#include "defs.hpp"
 #include "heap.hpp"
+#include "defs.hpp"
 
 namespace jolt {
     namespace memory {
@@ -12,11 +12,10 @@ namespace jolt {
             ArenaFreeListNode *m_prev, *m_next;
             size_t m_size;
 
-            ArenaFreeListNode(size_t const size,
-                              ArenaFreeListNode *const prev,
-                              ArenaFreeListNode *const next) :
-                m_size(size),
-                m_prev(prev), m_next(next) {}
+            ArenaFreeListNode(
+              size_t const size, ArenaFreeListNode *const prev, ArenaFreeListNode *const next) :
+              m_size(size),
+              m_prev(prev), m_next(next) {}
         };
 
         class JLTAPI Arena : public Heap {
@@ -55,7 +54,7 @@ namespace jolt {
              * Allocation function.
              *
              * @param size The total size of the memory to allocate.
-             * @param flags The allocation flags.
+             * @param flags Allocation flags.
              * @param alignment The alignment requirements for the allocated memory.
              */
             void *allocate(uint32_t const size, flags_t const flags, uint32_t const alignment);
@@ -144,7 +143,7 @@ namespace jolt {
 #ifdef JLT_WITH_MEM_CHECKS
                        + JLT_MEM_CANARY_VALUE_SIZE
 #endif // JLT_WITH_MEM_CHECKS
-                    ;
+                  ;
             }
         };
     } // namespace memory

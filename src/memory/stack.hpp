@@ -21,7 +21,7 @@ namespace jolt {
              * Allocation function.
              *
              * @param size The total size of the memory to allocate.
-             * @param flags The allocation flags.
+             * @param flags Allocation flags.
              * @param alignment The alignment requirements for the allocated memory.
              */
             void *allocate(uint32_t const size, flags_t const flags, uint32_t const alignment);
@@ -126,7 +126,7 @@ namespace jolt {
 #ifdef JLT_WITH_MEM_CHECKS
                        + JLT_MEM_CANARY_VALUE_SIZE
 #endif // JLT_WITH_MEM_CHECKS
-                    ;
+                  ;
             }
         };
     } // namespace memory
