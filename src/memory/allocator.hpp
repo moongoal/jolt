@@ -28,22 +28,6 @@ namespace jolt {
         };
 
         /**
-         * Initialize the allocator.
-         *
-         * @param max_memory The total maximum memory available to the
-         * application.
-         */
-        // void initialize(size_t const max_memory);
-
-        /**
-         * Finalize the allocator.
-         *
-         * When calling this function, any memory allocated through this
-         * allocator will be freed.
-         */
-        // void finalize();
-
-        /**
          * The real allocation function. Don't call this. Call `allocate()` instead.
          *
          * @param size The total size of the memory to allocate.
@@ -69,13 +53,14 @@ namespace jolt {
          * @param alignment The alignment requirements for the allocated memory.
          */
         template<typename T>
-        T *allocate(size_t const n = 1,
-                    flags_t const flags = ALLOC_NONE,
-                    size_t const alignment = alignof(T)) {
-            return reinterpret_cast<T *>(
-                _allocate(n * sizeof(T),
-                          choose(flags, flags | ALLOC_BIG, sizeof(T) < BIG_OBJECT_MIN_SIZE),
-                          alignment));
+        T *allocate(
+          size_t const n = 1,
+          flags_t const flags = ALLOC_NONE,
+          size_t const alignment = alignof(T)) {
+            return reinterpret_cast<T *>(_allocate(
+              n * sizeof(T),
+              choose(flags, flags | ALLOC_BIG, sizeof(T) < BIG_OBJECT_MIN_SIZE),
+              alignment));
         }
 
         /**
@@ -110,6 +95,13 @@ namespace jolt {
         }
 
         size_t JLTAPI get_allocated_size();
+
+        void JLTAPI *_reallocate(void *const ptr, size_t const new_size, size_t const alignment);
+
+        template<typename T>
+        T *reallocate(T *const ptr, size_t const new_size) {
+            return reinterpret_cast<T *>(_reallocate(ptr, new_size, alignof(T)));
+        }
     } // namespace memory
 } // namespace jolt
 

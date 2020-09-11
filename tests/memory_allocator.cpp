@@ -2,8 +2,9 @@
 #include <threading/thread.hpp>
 #include <memory/allocator.hpp>
 
+SETUP { jolt::threading::initialize(); }
+
 TEST(allocate__free) {
-    jolt::threading::initialize();
     size_t before = jolt::memory::get_allocated_size();
 
     int *a = jolt::memory::allocate<int>(500);
@@ -14,4 +15,18 @@ TEST(allocate__free) {
 
     assert2(after > before, "FAIL: Amount of memory should increase with allocation.");
     assert2(after_del < after, "FAIL: Amount of memory should decrease with deletion.");
+}
+
+TEST(reallocate) {
+    int *a = jolt::memory::allocate<int>(100);
+    int *b = jolt::memory::allocate<int>(500);
+
+    int *c = jolt::memory::reallocate(a, 2000);
+    int *d = jolt::memory::reallocate(c, 800);
+
+    jolt::memory::free(b);
+    jolt::memory::free(d);
+
+    assert(c > a && c > b);
+    assert(d == c);
 }
