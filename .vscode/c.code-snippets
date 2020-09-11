@@ -21,7 +21,9 @@
 		"body": [
 			"#ifndef JLT_$1_HPP",
 			"#define JLT_$1_HPP",
+			"",
 			"$0",
+			"",
 			"#endif /* JLT_$1_HPP */"
 		]
 	}

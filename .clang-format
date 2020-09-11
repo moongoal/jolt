@@ -4,7 +4,7 @@ IndentPPDirectives: BeforeHash
 IndentWidth: 4
 BinPackArguments: false
 BinPackParameters: false
-AllowAllArgumentsOnNextLine: false
+AllowAllArgumentsOnNextLine: true
 AllowAllConstructorInitializersOnNextLine: false
 AllowShortBlocksOnASingleLine: Always
 AllowShortCaseLabelsOnASingleLine: true
@@ -41,3 +41,7 @@ SpaceInEmptyParentheses: false
 SpacesInAngles: false
 UseCRLF: false
 UseTab: Never
+AlignAfterOpenBracket: AlwaysBreak
+BreakBeforeBinaryOperators: NonAssignment
+ContinuationIndentWidth: 2
+ConstructorInitializerIndentWidth: 2
