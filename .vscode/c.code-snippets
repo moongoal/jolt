@@ -22,7 +22,11 @@
 			"#ifndef JLT_$1_HPP",
 			"#define JLT_$1_HPP",
 			"",
-			"$0",
+			"namespace jolt {",
+			"    namespace $2 {",
+			"        $0",
+			"    }",
+			"}",
 			"",
 			"#endif /* JLT_$1_HPP */"
 		]
