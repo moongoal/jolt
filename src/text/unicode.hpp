@@ -40,7 +40,7 @@
 
 namespace jolt {
     namespace text {
-        using utf8c = uint8_t;
+        using utf8c = char8_t;
         using utf16c = uint16_t;
         using utf32c = uint32_t;
 
@@ -193,6 +193,7 @@ namespace jolt {
          * @param s_sz The size in bytes of the sequence.
          */
         bool JLTAPI utf8_is_sane(const utf8c *s, size_t const s_sz);
+
     } // namespace text
 } // namespace jolt
 
