@@ -107,12 +107,15 @@ namespace jolt {
 
                 if(next_state == UTF8_DECODE_STATE_SUCCESS) {
                     *(sout++) = value_out;
+                    sin = utf8_next_cp(sin, sin_end - sin);
                 } else { // Error
                     *(sout++) = UNICODE_CP_REPLACEMENT;
-                    sin = utf8_cp_start(sin, sin_begin);
-                }
+                    utf8c *sin_cp_begin = utf8_cp_start(sin, sin_begin);
 
-                sin = utf8_next_cp(sin, sin_end - sin);
+                    if(sin != sin_cp_begin) {
+                        sin = utf8_next_cp(sin, sin_end - sin);
+                    }
+                }
             }
         }
 

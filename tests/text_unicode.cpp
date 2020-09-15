@@ -35,7 +35,6 @@ TEST(utf8_decode__invalid_characters) {
 TEST(utf8_decode__missing) {
     const utf8c sin[] = {0x4D, 0xD0, 0xE4, 0xBA, 0x8C, 0xF0, 0x90, 0x8C, 0x82};
     utf32c sout[4];
-    // const utf32c expected_sout[] = {0x4d, UNICODE_CP_REPLACEMENT, 0x10302, 0};
     const utf32c expected_sout[] = {0x4d, UNICODE_CP_REPLACEMENT, 0x4e8c, 0x10302};
     size_t const sin_len = sizeof(sin) / sizeof(utf8c);
     size_t const sout_len = sizeof(sout) / sizeof(utf32c);

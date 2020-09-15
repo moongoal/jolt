@@ -80,18 +80,16 @@ namespace jolt {
          *
          * @param in The input UTF-8 scalar value.
          * @param out Pointer to the output UTF-32 code point.
-         * @param state Pointer to the state of the operation.
+         * @param state State of the operation.
          *
-         * @return A boolean value stating whether the operation for the currently examined UTF-8
-         * code point has finished (true) or requires the function to be called again for further
-         * processing (false). When the return value is true, the JLT_UTF_DECODE_NEXT_STATE() macro
-         * can be called upon `state` and checked against UTF8_DECODE_STATE_ERROR or
+         * @return The next state word. The JLT_UTF_DECODE_NEXT_STATE() macro can be called upon
+         * the returned value and its result checked against UTF8_DECODE_STATE_ERROR or
          * UTF8_DECODE_STATE_SUCCESS to establish whether an ill-formed sequence was encountered.
-         * When the return value is false, further processing is required and the function shall be
-         * called again. Before calling the function, the JLT_UTF_DECODE_STATE_INC_AMOUNT() macro
-         * should be called to determine whether the function requires to be called with the same
-         * UTF-8 scalar (the macro returns 0) or with its next sibling in the sequence (the macro
-         * returns 1).
+         * With any other value returned by the macro, further processing is required and the
+         * function shall be called again. Before calling the function, the
+         * JLT_UTF_DECODE_STATE_INC_AMOUNT() macro should be called to determine whether the
+         * function requires to be called with the same UTF-8 scalar (the macro returns 0) or with
+         * its next sibling in the sequence (the macro returns 1).
          *
          * @remark Before starting to decode a new code point, the value pointed at by `out` should
          * be set to 0 and the one pointed at by `state` should be set to UTF8_DECODE_STATE_INIT.
