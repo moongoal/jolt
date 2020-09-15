@@ -4,7 +4,24 @@
 #include <cstdint>
 #include <util.hpp>
 
+/**
+ * Decode the amount of characters to move forward in a UTF-8 string from the state word as modified
+ * by `utf8_decode_cp()`.
+ */
 #define JLT_UTF_DECODE_STATE_INC_AMOUNT(s) (((s)&0x80) >> 7)
+
+/**
+ * Extract the state of the operation from the state word.
+ *
+ * @param s The state word as returned from utf8_decode_cp().
+ *
+ * @return The state of the encoding operation. Notable states include:
+ * - UTF8_DECODE_STATE_SUCCESS
+ * - UTF8_DECODE_STATE_ERROR
+ *
+ * Any other returned value is to be interpreted as a non-complete encoding. In this case, a
+ * further call to the function is required.
+ */
 #define JLT_UTF_DECODE_NEXT_STATE(s) ((s)&0x7F)
 
 /**
@@ -32,11 +49,11 @@ namespace jolt {
 
         constexpr uint16_t UTF8_DECODE_STATE_INIT = 0x8000;
         constexpr uint16_t UTF8_ENCODE_STATE_INIT = 0x0800;
-        constexpr uint8_t UTF8_DECODE_STATE_ERROR = 2; //< decode state indicating an error.
+        constexpr uint8_t UTF8_DECODE_STATE_ERROR = 2; //< Decode state indicating an error.
         constexpr uint8_t UTF8_DECODE_STATE_SUCCESS =
           0; //< Decode state indicating success. Only valid when utf8_decode_cp() returns true.
-        constexpr uint8_t UTF8_ENCODE_STATE_SUCCESS = 0;
-        constexpr uint8_t UTF8_ENCODE_STATE_ERROR = 4;
+        constexpr uint8_t UTF8_ENCODE_STATE_SUCCESS = 0; //< Encode state indicating an error.
+        constexpr uint8_t UTF8_ENCODE_STATE_ERROR = 4;   //< Encode state indicating success.
 
         constexpr utf32c UNICODE_CP_REPLACEMENT = 0xFFFD;           //< Replacement codepoint.
         constexpr utf8c UTF8_CP_REPLACEMENT[] = {0xEF, 0xBF, 0xBD}; //< Replacement codepoint.
@@ -79,7 +96,7 @@ namespace jolt {
          * @remark Before starting to decode a new code point, the value pointed at by `out` should
          * be set to 0 and the one pointed at by `state` should be set to UTF8_DECODE_STATE_INIT.
          */
-        bool JLTAPI utf8_decode_cp(const utf8c in, utf32c *const out, uint16_t *const state);
+        uint16_t JLTAPI utf8_decode_cp(const utf8c in, utf32c *const out, uint16_t const state);
 
         /**
          * Encode a character to UTF-8.
@@ -150,6 +167,17 @@ namespace jolt {
          * next character.
          */
         utf8c *JLTAPI utf8_next_cp(const utf8c *s, long long len);
+
+        /**
+         * Find the beginning of the current code point.
+         *
+         * @param s The point where to start the search.
+         * @param s_begin The beginning of the searched string.
+         *
+         * @return The pointer to the beginning of the current code point or `nullptr` if there is
+         * string is Ill-formed.
+         */
+        utf8c *JLTAPI utf8_cp_start(const utf8c *s, const utf8c *const s_begin);
 
         /**
          * Compute the length of the input UTF-8 sequence.

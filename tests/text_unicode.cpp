@@ -35,7 +35,8 @@ TEST(utf8_decode__invalid_characters) {
 TEST(utf8_decode__missing) {
     const utf8c sin[] = {0x4D, 0xD0, 0xE4, 0xBA, 0x8C, 0xF0, 0x90, 0x8C, 0x82};
     utf32c sout[4];
-    const utf32c expected_sout[] = {0x4d, UNICODE_CP_REPLACEMENT, 0x10302, 0};
+    // const utf32c expected_sout[] = {0x4d, UNICODE_CP_REPLACEMENT, 0x10302, 0};
+    const utf32c expected_sout[] = {0x4d, UNICODE_CP_REPLACEMENT, 0x4e8c, 0x10302};
     size_t const sin_len = sizeof(sin) / sizeof(utf8c);
     size_t const sout_len = sizeof(sout) / sizeof(utf32c);
 
@@ -192,4 +193,23 @@ TEST(utf8_encode_buffer_len__invalid_character) {
     size_t const computed_len = utf8_encode_buffer_len(sin, sin_len);
 
     assert2(expected_sout_len == computed_len, "Output length not as expected.");
+}
+
+TEST(utf8_cp_start) {
+    const utf8c sin[] = {0x4D, 0xD0, 0xB0, 0xE4, 0xBA, 0x8C, 0xF0, 0x90, 0x8C, 0x82};
+    size_t const sin_len = sizeof(sin) / sizeof(utf8c);
+
+    assert(utf8_cp_start(sin, sin) == sin); // One byte
+
+    assert(utf8_cp_start(sin + 1, sin) == sin + 1); // Two bytes
+    assert(utf8_cp_start(sin + 2, sin) == sin + 1);
+
+    assert(utf8_cp_start(sin + 3, sin) == sin + 3); // Three bytes
+    assert(utf8_cp_start(sin + 4, sin) == sin + 3);
+    assert(utf8_cp_start(sin + 5, sin) == sin + 3);
+
+    assert(utf8_cp_start(sin + 6, sin) == sin + 6); // Four bytes
+    assert(utf8_cp_start(sin + 7, sin) == sin + 6);
+    assert(utf8_cp_start(sin + 8, sin) == sin + 6);
+    assert(utf8_cp_start(sin + 9, sin) == sin + 6);
 }
