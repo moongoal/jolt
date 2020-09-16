@@ -1,11 +1,17 @@
 #include <utility>
 #include <test.hpp>
+#include <memory/allocator.hpp>
 #include <threading/thread.hpp>
 #include <text/string.hpp>
 
 using namespace jolt::text;
 
-SETUP { jolt::threading::initialize(); }
+size_t mem_begin;
+
+SETUP {
+    jolt::threading::initialize();
+    mem_begin = jolt::memory::get_allocated_size();
+}
 
 TEST(ctor__utf8c_literal) {
     const utf8c *const s_raw = u8"asd";
@@ -79,3 +85,5 @@ TEST(join) {
 
     assert(s4 == expected_out);
 }
+
+TEST(memory_leaks) { assert(jolt::memory::get_allocated_size() == mem_begin); }
