@@ -1,3 +1,4 @@
+#include <cstring>
 #include <test.hpp>
 #include <memory/arena.hpp>
 
@@ -77,6 +78,19 @@ TEST(allocate2) {
       == arena.get_size() - 3 * sizeof(AllocHeader) - h1->m_alloc_offset - h1->m_alloc_sz
            - h2->m_alloc_offset - h2->m_alloc_sz - h3->m_alloc_offset - h3->m_alloc_sz
            - 3 * JLT_MEM_CANARY_VALUE_SIZE);
+}
+
+TEST(overflow_canary_location) { // Issue #14
+    constexpr size_t alloc_size = 9;
+    Arena arena(Heap::MIN_ALLOC_SIZE * 2);
+
+    void *const x = arena.allocate(24, ALLOC_NONE, 1);
+    arena.allocate(24, ALLOC_NONE, 1);
+    arena.free(x);
+    void *const b1 = arena.allocate(alloc_size, ALLOC_NONE, 1);
+    auto const h1 = reinterpret_cast<AllocHeader *>(b1) - 1;
+
+    JLT_CHECK_OVERFLOW(b1, h1->m_alloc_sz);
 }
 
 TEST(free__right_free_node_available) { // Single free (only right free list node available)

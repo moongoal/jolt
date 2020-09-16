@@ -190,7 +190,7 @@ namespace jolt {
             new(hdr_ptr) AllocHeader(
               adjusted_size - sizeof(AllocHeader) - JLT_MEM_CANARY_VALUE_SIZE, flags, padding);
 
-            JLT_FILL_OVERFLOW(alloc_ptr, size);
+            JLT_FILL_OVERFLOW(alloc_ptr, hdr_ptr->m_alloc_sz);
             m_allocated_size += adjusted_size + padding;
 
             return alloc_ptr;
