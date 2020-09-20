@@ -47,6 +47,18 @@ namespace jolt {
              */
             ArenaFreeListNode *find_right_closest_node(void *const ptr, size_t const size) const;
 
+            void *reallocate_shrink(
+              void *const ptr,
+              size_t const new_size,
+              size_t const alignment,
+              AllocHeader *const ptr_hdr);
+
+            void *reallocate_grow(
+              void *const ptr,
+              size_t const new_size,
+              size_t const alignment,
+              AllocHeader *const ptr_hdr);
+
           public:
             explicit Arena(size_t const memory_size);
 

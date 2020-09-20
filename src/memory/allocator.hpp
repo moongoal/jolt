@@ -101,8 +101,8 @@ namespace jolt {
         void JLTAPI *_reallocate(void *const ptr, size_t const new_size, size_t const alignment);
 
         template<typename T>
-        T *reallocate(T *const ptr, size_t const new_size) {
-            return reinterpret_cast<T *>(_reallocate(ptr, new_size, alignof(T)));
+        T *reallocate(T *const ptr, size_t const new_length) {
+            return reinterpret_cast<T *>(_reallocate(ptr, new_length * sizeof(T), alignof(T)));
         }
     } // namespace memory
 } // namespace jolt
