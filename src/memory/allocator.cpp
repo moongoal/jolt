@@ -17,7 +17,7 @@ namespace jolt {
          * Return the allocator slot for the calling thread.
          */
         static inline AllocatorSlot &get_allocator_slot() {
-            thread_id const tid = Thread::current().get_id();
+            thread_id const tid = Thread::get_current().get_id();
             uint32_t const slot_idx = map_thread_id_to_allocator_slot(tid);
             return g_alloc_slots[slot_idx];
         }

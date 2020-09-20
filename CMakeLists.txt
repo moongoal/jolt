@@ -30,7 +30,10 @@ target_compile_features(
     cxx_attributes
 )
 
-target_compile_definitions(libjolt PRIVATE JLT_INTERNAL NOMINMAX)
+target_compile_definitions(libjolt
+    PRIVATE JLT_INTERNAL
+    PUBLIC NOMINMAX
+)
 
 target_include_directories(libjolt PUBLIC ${PATH_SRC})
 add_subdirectory(tests/)

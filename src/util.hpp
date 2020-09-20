@@ -12,6 +12,9 @@
     #define JLTAPI __attribute__((dllimport))
 #endif // JLT_INTERNAL
 
+#define JLT_INLINE __attribute__((always_inline))
+
+
 namespace jolt {
     template<typename T>
     constexpr T choose(T const a, T const b, bool const condition) {
