@@ -100,5 +100,20 @@ namespace jolt {
 
             return slot.m_sm_alloc.reallocate(ptr, new_size, alignment);
         }
+
+        bool will_relocate(void *const ptr, size_t const new_size) {
+            AllocatorSlot &slot = get_allocator_slot();
+            AllocHeader *const hdr_ptr = get_alloc_header(ptr);
+
+            if((hdr_ptr->m_flags & ALLOC_SCRATCH) || (hdr_ptr->m_flags & ALLOC_PERSIST)) {
+                return false;
+            }
+
+            if(hdr_ptr->m_flags & ALLOC_BIG) {
+                return slot.m_bg_alloc.will_relocate(ptr, new_size);
+            }
+
+            return slot.m_sm_alloc.will_relocate(ptr, new_size);
+        }
     } // namespace memory
 } // namespace jolt

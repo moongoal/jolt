@@ -90,6 +90,8 @@ namespace jolt {
             _free(ptr);
         }
 
+        bool will_relocate(void *const ptr, size_t const new_size);
+
         inline AllocHeader *get_alloc_header(void *const ptr) {
             return reinterpret_cast<AllocHeader *>(ptr) - 1;
         }

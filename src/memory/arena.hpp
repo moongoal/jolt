@@ -91,12 +91,25 @@ namespace jolt {
              * Reallocate a pre-allocated chunk of memory, resizing it.
              *
              * @param ptr Pointer to the memory to reallocate.
-             * @param new_size Size of the new allocation.
-             * @param alignment Alignment of the new allocation.
+             * @param new_size The new size of the new allocation.
+             * @param alignment The alignment of the new allocation (only used if the allocation is
+             * moved).
              *
              * @return A pointer to the new allocation.
              */
             void *reallocate(void *const ptr, size_t const new_size, size_t const alignment);
+
+            /**
+             * Return a value stating whether reallocating a pointer will result in the memory
+             * allocation to be displaced.
+             *
+             * @param ptr The pointer to the memory allocation.
+             * @param new_size The new size to test.
+             *
+             * @return True if reallocating `ptr` will result in a different pointer being returned
+             * by `reallocate()`. False otherwise.
+             */
+            bool will_relocate(void *const ptr, size_t const new_size) const;
 
             /**
              * Return the allocation header for a given pointer.

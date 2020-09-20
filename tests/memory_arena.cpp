@@ -319,3 +319,13 @@ TEST(fill_after_free) {
     void *const a = arena.allocate(sizeof(int) * 500, ALLOC_NONE, alignof(int));
     arena.free(a); // This will crash if fill goes beyond committed memory
 }
+
+TEST(will_relocate) {
+    Arena arena(test_heap_size);
+
+    void *const b1 = arena.allocate(1024, ALLOC_NONE, 16);
+    void *const b2 = arena.allocate(256, ALLOC_NONE, 8);
+
+    assert(arena.will_relocate(b1, 100'000));
+    assert(!arena.will_relocate(b2, 100'000));
+}
