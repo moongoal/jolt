@@ -9,10 +9,10 @@
 #include <debug.hpp>
 #include <util.hpp>
 #include <memory/allocator.hpp>
+#include "iterator.hpp"
 
 namespace jolt {
     namespace collections {
-
         /**
          * A resizable collection where the data is stored in arrays.
          */
@@ -25,6 +25,11 @@ namespace jolt {
             using reference = T &;
             using const_reference = const T &;
             using noclone_t = int;
+            
+            template<typename E>
+            using base_iterator = Iterator<E, ArrayIteratorImpl<E>>;
+            using iterator = base_iterator<T>;
+            using const_iterator = base_iterator<const T>;
 
             static_assert(std::is_move_constructible<value_type>::value);
             static_assert(std::is_copy_constructible<value_type>::value);
@@ -137,12 +142,12 @@ namespace jolt {
                 if constexpr(std::is_trivially_copyable<value_type>::value) {
                     memcpy(m_data, other.m_data, sizeof(value_type) * m_length);
                 } else {
-                    pointer const other_data_end = other.m_data + other.m_length;
-                    pointer my_data = m_data;
+                    const_iterator const other_data_end = other.cend();
+                    iterator my_data = begin();
 
-                    for(pointer other_data = other.m_data; other_data < other_data_end;
+                    for(iterator other_data = other.begin(); other_data != other_data_end;
                         ++other_data) {
-                        new(my_data++)(*other_data);
+                        new((my_data++)(*other_data);
                     }
                 }
 
@@ -176,11 +181,11 @@ namespace jolt {
                     memcpy(new_vec + m_length, other.m_data, other.m_length * sizeof(value_type));
                 } else {
                     pointer nvp = new_vec;
-                    pointer const this_end = m_data + m_length;
-                    pointer const other_end = other.m_data + other.m_length;
+                    const_iterator const this_end = cend();
+                    const_iterator const other_end = other.cend();
 
-                    for(pointer p = m_data; p < this_end; ++p) { new(nvp++) value_type(*p); }
-                    for(pointer p = other.m_length; p < other_end; ++p) {
+                    for(iterator p = begin(); p != this_end; ++p) { new(nvp++) value_type(*p); }
+                    for(iterator p = other.begin(); p != other_end; ++p) {
                         new(nvp++) value_type(*p);
                     }
                 }
@@ -199,9 +204,9 @@ namespace jolt {
             }
 
             /**
-             * Ensure there is enough capacity to satisfy the requirement.
+             * Reserve capacity some capacity.
              *
-             * @param new_capacity The capacity requirement.
+             * @param new_capacity The minimum capacity to reserve.
              */
             void reserve_capacity(unsigned int const new_capacity) {
                 if(new_capacity > m_capacity) {
@@ -349,13 +354,20 @@ namespace jolt {
              */
             void clear() {
                 if constexpr(!std::is_trivially_destructible<value_type>::value) {
-                    const_pointer ptr_end = m_data + m_length;
+                    // const_pointer ptr_end = m_data + m_length;
+                    const_iterator end = cend();
 
-                    for(pointer ptr = m_data; ptr < ptr_end; ++ptr) { ptr->~value_type(); }
+                    // for(pointer ptr = m_data; ptr < ptr_end; ++ptr) { ptr->~value_type(); }
+                    for(iterator it = begin(); it < end; ++it) { (*it).~value_type(); }
                 }
 
                 m_length = 0;
             }
+
+            constexpr iterator begin() { return iterator{m_data}; }
+            constexpr iterator end() { return iterator{m_data + m_length}; }
+            constexpr const_iterator cbegin() const { return const_iterator{m_data}; }
+            constexpr const_iterator cend() const { return const_iterator{m_data + m_length}; }
         };
     } // namespace collections
 } // namespace jolt
