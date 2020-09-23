@@ -5,6 +5,25 @@
 
 namespace jolt {
     namespace collections {
+        /**
+         * Generic iterator.
+         *
+         * @tparam T The type of element the iterator will use internally.
+         * @tparam F The custom functional type of the iterator.
+         *
+         * Each iterator needs a type T which defines the type of the internal state.
+         * The type F must contain one of more static functions to provide custom iteration
+         * behaviour plus an `item_type` type alias that represents the type of the actual item the
+         * iterator is meant to return when dereferenced.
+         *
+         * The static functions that can be defined within F are the following:
+         * - next: Move the iterator forward
+         * - previous: Move the iterator backwards
+         * - compare: Compare two iterators
+         * - resolve: Return the item the iterator points at
+         *
+         * See `ArrayIteratorImpl` for a sample implementation.
+         */
         template<typename T, typename F>
         struct Iterator {
             using value_type = T;
@@ -28,6 +47,19 @@ namespace jolt {
 
             reference operator++(int) {
                 next();
+
+                return *m_ptr;
+            }
+
+            reference operator--() {
+                pointer ptr = m_ptr;
+                previous();
+
+                return *ptr;
+            }
+
+            reference operator--(int) {
+                previous();
 
                 return *m_ptr;
             }
