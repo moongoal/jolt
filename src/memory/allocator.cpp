@@ -42,6 +42,51 @@ namespace jolt {
             return slot.m_sm_alloc.allocate(size, flags, alignment);
         }
 
+        static inline bool is_allocation_from_slot(void *const ptr, AllocatorSlot &slot) {
+            AllocHeader *const hdr_ptr = get_alloc_header(ptr);
+
+            if(hdr_ptr->m_flags & ALLOC_SCRATCH) {
+                return slot.m_scratch.owns_ptr(ptr);
+            }
+
+            if(hdr_ptr->m_flags & ALLOC_PERSIST) {
+                return slot.m_persist.owns_ptr(ptr);
+            }
+
+            if(hdr_ptr->m_flags & ALLOC_BIG) {
+                return slot.m_bg_alloc.owns_ptr(ptr);
+            }
+
+            return slot.m_sm_alloc.owns_ptr(ptr);
+        }
+
+        static inline AllocatorSlot &get_slot_for_allocation(void *const ptr) {
+            AllocatorSlot *slot = &get_allocator_slot();
+            AllocatorSlot *const thread_slot = slot;
+            AllocHeader *const hdr_ptr = get_alloc_header(ptr);
+
+            if(!is_allocation_from_slot(ptr, *slot)) {
+                size_t i;
+
+                for(i = 0; i < ALLOCATOR_SLOTS - 1; ++i) {
+                    slot = &g_alloc_slots[i];
+
+                    if(slot != thread_slot && is_allocation_from_slot(ptr, *slot)) {
+                        break;
+                    }
+                }
+
+                // Last slot doesn't need to be checked.
+                // If the allocator is used correctly, any freed allocation *will* belong to one of
+                // the slots and if it's not in the first N - 1 slots, then it must necessarily be
+                // in the Nth one. This means we don't need to run the check again for the last slot
+                // and we can therefore spare some cycles :)
+                slot = choose(&g_alloc_slots[ALLOCATOR_SLOTS - 1], slot, i == ALLOCATOR_SLOTS - 1);
+            }
+
+            return *slot;
+        }
+
         void _free(void *const ptr) {
             AllocatorSlot &slot = get_allocator_slot();
             AllocHeader *const hdr_ptr = get_alloc_header(ptr);

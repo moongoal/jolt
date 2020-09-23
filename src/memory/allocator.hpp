@@ -91,7 +91,10 @@ namespace jolt {
          */
         template<typename T>
         void free(T *const ptr) {
-            ptr->~T();
+            if constexpr(!std::is_void<T>::value) {
+                ptr->~T();
+            }
+
             _free(ptr);
         }
 

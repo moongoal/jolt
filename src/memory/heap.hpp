@@ -56,6 +56,19 @@ namespace jolt {
              */
             size_t get_committed_size() const { return m_committed_size; }
 
+            /**
+             * Check whether the current heap owns a memory location.
+             *
+             * @param ptr The pointer to the memory location.
+             *
+             * @return True if the memory location is contained in this heap. False if not.
+             */
+            bool owns_ptr(void *const ptr) const {
+                auto const base = reinterpret_cast<uint8_t *>(get_base());
+
+                return ptr > base && ptr < base + get_size();
+            }
+
           protected:
             /**
              * Commit a new chunk of memory.

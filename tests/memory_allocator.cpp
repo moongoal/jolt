@@ -2,6 +2,8 @@
 #include <threading/thread.hpp>
 #include <memory/allocator.hpp>
 
+void free_mt_handler(void *ptr) { jolt::memory::free(ptr); }
+
 SETUP { jolt::threading::initialize(); }
 
 TEST(allocate__free) {
@@ -29,4 +31,15 @@ TEST(reallocate) {
 
     assert(c > a && c > b);
     assert(d == c);
+}
+
+TEST(free__mt) {
+    size_t const mem_alloc = jolt::memory::get_allocated_size();
+    int *a = jolt::memory::allocate<int>(100);
+    jolt::threading::Thread t{free_mt_handler};
+
+    t.start(a);
+    t.join();
+
+    assert(mem_alloc == jolt::memory::get_allocated_size());
 }
