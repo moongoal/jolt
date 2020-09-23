@@ -47,12 +47,12 @@ namespace jolt {
 
             template<typename It>
             constexpr bool operator==(const It other) const {
-                return F::compare(m_ptr, other.get_pointer()) == 0;
+                return m_ptr == other.get_pointer();
             }
 
             template<typename It>
             constexpr bool operator!=(const It other) const {
-                return F::compare(m_ptr, other.get_pointer()) != 0;
+                return m_ptr != other.get_pointer();
             }
 
             template<typename It>
@@ -75,20 +75,24 @@ namespace jolt {
                 return F::compare(m_ptr, other.get_pointer()) <= 0;
             }
 
-            constexpr T &operator*() { return *m_ptr; }
+            constexpr typename F::item_type &operator*() { return F::resolve(m_ptr); }
+            constexpr const typename F::item_type &operator*() const { return F::resolve(m_ptr); }
 
             constexpr void next() { m_ptr = F::forward(m_ptr, 1); }
             constexpr void previous() { m_ptr = F::backward(m_ptr, 1); }
             constexpr pointer get_pointer() const { return m_ptr; }
         };
 
-        template<typename T>
+        template<typename T, typename E = T>
         struct ArrayIteratorImpl {
+            using item_type = E;
+
             static constexpr T *forward(T *const cur, size_t const n) { return cur + n; }
             static constexpr T *backward(T *const cur, size_t const n) { return cur - n; }
             static constexpr int compare(T *const left, const T *const right) {
                 return choose(1, choose(-1, 0, left < right), left > right);
             }
+            static constexpr item_type &resolve(T *const cur) { return *cur; }
         };
     } // namespace collections
 } // namespace jolt
