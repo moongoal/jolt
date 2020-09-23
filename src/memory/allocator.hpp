@@ -2,6 +2,10 @@
 #define JLT_ALLOCATOR_H
 
 #include <cstdint>
+#include <type_traits>
+#include <utility>
+#include <threading/lock.hpp>
+#include <threading/lockguard.hpp>
 #include <util.hpp>
 #include "defs.hpp"
 #include "arena.hpp"
@@ -23,6 +27,7 @@ namespace jolt {
         struct JLTAPI AllocatorSlot {
             Arena m_sm_alloc, m_bg_alloc;
             Stack m_persist, m_scratch;
+            jolt::threading::Lock m_lock;
 
             AllocatorSlot();
         };
@@ -98,10 +103,34 @@ namespace jolt {
 
         size_t JLTAPI get_allocated_size();
 
+        /**
+         * Return the allocator slot for the calling thread.
+         */
+        JLTAPI AllocatorSlot &get_allocator_slot();
+
         void JLTAPI *_reallocate(void *const ptr, size_t const new_size, size_t const alignment);
 
         template<typename T>
         T *reallocate(T *const ptr, size_t const new_length) {
+            AllocatorSlot &slot = get_allocator_slot();
+            jolt::threading::LockGuard lock{slot.m_lock};
+
+            if constexpr(std::is_trivial<T>::value) {
+                return reinterpret_cast<T *>(_reallocate(ptr, new_length * sizeof(T), alignof(T)));
+            } else {
+                if(will_relocate(ptr, new_length)) {
+                    T *const data_new = allocate<T>(new_length);
+
+                    for(size_t i = 0; i < new_length; ++i) {
+                        construct(data_new + i, std::move(ptr[i]));
+                        ptr[i].~T();
+                    }
+
+                    jolt::memory::free(ptr);
+
+                    return data_new;
+                }
+            }
             return reinterpret_cast<T *>(_reallocate(ptr, new_length * sizeof(T), alignof(T)));
         }
     } // namespace memory

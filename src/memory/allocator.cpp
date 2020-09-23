@@ -13,10 +13,7 @@ namespace jolt {
             return id % ALLOCATOR_SLOTS;
         }
 
-        /**
-         * Return the allocator slot for the calling thread.
-         */
-        static inline AllocatorSlot &get_allocator_slot() {
+        AllocatorSlot &get_allocator_slot() {
             thread_id const tid = Thread::get_current().get_id();
             uint32_t const slot_idx = map_thread_id_to_allocator_slot(tid);
             return g_alloc_slots[slot_idx];
@@ -28,6 +25,7 @@ namespace jolt {
 
         void *_allocate(const size_t size, flags_t const flags, size_t const alignment) {
             AllocatorSlot &slot = get_allocator_slot();
+            LockGuard lock{slot.m_lock};
 
             if(flags & ALLOC_SCRATCH) {
                 return slot.m_scratch.allocate(size, flags, alignment);
@@ -47,6 +45,7 @@ namespace jolt {
         void _free(void *const ptr) {
             AllocatorSlot &slot = get_allocator_slot();
             AllocHeader *const hdr_ptr = get_alloc_header(ptr);
+            LockGuard lock{slot.m_lock};
 
             if(hdr_ptr->m_flags & ALLOC_SCRATCH) {
                 return slot.m_scratch.free(ptr);

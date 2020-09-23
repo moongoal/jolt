@@ -25,7 +25,7 @@ namespace jolt {
             using reference = T &;
             using const_reference = const T &;
             using noclone_t = int;
-            
+
             template<typename E>
             using base_iterator = Iterator<E, ArrayIteratorImpl<E>>;
             using iterator = base_iterator<T>;
@@ -212,21 +212,7 @@ namespace jolt {
                 if(new_capacity > m_capacity) {
                     m_capacity = new_capacity;
 
-                    if constexpr(std::is_trivial<value_type>::value) {
-                        m_data = jolt::memory::reallocate(m_data, m_capacity);
-                    } else {
-                        if(jolt::memory::will_relocate(m_data, m_capacity)) {
-                            pointer const data_new = jolt::memory::allocate<value_type>(m_capacity);
-
-                            for(unsigned int i = 0; i < m_length; ++i) {
-                                new(data_new + i) value_type(std::move(m_data[i]));
-                                m_data[i].~value_type();
-                            }
-
-                            jolt::memory::free(m_data);
-                            m_data = data_new;
-                        }
-                    }
+                    jolt::memory::reallocate(m_data, m_capacity);
                 }
             }
 
