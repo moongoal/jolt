@@ -103,9 +103,16 @@ namespace jolt {
                     memcpy(m_data, data, length * sizeof(value_type));
                 } else {
                     for(unsigned int i = 0; i < length; ++i) {
-                        new(m_data + i) value_type(*(data + i));
+                        jolt::memory::construct(m_data + i, *(data + i));
                     }
                 }
+            }
+
+            template<typename It>
+            Vector(It const begin, It const end) :
+              m_data{jolt::memory::allocate<value_type>(end - begin)}, m_length{end - begin},
+              m_capacity{end - begin} {
+                add_all(begin, end);
             }
 
             Vector(const Vector<value_type> &other) : Vector(other.m_data, other.m_length) {}
@@ -147,7 +154,7 @@ namespace jolt {
 
                     for(iterator other_data = other.begin(); other_data != other_data_end;
                         ++other_data) {
-                        new((my_data++)(*other_data);
+                        jolt::memory::construct(my_data++, *other_data);
                     }
                 }
 
@@ -242,6 +249,19 @@ namespace jolt {
             /**
              * Add many items.
              *
+             * @param begin Iterator to the beginning of the sequence.
+             * @param end Iterator to the end of the sequence.
+             * @param position The index at which to add the items.
+             */
+            template<typename It>
+            void add_all(It const begin, It const end, unsigned int const position) {
+
+                add_all(begin.get_pointer(), end - begin, position);
+            }
+
+            /**
+             * Add many items.
+             *
              * @param items Pointer to the array of items to add.
              * @param length The number of items to add.
              * @param position The index at which to add the items.
@@ -257,7 +277,7 @@ namespace jolt {
                       (m_length - position) * sizeof(value_type));
                     memcpy(m_data + position, items, length * sizeof(value_type));
                 } else {
-                    for(long long i = m_length - 1; i >= position; --i) {
+                    for(long long i = static_cast<long long>(m_length) - 1; i >= position; --i) {
                         pointer const cur = m_data + i;
 
                         new(cur + length) value_type(std::move(*cur));
@@ -266,7 +286,7 @@ namespace jolt {
                     pointer const base_pos = m_data + position;
 
                     for(unsigned int i = 0; i < length; ++i) {
-                        new(base_pos + i) value_type(*(items + i));
+                        jolt::memory::construct(base_pos + i, *(items + i));
                     }
                 }
 
@@ -279,6 +299,17 @@ namespace jolt {
              * @param item The item to add.
              */
             void push(const_reference item) { add(item, m_length); }
+
+            /**
+             * Add many items at the end of the vector.
+             *
+             * @param items Pointer to the array of items to add.
+             * @param length The number of items to add.
+             */
+            template<typename It>
+            void push_all(It const begin, It const end) {
+                add_all(begin, end, m_length);
+            }
 
             /**
              * Remove and return an item from the end of the vector.
@@ -295,7 +326,7 @@ namespace jolt {
              *
              * @return The index of the item in the vector or `-1` if not found.
              */
-            int find(const_reference item) {
+            int find(const_reference item) const {
                 for(int i = 0; i < m_length; ++i) {
                     if(m_data[i] == item) {
                         return i;
@@ -344,11 +375,13 @@ namespace jolt {
                     const_iterator end = cend();
 
                     // for(pointer ptr = m_data; ptr < ptr_end; ++ptr) { ptr->~value_type(); }
-                    for(iterator it = begin(); it < end; ++it) { (*it).~value_type(); }
+                    for(iterator it = begin(); it != end; ++it) { (*it).~value_type(); }
                 }
 
                 m_length = 0;
             }
+
+            bool contains(const_reference value) const { return find(value) >= 0; }
 
             constexpr iterator begin() { return iterator{m_data}; }
             constexpr iterator end() { return iterator{m_data + m_length}; }

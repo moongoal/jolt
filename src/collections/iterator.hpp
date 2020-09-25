@@ -1,6 +1,7 @@
 #ifndef JLT_COLLECTIONS_ITERATOR_HPP
 #define JLT_COLLECTIONS_ITERATOR_HPP
 
+#include <type_traits>
 #include <util.hpp>
 
 namespace jolt {
@@ -33,6 +34,9 @@ namespace jolt {
             using const_reference = const T &;
 
           private:
+            template<typename A, typename B>
+            friend class Iterator;
+
             pointer m_ptr;
 
           public:
@@ -88,23 +92,8 @@ namespace jolt {
             }
 
             template<typename It>
-            constexpr bool operator>(const It other) const {
-                return F::compare(m_ptr, other.get_pointer()) > 0;
-            }
-
-            template<typename It>
-            constexpr bool operator<(const It other) const {
-                return F::compare(m_ptr, other.get_pointer()) < 0;
-            }
-
-            template<typename It>
-            constexpr bool operator>=(const It other) const {
-                return F::compare(m_ptr, other.get_pointer()) >= 0;
-            }
-
-            template<typename It>
-            constexpr bool operator<=(const It other) const {
-                return F::compare(m_ptr, other.get_pointer()) <= 0;
+            constexpr size_t operator-(const It other) const {
+                return m_ptr - other.m_ptr;
             }
 
             constexpr typename F::item_type &operator*() { return F::resolve(m_ptr); }
