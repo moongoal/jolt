@@ -88,11 +88,13 @@ namespace jolt {
          * first.
          *
          * @param ptr A pointer to the beginning of the memory location to free.
+         * @param n The number of items in the array (1 for non-arrays or arrays where the data has
+         * already been destroyed).
          */
         template<typename T>
-        void free(T *const ptr) {
-            if constexpr(!std::is_void<T>::value) {
-                ptr->~T();
+        void free(T *const ptr, size_t const n = 1) {
+            if constexpr(!std::is_void<T>::value && !std::is_trivial<T>::value) {
+                for(size_t i = 0; i < n; ++i) { ptr[i].~T(); }
             }
 
             _free(ptr);

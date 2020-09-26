@@ -47,8 +47,7 @@ namespace jolt {
              */
             void dispose() {
                 if(m_data) {
-                    clear();
-                    jolt::memory::free(m_data);
+                    jolt::memory::free(m_data, m_length);
 
                     m_data = nullptr;
                 }
@@ -146,7 +145,7 @@ namespace jolt {
 
                 m_length = other.m_length;
 
-                if constexpr(std::is_trivially_copyable<value_type>::value) {
+                if constexpr(std::is_trivial<value_type>::value) {
                     memcpy(m_data, other.m_data, sizeof(value_type) * m_length);
                 } else {
                     const_iterator const other_data_end = other.cend();
@@ -357,7 +356,7 @@ namespace jolt {
             void remove_at(unsigned int i) {
                 jltassert(i >= 0 && i < m_length);
 
-                if constexpr(!std::is_trivially_destructible<value_type>::value) {
+                if constexpr(!std::is_trivial<value_type>::value) {
                     m_data[i].~value_type();
                 }
 
@@ -370,11 +369,10 @@ namespace jolt {
              * Remove all the items from the vector.
              */
             void clear() {
-                if constexpr(!std::is_trivially_destructible<value_type>::value) {
+                if constexpr(!std::is_trivial<value_type>::value) {
                     // const_pointer ptr_end = m_data + m_length;
                     const_iterator end = cend();
 
-                    // for(pointer ptr = m_data; ptr < ptr_end; ++ptr) { ptr->~value_type(); }
                     for(iterator it = begin(); it != end; ++it) { (*it).~value_type(); }
                 }
 

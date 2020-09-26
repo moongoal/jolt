@@ -42,30 +42,37 @@ namespace jolt {
           public:
             Iterator(pointer ptr) : m_ptr{ptr} {}
 
-            reference operator++() {
-                pointer ptr = m_ptr;
+            template<typename A, typename B>
+            Iterator(const Iterator<A, B> &other) : m_ptr{other.m_ptr} {}
+
+            template<typename A, typename B>
+            Iterator(Iterator<A, B> &&other) : m_ptr{other.m_ptr} {}
+
+            Iterator &operator++() {
+                Iterator other = *this;
                 next();
 
-                return *ptr;
+                return *this;
             }
 
-            reference operator++(int) {
+            Iterator &operator++(int) {
                 next();
 
-                return *m_ptr;
+                return *this;
             }
 
-            reference operator--() {
-                pointer ptr = m_ptr;
+            Iterator operator--() {
+                Iterator other = *this;
+
                 previous();
 
-                return *ptr;
+                return other;
             }
 
-            reference operator--(int) {
+            Iterator &operator--(int) {
                 previous();
 
-                return *m_ptr;
+                return *this;
             }
 
             constexpr Iterator operator+(size_t n) const { return Iterator{F::forward(m_ptr, n)}; }

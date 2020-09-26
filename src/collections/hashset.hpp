@@ -17,6 +17,9 @@ namespace jolt {
             using reference = T &;
             using const_reference = const T &;
 
+            using iterator = typename Vector<value_type>::const_iterator;
+            using const_iterator = typename Vector<value_type>::const_iterator;
+
             static constexpr unsigned int DEFAULT_CAPACITY = Vector<T>::DEFAULT_CAPACITY;
 
           private:
@@ -151,8 +154,10 @@ namespace jolt {
                 m_values.clear();
             }
 
-            typename Vector<value_type>::const_iterator cbegin() const { return m_values.cbegin(); }
-            typename Vector<value_type>::const_iterator cend() const { return m_values.cend(); }
+            const_iterator begin() const { return m_values.cbegin(); }
+            const_iterator end() const { return m_values.cend(); }
+            const_iterator cbegin() const { return m_values.cbegin(); }
+            const_iterator cend() const { return m_values.cend(); }
         };
     } // namespace collections
 } // namespace jolt
