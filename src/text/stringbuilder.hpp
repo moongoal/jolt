@@ -1,7 +1,6 @@
 #ifndef JLT_TEXT_STRINGBUILDER_HPP
 #define JLT_TEXT_STRINGBUILDER_HPP
 
-#include <utility>
 #include <util.hpp>
 #include "string.hpp"
 #include <collections/vector.hpp>
@@ -54,7 +53,7 @@ namespace jolt {
             /**
              * @see to_string()
              */
-            String operator*() { return to_string(); }
+            operator String() { return to_string(); }
         };
     } // namespace text
 } // namespace jolt
