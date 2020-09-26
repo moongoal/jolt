@@ -9,16 +9,18 @@ namespace jolt {
          * Immutable string class.
          */
         class JLTAPI UTF8String {
+          public:
+            using noclone_t = int;
+
+            constexpr static noclone_t noclone = 0;
+
+          private:
             utf8c *m_str;            //< String data.
             size_t const m_str_len;  //< Length as number of code points.
             size_t const m_str_size; //< Length as number of bytes.
             bool m_own = true;       //< True if the memory of m_str is owned by the object.
 
           protected:
-            using noclone_t = int;
-
-            constexpr static noclone_t noclone = 0;
-
             /**
              * Disposes the allocated resources. Will do nothing if called more than once.
              *
@@ -26,6 +28,7 @@ namespace jolt {
              */
             void dispose();
 
+          public:
             /**
              * Initialize a new instance of this class.
              *
@@ -38,7 +41,6 @@ namespace jolt {
              */
             UTF8String(utf8c const *const s, size_t const s_size, noclone_t noclone);
 
-          public:
             /**
              * Initialize a new instance of this class.
              *
@@ -50,7 +52,7 @@ namespace jolt {
              * literal's storage as its data.
              */
             template<size_t N>
-            UTF8String(const utf8c (&s)[N]) :
+            constexpr UTF8String(const utf8c (&s)[N]) :
               m_str(const_cast<utf8c *>(s)), m_str_len(utf8_len(s, N - 1)), m_str_size(N - 1),
               m_own(false) {}
 

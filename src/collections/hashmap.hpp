@@ -359,8 +359,12 @@ namespace jolt {
             }
 
             iterator begin() { return iterator{m_table, m_capacity}; }
-            const_iterator cbegin() const { return const_iterator{m_table, m_capacity}; }
             iterator end() { return iterator{m_table, m_capacity, true}; }
+
+            const_iterator begin() const { return const_iterator{m_table, m_capacity}; }
+            const_iterator end() const { return const_iterator{m_table, m_capacity, true}; }
+
+            const_iterator cbegin() const { return const_iterator{m_table, m_capacity}; }
             const_iterator cend() const { return const_iterator{m_table, m_capacity, true}; }
         };
     } // namespace collections

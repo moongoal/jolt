@@ -31,12 +31,25 @@ TEST(ctor__char_ptr) {
     for(size_t i = 0; i < 3; ++i) { assert2(s[i] == s_raw[i], "Value not set correctly"); }
 }
 
-TEST(ctor__string_ref) {
+TEST(ctor__string_ref_non_literal) {
+    String s1{u8"blah blah"};
+    String s4 = u8"hey ";
+    String s3 = s4 + s1;
+
+    String s2{s3};
+
+    assert2(s2.get_length() == s3.get_length(), "Length not set correctly");
+    assert2(s2.get_raw() != s1.get_raw(), "String not cloned");
+
+    for(size_t i = 0; i < 3; ++i) { assert2(s2[i] == s3[i], "Value not set correctly"); }
+}
+
+TEST(ctor__string_ref_literal) {
     String s1{u8"blah blah"};
     String s2{s1};
 
     assert2(s2.get_length() == s1.get_length(), "Length not set correctly");
-    assert2(s2.get_raw() != s1.get_raw(), "String not cloned");
+    assert2(s2.get_raw() == s1.get_raw(), "String not cloned");
 
     for(size_t i = 0; i < 3; ++i) { assert2(s2[i] == s1[i], "Value not set correctly"); }
 }

@@ -23,7 +23,7 @@ namespace jolt {
           public:
             explicit ValueSet() = default;
 
-            ValueSet(std::initializer_list<T> lst) : ValueSet(lst.begin(), lst.end()) {}
+            ValueSet(const std::initializer_list<T> &lst) : ValueSet(lst.begin(), lst.end()) {}
 
             template<typename It>
             ValueSet(It const begin, It const end) : ValueSet{} {

@@ -29,7 +29,7 @@ namespace jolt {
           public:
             explicit HashSet() = default;
 
-            HashSet(std::initializer_list<T> lst) : HashSet(lst.begin(), lst.end()) {}
+            HashSet(const std::initializer_list<T> &lst) : HashSet(lst.begin(), lst.end()) {}
 
             template<typename It>
             HashSet(It const begin, It const end) : HashSet{} {

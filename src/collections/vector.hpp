@@ -75,7 +75,7 @@ namespace jolt {
              *
              * @param lst The initializer list of items containing the initial state.
              */
-            Vector(std::initializer_list<value_type> lst) : Vector(lst.begin(), lst.size()) {}
+            Vector(const std::initializer_list<value_type> &lst) : Vector(lst.begin(), lst.size()) {}
 
             /**
              * Create a new empty instance of this class.
@@ -151,9 +151,9 @@ namespace jolt {
                     const_iterator const other_data_end = other.cend();
                     iterator my_data = begin();
 
-                    for(iterator other_data = other.begin(); other_data != other_data_end;
+                    for(const_iterator other_data = other.begin(); other_data != other_data_end;
                         ++other_data) {
-                        jolt::memory::construct(my_data++, *other_data);
+                        jolt::memory::construct((my_data++).get_pointer(), *other_data);
                     }
                 }
 
@@ -254,7 +254,6 @@ namespace jolt {
              */
             template<typename It>
             void add_all(It const begin, It const end, unsigned int const position) {
-
                 add_all(begin.get_pointer(), end - begin, position);
             }
 
@@ -383,6 +382,10 @@ namespace jolt {
 
             constexpr iterator begin() { return iterator{m_data}; }
             constexpr iterator end() { return iterator{m_data + m_length}; }
+
+            constexpr const_iterator begin() const { return const_iterator{m_data}; }
+            constexpr const_iterator end() const { return const_iterator{m_data + m_length}; }
+
             constexpr const_iterator cbegin() const { return const_iterator{m_data}; }
             constexpr const_iterator cend() const { return const_iterator{m_data + m_length}; }
         };

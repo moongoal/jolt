@@ -16,9 +16,13 @@ namespace jolt {
         }
 
         UTF8String::UTF8String(const UTF8String &other) :
-          m_str{allocate<utf8c>(other.m_str_size)}, m_str_len{other.m_str_len},
-          m_str_size{other.m_str_size} {
-            memcpy(m_str, other.m_str, m_str_size);
+          m_str_len{other.m_str_len}, m_str_size{other.m_str_size}, m_own{other.m_own} {
+            if(other.m_own) {
+                m_str = allocate<utf8c>(other.m_str_size);
+                memcpy(m_str, other.m_str, m_str_size);
+            } else {
+                m_str = other.m_str;
+            }
         }
 
         UTF8String::UTF8String(UTF8String &&other) :

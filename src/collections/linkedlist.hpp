@@ -259,6 +259,8 @@ namespace jolt {
 
             constexpr iterator begin() { return iterator{m_first}; }
             constexpr iterator end() { return iterator{nullptr}; }
+            constexpr const_iterator begin() const { return const_iterator{m_first}; }
+            constexpr const_iterator end() const { return const_iterator{nullptr}; }
             constexpr const_iterator cbegin() const { return const_iterator{m_first}; }
             constexpr const_iterator cend() const { return const_iterator{nullptr}; }
         };
