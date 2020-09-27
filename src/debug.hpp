@@ -12,4 +12,6 @@
         } while(false)
 #endif // NDEBUG
 
+#include <debug/console.hpp>
+
 #endif /* JLT_ASSERT_H */

@@ -4,6 +4,9 @@
 
 namespace jolt {
     namespace io {
+        StandardOutputStream standard_output_stream;
+        StandardErrorStream standard_error_stream;
+
         FileStream::FileStream(const text::String &path, FileMode const mode) : m_mode(mode) {
             char fo_mode[4] = {(mode == FileMode::Read ? 'r' : 'w'), 'b', '+', 0};
 

@@ -77,6 +77,9 @@ namespace jolt {
 
             virtual void close() {}
         };
+
+        extern JLTAPI StandardOutputStream standard_output_stream;
+        extern JLTAPI StandardErrorStream standard_error_stream;
     } // namespace io
 } // namespace jolt
 

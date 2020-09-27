@@ -12,8 +12,11 @@ namespace jolt {
          * will be executed by the game engine and to output text to any output stream.
          */
         class JLTAPI Console {
-            io::InputStream *const m_source; //< The console input stream.
-            io::OutputStream *const m_sink;  //< The console output stream.
+            io::InputStream *m_source; //< The console input stream.
+            io::OutputStream *m_sink;  //< The console output stream.
+
+            void print_with_prefix(
+              const text::String &prefix, const text::String &message, bool newline);
 
           public:
             /**
@@ -29,6 +32,7 @@ namespace jolt {
 
             Console(const Console &other) = delete;
             Console &operator=(const Console &other) = delete;
+            Console &operator=(Console &&other) = default;
 
             /**
              * Interpret a command and execute it.
@@ -40,10 +44,22 @@ namespace jolt {
             bool interpret_command(const text::String &cmdline);
 
             void echo(const text::String &message, bool newline = true);
+            void info(const text::String &message, bool newline = true);
             void warn(const text::String &message, bool newline = true);
             void err(const text::String &message, bool newline = true);
+
+            void make_default();
+
+            io::InputStream *get_input_stream() { return m_source; }
+            io::OutputStream *get_output_straem() { return m_sink; }
+
+            void set_input_stream(io::InputStream *const source) { m_source = source; }
+            void set_output_stream(io::OutputStream *const sink) { m_sink = sink; }
         };
+
     } // namespace debug
+
+    extern JLTAPI debug::Console console; //< Default application-wide console
 } // namespace jolt
 
 #endif /* JLT_DEBUG_CONSOLE_HPP */

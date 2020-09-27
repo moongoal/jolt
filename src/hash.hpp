@@ -11,6 +11,13 @@ namespace jolt {
         struct XXHash {
             static JLTAPI hash_t hash(const void *const data, size_t const size);
         };
+
+        template<typename T>
+        struct Identity {
+            static JLTAPI hash_t hash(const T *const data, size_t const size) {
+                return (hash_t)(*data);
+            }
+        };
     } // namespace hash
 } // namespace jolt
 

@@ -4,62 +4,48 @@
 using namespace jolt::text;
 
 namespace jolt {
+    debug::Console console;
+    
     namespace debug {
-        void Console::echo(const text::String &message, bool newline) {
+
+        void Console::print_with_prefix(
+          const text::String &prefix, const text::String &message, bool newline) {
             if(!m_sink) {
                 return;
             }
 
-            StringBuilder sb;
+            StringBuilder sb{prefix};
+
+            if(prefix != EmptyString) {
+                sb.add(": ");
+            }
 
             sb.add(message);
 
             if(newline) {
-                sb.add(u8"\n");
+                sb.add("\n");
             }
 
             String s = sb.to_string();
 
             m_sink->write(
               reinterpret_cast<const uint8_t *>(s.get_raw()), s.get_length() * sizeof(utf8c));
+        }
+
+        void Console::echo(const text::String &message, bool newline) {
+            print_with_prefix(EmptyString, message, newline);
+        }
+
+        void Console::info(const text::String &message, bool newline) {
+            print_with_prefix("Info", message, newline);
         }
 
         void Console::warn(const text::String &message, bool newline) {
-            if(!m_sink) {
-                return;
-            }
-
-            StringBuilder sb{u8"Warning: "};
-
-            sb.add(message);
-
-            if(newline) {
-                sb.add(u8"\n");
-            }
-
-            String s = sb.to_string();
-
-            m_sink->write(
-              reinterpret_cast<const uint8_t *>(s.get_raw()), s.get_length() * sizeof(utf8c));
+            print_with_prefix("Warning", message, newline);
         }
 
         void Console::err(const text::String &message, bool newline) {
-            if(!m_sink) {
-                return;
-            }
-
-            StringBuilder sb{u8"Error: "};
-
-            sb.add(message);
-
-            if(newline) {
-                sb.add(u8"\n");
-            }
-
-            String s = sb.to_string();
-
-            m_sink->write(
-              reinterpret_cast<const uint8_t *>(s.get_raw()), s.get_length() * sizeof(utf8c));
+            print_with_prefix("Error", message, newline);
         }
 
         bool Console::interpret_command(const text::String &cmdline) { return true; }

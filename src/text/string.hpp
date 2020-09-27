@@ -1,6 +1,7 @@
 #ifndef JLT_TEXT_STRING_HPP
 #define JLT_TEXT_STRING_HPP
 
+#include <utility>
 #include "unicode.hpp"
 
 namespace jolt {
@@ -68,7 +69,7 @@ namespace jolt {
               m_str(const_cast<utf8c *>(s)), m_str_len(utf8_len(s, N - 1)), m_str_size(N - 1),
               m_own(false) {}
 
-              /**
+            /**
              * Initialize a new instance of this class.
              *
              * @tparam N The length of the string literal.
@@ -80,8 +81,8 @@ namespace jolt {
              */
             template<size_t N>
             constexpr UTF8String(const char (&s)[N]) :
-              m_str{const_cast<utf8c *>(reinterpret_cast<utf8c const *>(s))}, m_str_len{N - 1}, m_str_size{N - 1},
-              m_own{false} {}
+              m_str{const_cast<utf8c *>(reinterpret_cast<utf8c const *>(s))}, m_str_len{N - 1},
+              m_str_size{N - 1}, m_own{false} {}
 
             /**
              * Initialize a new instance of this class.
@@ -165,6 +166,18 @@ namespace jolt {
             operator const utf8c *() const { return get_raw(); }
             const utf8c &operator[](size_t const i) const { return m_str[i]; }
         };
+
+        /**
+         * Concatenate two strings.
+         */
+        template<typename C, size_t N>
+        UTF8String operator+(const C (&left)[N], const UTF8String &right) {
+            static_assert(
+              std::is_same<C, char>::value || std::is_same<C, utf8c>::value,
+              "Invalid string literal");
+
+            return UTF8String{left} + right;
+        }
 
         using String = UTF8String;
 
