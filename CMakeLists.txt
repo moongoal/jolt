@@ -55,6 +55,7 @@ target_include_directories(libjolt PUBLIC ${XXHASH_INCLUDE_DIR})
 target_link_libraries(libjolt PRIVATE ${XXHASH_LIBRARY})
 
 add_subdirectory(tests/)
+add_subdirectory(samples/)
 
 add_custom_command(
     TARGET libjolt POST_BUILD

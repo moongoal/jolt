@@ -7,11 +7,22 @@ using namespace jolt::memory;
 
 namespace jolt {
     namespace text {
+        String EmptyString{u8""};
+
         UTF8String::UTF8String(utf8c const *const s, size_t const s_size, noclone_t noclone) :
           m_str{const_cast<utf8c *>(s)}, m_str_len{utf8_len(s, s_size)}, m_str_size{s_size} {}
 
         UTF8String::UTF8String(utf8c const *const s, size_t const s_size) :
           m_str{allocate<utf8c>(s_size)}, m_str_len{utf8_len(s, s_size)}, m_str_size{s_size} {
+            memcpy(m_str, s, s_size);
+        }
+
+        UTF8String::UTF8String(char const *const s, size_t const s_size, noclone_t noclone) :
+          m_str{const_cast<utf8c *>(reinterpret_cast<utf8c const *>(s))}, m_str_len{s_size},
+          m_str_size{s_size} {}
+
+        UTF8String::UTF8String(char const *const s, size_t const s_size) :
+          m_str{allocate<utf8c>(s_size)}, m_str_len{s_size}, m_str_size{s_size} {
             memcpy(m_str, s, s_size);
         }
 

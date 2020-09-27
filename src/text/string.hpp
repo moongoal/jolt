@@ -44,6 +44,18 @@ namespace jolt {
             /**
              * Initialize a new instance of this class.
              *
+             * @param s The string.
+             * @param s_size The size of the string as the number of `utf8c` elements.
+             * @param noclone The constant noclone.
+             *
+             * @remarks This constructor will not create a copy of the string but will acquire
+             * ownership of the input `s`.
+             */
+            UTF8String(char const *const s, size_t const s_size, noclone_t noclone);
+
+            /**
+             * Initialize a new instance of this class.
+             *
              * @tparam N The length of the string literal.
              *
              * @param s The string literal.
@@ -56,6 +68,21 @@ namespace jolt {
               m_str(const_cast<utf8c *>(s)), m_str_len(utf8_len(s, N - 1)), m_str_size(N - 1),
               m_own(false) {}
 
+              /**
+             * Initialize a new instance of this class.
+             *
+             * @tparam N The length of the string literal.
+             *
+             * @param s The string literal.
+             *
+             * @remarks This constructor will not create a copy of the string. It will use the
+             * literal's storage as its data.
+             */
+            template<size_t N>
+            constexpr UTF8String(const char (&s)[N]) :
+              m_str{const_cast<utf8c *>(reinterpret_cast<utf8c const *>(s))}, m_str_len{N - 1}, m_str_size{N - 1},
+              m_own{false} {}
+
             /**
              * Initialize a new instance of this class.
              *
@@ -65,6 +92,16 @@ namespace jolt {
              * @remarks This constructor will create a copy of the string.
              */
             UTF8String(utf8c const *const s, size_t const s_size);
+
+            /**
+             * Initialize a new instance of this class.
+             *
+             * @param s The string.
+             * @param s_size The size of the string as the number of `utf8c` elements.
+             *
+             * @remarks This constructor will create a copy of the string.
+             */
+            UTF8String(char const *const s, size_t const s_size);
 
             /**
              * Initialize a new instance of this class.
@@ -130,6 +167,8 @@ namespace jolt {
         };
 
         using String = UTF8String;
+
+        extern JLTAPI String EmptyString;
     } // namespace text
 } // namespace jolt
 
