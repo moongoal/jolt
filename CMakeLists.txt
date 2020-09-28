@@ -18,12 +18,17 @@ project(
 include(CTest)
 include(features.cmake)
 
-find_path(PATH_SRC version.hpp.in REQUIRED DOC "Main source directory" HINTS src)
-configure_file(${PATH_SRC}/version.hpp.in ${PATH_SRC}/version.hpp NEWLINE_STYLE UNIX)
-configure_file(${PATH_SRC}/features.hpp.in ${PATH_SRC}/features.hpp NEWLINE_STYLE UNIX)
+find_path(PATH_SRC_JOLT version.hpp.in REQUIRED DOC "Main source directory" HINTS src/jolt)
+get_filename_component(PATH_SRC ${PATH_SRC_JOLT} DIRECTORY)
 
-file(GLOB_RECURSE FILE_CPP_HEADERS ${PATH_SRC}/*.hpp)
-file(GLOB_RECURSE FILE_CPP_SOURCES ${PATH_SRC}/*.cpp)
+set(PATH_TESTS ${PATH_SRC}/tests)
+set(PATH_SAMPLES ${PATH_SRC}/samples)
+
+configure_file(${PATH_SRC_JOLT}/version.hpp.in ${PATH_SRC_JOLT}/version.hpp NEWLINE_STYLE UNIX)
+configure_file(${PATH_SRC_JOLT}/features.hpp.in ${PATH_SRC_JOLT}/features.hpp NEWLINE_STYLE UNIX)
+
+file(GLOB_RECURSE FILE_CPP_HEADERS ${PATH_SRC_JOLT}/*.hpp)
+file(GLOB_RECURSE FILE_CPP_SOURCES ${PATH_SRC_JOLT}/*.cpp)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS on)
 set(CMAKE_BUILD_TYPE Debug)
@@ -50,12 +55,13 @@ target_include_directories(libjolt PUBLIC ${PATH_SRC})
 
 # xxHash
 find_path(XXHASH_INCLUDE_DIR xxhash.h REQUIRED)
+find_library(XXHASH_LIBRARY xxhash REQUIRED)
 
 target_include_directories(libjolt PUBLIC ${XXHASH_INCLUDE_DIR})
 target_link_libraries(libjolt PRIVATE ${XXHASH_LIBRARY})
 
-add_subdirectory(tests/)
-add_subdirectory(samples/)
+add_subdirectory(${PATH_TESTS})
+add_subdirectory(${PATH_SAMPLES})
 
 add_custom_command(
     TARGET libjolt POST_BUILD
@@ -69,7 +75,7 @@ add_custom_command(
 if(NOT ${JLT_WITH_MEM_CHECKS})
     find_file(
         SRC_MEM_CHECKS checks.cpp
-        PATHS ${PATH_SRC}/memory
+        PATHS ${PATH_SRC_JOLT}/memory
         NO_DEFAULT_PATH
         REQUIRED
     )

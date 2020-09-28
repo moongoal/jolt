@@ -2,6 +2,6 @@
 build/
 
 compile_commands.json
-src/version.hpp
-src/features.hpp
+src/jolt/version.hpp
+src/jolt/features.hpp
 assets/
