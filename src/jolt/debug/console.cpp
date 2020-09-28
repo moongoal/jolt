@@ -5,9 +5,8 @@ using namespace jolt::text;
 
 namespace jolt {
     debug::Console console;
-    
-    namespace debug {
 
+    namespace debug {
         void Console::print_with_prefix(
           const text::String &prefix, const text::String &message, bool newline) {
             if(!m_sink) {
@@ -37,15 +36,27 @@ namespace jolt {
         }
 
         void Console::info(const text::String &message, bool newline) {
-            print_with_prefix("Info", message, newline);
+            if(m_loglevel >= LogLevel::Info) {
+                print_with_prefix("Info", message, newline);
+            }
         }
 
         void Console::warn(const text::String &message, bool newline) {
-            print_with_prefix("Warning", message, newline);
+            if(m_loglevel >= LogLevel::Warning) {
+                print_with_prefix("Warning", message, newline);
+            }
         }
 
         void Console::err(const text::String &message, bool newline) {
-            print_with_prefix("Error", message, newline);
+            if(m_loglevel >= LogLevel::Error) {
+                print_with_prefix("Error", message, newline);
+            }
+        }
+
+        void Console::debug(const text::String &message, bool newline) {
+            if(m_loglevel >= LogLevel::Debug) {
+                print_with_prefix("Debug", message, newline);
+            }
         }
 
         bool Console::interpret_command(const text::String &cmdline) { return true; }

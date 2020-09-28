@@ -2,5 +2,6 @@
 #define JLT_FEATURES_HPP
 
 #cmakedefine JLT_WITH_MEM_CHECKS
+#cmakedefine JLT_WITH_DEBUG_LOGGING
 
 #endif // JLT_FEATURES_HPP
