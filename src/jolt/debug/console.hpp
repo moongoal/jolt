@@ -37,11 +37,11 @@ namespace jolt {
               m_sink{sink},
 #ifdef JLT_WITH_DEBUG_LOGGING
               m_loglevel {
-                loglevel
+                LogLevel::Debug
             }
 #else  // JLT_WITH_DEBUG_LOGGING
               m_loglevel {
-                LogLevel::Debug
+                loglevel
             }
 #endif // JLT_WITH_DEBUG_LOGGING
             {}
@@ -73,11 +73,11 @@ namespace jolt {
 
             void set_input_stream(io::InputStream *const source) { m_source = source; }
             void set_output_stream(io::OutputStream *const sink) { m_sink = sink; }
-            
+
             void set_log_level(LogLevel loglevel) {
-#ifdef JLT_WITH_DEBUG_LOGGING
+#ifndef JLT_WITH_DEBUG_LOGGING
                 m_loglevel = loglevel;
-#endif // JLT_WITH_DEBUG_LOGGING
+#endif // !JLT_WITH_DEBUG_LOGGING
             }
         };
 

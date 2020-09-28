@@ -30,7 +30,7 @@
                 "isDefault": true
             },
             "options": {
-                "cwd": "${workspaceFolder}/build/tests"
+                "cwd": "${workspaceFolder}/build/src/tests"
             }
         }
     ]

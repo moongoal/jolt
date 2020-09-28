@@ -6,6 +6,7 @@
 #include <jolt/memory/allocator.hpp>
 #include <jolt/threading/thread.hpp>
 #include <jolt/ui/window.hpp>
+#include <jolt/graphics/vulkan.hpp>
 
 namespace jolt {
     void JLTAPI initialize();

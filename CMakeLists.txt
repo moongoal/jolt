@@ -57,8 +57,14 @@ target_include_directories(libjolt PUBLIC ${PATH_SRC})
 find_path(XXHASH_INCLUDE_DIR xxhash.h REQUIRED)
 find_library(XXHASH_LIBRARY xxhash REQUIRED)
 
+# Vulkan
+include(FindVulkan)
+find_package(Vulkan REQUIRED)
+#find_path(VULKAN_INCLUDE_DIR vulkan.h REQUIRED)
+#find_library(VULKAN_LIBRARY vulkan REQUIRED)
+
 target_include_directories(libjolt PUBLIC ${XXHASH_INCLUDE_DIR})
-target_link_libraries(libjolt PRIVATE ${XXHASH_LIBRARY})
+target_link_libraries(libjolt PRIVATE ${XXHASH_LIBRARY} Vulkan::Vulkan)
 
 add_subdirectory(${PATH_TESTS})
 add_subdirectory(${PATH_SAMPLES})
@@ -69,7 +75,16 @@ add_custom_command(
         ${CMAKE_COMMAND}
         -E copy_if_different
         $<TARGET_FILE:libjolt>
-        $<TARGET_FILE_DIR:libjolt>/tests
+        $<TARGET_FILE_DIR:libjolt>/src/tests
+)
+
+add_custom_command(
+    TARGET libjolt POST_BUILD
+    COMMAND
+        ${CMAKE_COMMAND}
+        -E copy_if_different
+        $<TARGET_FILE:libjolt>
+        $<TARGET_FILE_DIR:libjolt>/src/samples
 )
 
 if(NOT ${JLT_WITH_MEM_CHECKS})

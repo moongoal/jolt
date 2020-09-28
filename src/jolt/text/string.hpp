@@ -66,8 +66,8 @@ namespace jolt {
              */
             template<size_t N>
             constexpr UTF8String(const utf8c (&s)[N]) :
-              m_str(const_cast<utf8c *>(s)), m_str_len(utf8_len(s, N - 1)), m_str_size(N - 1),
-              m_own(false) {}
+              m_str{const_cast<utf8c *>(s)}, m_str_len{utf8_len(s, N - 1)},
+              m_str_size{N - 1}, m_own{false} {}
 
             /**
              * Initialize a new instance of this class.
@@ -168,6 +168,30 @@ namespace jolt {
         };
 
         /**
+         * Build a string object from its raw NUL-terminated representation.
+         *
+         * @tparam C The character type.
+         *
+         * @param raw The raw, NUL-terminated string.
+         */
+        template<typename C>
+        static UTF8String s(const C *raw) {
+            static_assert(
+              std::is_same<C, char>::value || std::is_same<C, utf8c>::value,
+              "Invalid string literal");
+
+            size_t len;
+
+            if constexpr(std::is_same<C, char>::value) {
+                len = strlen(raw);
+            } else { // utf8c
+                len = utf8_len(raw);
+            }
+
+            return UTF8String{raw, len};
+        }
+
+        /**
          * Concatenate two strings.
          */
         template<typename C, size_t N>
@@ -177,6 +201,18 @@ namespace jolt {
               "Invalid string literal");
 
             return UTF8String{left} + right;
+        }
+
+        /**
+         * Concatenate two strings.
+         */
+        template<typename C, size_t N>
+        UTF8String operator+(const UTF8String &left, const C (&right)[N]) {
+            static_assert(
+              std::is_same<C, char>::value || std::is_same<C, utf8c>::value,
+              "Invalid string literal");
+
+            return left + UTF8String{right};
         }
 
         using String = UTF8String;

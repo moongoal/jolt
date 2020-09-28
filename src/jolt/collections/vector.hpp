@@ -31,9 +31,6 @@ namespace jolt {
             using iterator = base_iterator<T>;
             using const_iterator = base_iterator<const T>;
 
-            static_assert(std::is_move_constructible<value_type>::value);
-            static_assert(std::is_copy_constructible<value_type>::value);
-
             static constexpr noclone_t noclone = 0;
 
           private:
@@ -75,7 +72,8 @@ namespace jolt {
              *
              * @param lst The initializer list of items containing the initial state.
              */
-            Vector(const std::initializer_list<value_type> &lst) : Vector(lst.begin(), lst.size()) {}
+            Vector(const std::initializer_list<value_type> &lst) :
+              Vector(lst.begin(), lst.size()) {}
 
             /**
              * Create a new empty instance of this class.
@@ -128,6 +126,21 @@ namespace jolt {
              */
             unsigned int get_length() const { return m_length; }
 
+            void set_length(unsigned int length) {
+                ensure_capacity(length);
+
+                if constexpr(!std::is_trivial<value_type>::value) {
+                    if(length < m_length) {
+                        const_iterator end = cend();
+
+                        for(iterator it = begin() + m_length; it != end; ++it) {
+                            (*it).~value_type();
+                        }
+                    }
+                }
+
+                m_length = length;
+            }
             /**
              * Return the capacity of the vector.
              */
@@ -369,7 +382,6 @@ namespace jolt {
              */
             void clear() {
                 if constexpr(!std::is_trivial<value_type>::value) {
-                    // const_pointer ptr_end = m_data + m_length;
                     const_iterator end = cend();
 
                     for(iterator it = begin(); it != end; ++it) { (*it).~value_type(); }
