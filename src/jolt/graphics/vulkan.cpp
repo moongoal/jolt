@@ -42,6 +42,7 @@ static const float g_q_priorities[2] = {1.0f /* graphics */, 1.0f, /* transfer *
 static VkSurfaceKHR g_win_surface;
 static VkSurfaceCapabilitiesKHR g_win_surface_caps;
 static VkImageFormatProperties g_phy_dev_image_fmt_props;
+static VkFormat g_win_surface_fmt;
 static bool g_use_window;
 
 static VkSwapchainKHR g_swapchain;
@@ -52,6 +53,8 @@ static VkImage g_ds_image;
 static VkImageView g_ds_image_view;
 static VkDeviceMemory g_ds_image_memory;
 static VkFormat g_ds_image_fmt;
+
+static VkRenderPass g_render_pass;
 
 using namespace jolt::text;
 
@@ -413,9 +416,14 @@ namespace jolt {
 
             VkResult result;
 
+            VkPhysicalDeviceVulkan12Features features12 = {};
+
+            features12.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES;
+            features12.separateDepthStencilLayouts = VK_TRUE;
+
             VkPhysicalDeviceFeatures2 features{
               VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2, // sType
-              nullptr,                                      // pNext
+              &features12,                                  // pNext
               {0}};
 
             // TODO: These features must be checked for in the physical device selection algorithm
@@ -561,7 +569,9 @@ namespace jolt {
                 chosen_present_mode = VK_PRESENT_MODE_MAILBOX_KHR;
             } else if(present_mode_fifo_supported) {
                 chosen_present_mode = VK_PRESENT_MODE_FIFO_KHR;
-            } // TODO: Check FIFO relaxed mode
+            }
+
+            g_win_surface_fmt = fmts[0].format;
 
             VkSwapchainCreateInfoKHR cinfo{
               VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR, // sType
@@ -573,7 +583,7 @@ namespace jolt {
               fmts[0].colorSpace,                          // imageColorSpace
               g_win_surface_caps.currentExtent,            // imageExtent
               1,                                           // imageArrayLayers
-              VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT, // imageUsage
+              VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, // imageUsage
               VK_SHARING_MODE_EXCLUSIVE,           // imageSharingMode
               1,                                   // queueFamilyIndexCount
               &g_q_graphics_fam_index,             // pQueueFamilyIndices
@@ -658,7 +668,6 @@ namespace jolt {
             for(size_t i = 0; i < allowed_fmts_len; ++i) {
                 VkFormatProperties props;
 
-                // TODO: Apply this same logic for the other image formats
                 vkGetPhysicalDeviceFormatProperties(g_phy_device, allowed_fmts[i], &props);
 
                 if(props.optimalTilingFeatures & VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT) {
@@ -779,12 +788,94 @@ namespace jolt {
             vkDestroyImage(g_device, g_ds_image, g_allocator);
         }
 
+        static void initialize_render_pass() {
+            console.debug("Creating render pass");
+
+            VkResult result;
+
+            VkAttachmentDescription attachments[] = {
+              {
+                // Color
+                0,                                // flags
+                g_win_surface_fmt,                // format
+                VK_SAMPLE_COUNT_1_BIT,            // samples
+                VK_ATTACHMENT_LOAD_OP_CLEAR,      // loadOp
+                VK_ATTACHMENT_STORE_OP_DONT_CARE, // storeOp
+                VK_ATTACHMENT_LOAD_OP_DONT_CARE,  // stencilLoadOp
+                VK_ATTACHMENT_STORE_OP_DONT_CARE, // stencilStoreOp
+                VK_IMAGE_LAYOUT_UNDEFINED,        // initialLayout
+                VK_IMAGE_LAYOUT_PRESENT_SRC_KHR   // finalLayout
+              },
+              {
+                // Depth
+                0,                                       // flags
+                g_ds_image_fmt,                          // format
+                VK_SAMPLE_COUNT_1_BIT,                   // samples
+                VK_ATTACHMENT_LOAD_OP_CLEAR,             // loadOp
+                VK_ATTACHMENT_STORE_OP_DONT_CARE,        // storeOp
+                VK_ATTACHMENT_LOAD_OP_DONT_CARE,         // stencilLoadOp
+                VK_ATTACHMENT_STORE_OP_DONT_CARE,        // stencilStoreOp
+                VK_IMAGE_LAYOUT_UNDEFINED,               // initialLayout
+                VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL // finalLayout
+              }};
+            constexpr const uint32_t n_attachments =
+              sizeof(attachments) / sizeof(VkAttachmentDescription);
+
+            VkAttachmentReference sp_color_att_ref = {
+              0,                                       // attachment
+              VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL // layout
+            };
+
+            VkAttachmentReference sp_ds_att_ref = {
+              1,                                       // attachment
+              VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL // layout
+            };
+
+            VkSubpassDescription subpasses[] = {{
+              0,                               // flags
+              VK_PIPELINE_BIND_POINT_GRAPHICS, // pipelineBindPoint
+              0,                               // inputAttachmentCount
+              nullptr,                         // pInputAttachments
+              1,                               // colorAttachmentCount
+              &sp_color_att_ref,               // pColorAttachments
+              nullptr,                         // pResolveAttachments
+              &sp_ds_att_ref,                  // pDepthStencilAttachment
+              0,                               // preserveAttachmentCount
+              nullptr,                         // pPreserveAttachments
+            }};
+            constexpr const uint32_t n_subpasses = sizeof(subpasses) / sizeof(VkSubpassDescription);
+
+            VkRenderPassCreateInfo cinfo{
+              VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO, // sType
+              nullptr,                                   // pNext
+              0,                                         // flags
+              n_attachments,                             // attachmentCount
+              attachments,                               // pAttachments
+              n_subpasses,                               // subpassCount
+              subpasses,                                 // pSubpasses
+              0,                                         // dependencyCount
+              nullptr                                    // pDependencies
+            };
+
+            result = vkCreateRenderPass(g_device, &cinfo, g_allocator, &g_render_pass);
+            jltassert2(result == VK_SUCCESS, "Unable to create render pass");
+        }
+
+        static void shutdown_render_pass() {
+            console.debug("Destroying render pass");
+
+            vkDestroyRenderPass(g_device, g_render_pass, g_allocator);
+        }
+
         /**
          * To be called at initialization time or when the logical device is reported as lost.
          */
         static void reset_device() {
             initialize_device();
             initialize_debug_logger();
+            initialize_swapchain();
+            initialize_depth_stencil_buffer();
+            initialize_render_pass();
         }
 
         void initialize(GraphicsEngineInitializationParams &params) {
@@ -800,11 +891,10 @@ namespace jolt {
 
             populate_device_image_metadata();
             reset_device();
-            initialize_swapchain();
-            initialize_depth_stencil_buffer();
         }
 
         void shutdown() {
+            shutdown_render_pass();
             shutdown_depth_stencil_buffer();
             shutdown_swapchain();
             shutdown_debug_logger();
