@@ -163,11 +163,7 @@ namespace jolt {
               m_table{jolt::memory::allocate<table_entry>(capacity)}, m_capacity{capacity} {
                 jltassert(capacity);
 
-                memory::push_force_flags(m_table);
-
                 for(size_t i = 0; i < capacity; ++i) { memory::construct(&m_table[i]); }
-
-                memory::pop_force_flags();
             }
 
             HashMap(const HashMap &other) :

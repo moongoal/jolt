@@ -34,9 +34,10 @@ namespace jolt {
             static constexpr noclone_t noclone = 0;
 
           private:
-            pointer m_data;          //< Pointer to the data.
-            unsigned int m_length;   //< Length of the data.
-            unsigned int m_capacity; //< Capacity of the array.
+            pointer m_data;                //< Pointer to the data.
+            unsigned int m_length;         //< Length of the data.
+            unsigned int m_capacity;       //< Capacity of the array.
+            memory::flags_t m_alloc_flags; //< Allocation flags.
 
           protected:
             /**
@@ -44,7 +45,7 @@ namespace jolt {
              */
             void dispose() {
                 if(m_data) {
-                    jolt::memory::free(m_data, m_length);
+                    memory::free(m_data, m_length);
 
                     m_data = nullptr;
                 }
@@ -63,7 +64,8 @@ namespace jolt {
              * @param noclone The `noclone` constant.
              */
             Vector(pointer data, unsigned int const length, noclone_t) :
-              m_data{data}, m_length{length}, m_capacity{length} {
+              m_data{data}, m_length{length}, m_capacity{length}, m_alloc_flags{
+                                                                    memory::get_alloc_flags(data)} {
                 jltassert(data);
             }
 
@@ -82,8 +84,8 @@ namespace jolt {
              * its internal array.
              */
             explicit Vector(unsigned int const initial_capacity = DEFAULT_CAPACITY) :
-              m_data{jolt::memory::allocate<value_type>(initial_capacity)}, m_length{0},
-              m_capacity{initial_capacity} {}
+              m_data{memory::allocate<value_type>(initial_capacity)}, m_length{0},
+              m_capacity{initial_capacity}, m_alloc_flags{memory::get_current_force_flags()} {}
 
             /**
              * Create a new instance of this class.
@@ -92,23 +94,24 @@ namespace jolt {
              * @param length Length (as number of items) of `data`.
              */
             Vector(const_pointer const data, unsigned int const length) :
-              m_data{jolt::memory::allocate<value_type>(max(length, DEFAULT_CAPACITY))},
-              m_length{length}, m_capacity{max(length, DEFAULT_CAPACITY)} {
+              m_data{memory::allocate<value_type>(max(length, DEFAULT_CAPACITY))}, m_length{length},
+              m_capacity{max(length, DEFAULT_CAPACITY)}, m_alloc_flags{
+                                                           memory::get_current_force_flags()} {
                 jltassert(data);
 
                 if constexpr(std::is_trivial<value_type>::value) {
                     memcpy(m_data, data, length * sizeof(value_type));
                 } else {
                     for(unsigned int i = 0; i < length; ++i) {
-                        jolt::memory::construct(m_data + i, *(data + i));
+                        memory::construct(m_data + i, *(data + i));
                     }
                 }
             }
 
             template<typename It>
             Vector(It const begin, It const end) :
-              m_data{jolt::memory::allocate<value_type>(end - begin)}, m_length{end - begin},
-              m_capacity{end - begin} {
+              m_data{memory::allocate<value_type>(end - begin)}, m_length{end - begin},
+              m_capacity{end - begin}, m_alloc_flags{memory::get_current_force_flags()} {
                 add_all(begin, end);
             }
 
@@ -147,16 +150,19 @@ namespace jolt {
             unsigned int get_capacity() const { return m_capacity; }
 
             Vector<value_type> &operator=(const Vector<value_type> &other) {
+                memory::push_force_flags(m_alloc_flags);
+
                 if(m_capacity >= other.m_capacity) {
                     clear();
                 } else {
                     dispose();
 
-                    m_data = jolt::memory::allocate<value_type>(other.m_capacity);
+                    m_data = memory::allocate<value_type>(other.m_capacity);
                     m_capacity = other.m_capacity;
                 }
 
                 m_length = other.m_length;
+                m_alloc_flags = other.m_alloc_flags;
 
                 if constexpr(std::is_trivial<value_type>::value) {
                     memcpy(m_data, other.m_data, sizeof(value_type) * m_length);
@@ -166,10 +172,11 @@ namespace jolt {
 
                     for(const_iterator other_data = other.begin(); other_data != other_data_end;
                         ++other_data) {
-                        jolt::memory::construct((my_data++).get_pointer(), *other_data);
+                        memory::construct((my_data++).get_pointer(), *other_data);
                     }
                 }
 
+                memory::pop_force_flags();
                 return *this;
             }
 
@@ -179,6 +186,7 @@ namespace jolt {
                 m_data = other.m_data;
                 m_length = other.m_length;
                 m_capacity = other.m_capacity;
+                m_alloc_flags = other.m_alloc_flags;
 
                 other.m_data = nullptr;
 
@@ -192,8 +200,10 @@ namespace jolt {
             }
 
             Vector<value_type> operator+(const Vector<value_type> &other) const {
+                memory::push_force_flags(m_alloc_flags);
+
                 unsigned int const new_length = m_length + other.m_length;
-                pointer const new_vec = jolt::memory::allocate<value_type>(new_length);
+                pointer const new_vec = memory::allocate<value_type>(new_length);
 
                 if constexpr(std::is_trivial<value_type>::value) {
                     memcpy(new_vec, m_data, m_length * sizeof(value_type));
@@ -203,11 +213,16 @@ namespace jolt {
                     const_iterator const this_end = cend();
                     const_iterator const other_end = other.cend();
 
-                    for(iterator p = begin(); p != this_end; ++p) { new(nvp++) value_type(*p); }
+                    for(iterator p = begin(); p != this_end; ++p) {
+                        memory::construct(nvp++, value_type(*p));
+                    }
+
                     for(iterator p = other.begin(); p != other_end; ++p) {
-                        new(nvp++) value_type(*p);
+                        memory::construct(nvp++, value_type(*p));
                     }
                 }
+
+                memory::pop_force_flags();
 
                 return Vector<value_type>{new_vec, new_length, noclone};
             }
@@ -231,7 +246,7 @@ namespace jolt {
                 if(new_capacity > m_capacity) {
                     m_capacity = new_capacity;
 
-                    jolt::memory::reallocate(m_data, m_capacity);
+                    memory::reallocate(m_data, m_capacity);
                 }
             }
 
@@ -291,13 +306,13 @@ namespace jolt {
                     for(long long i = static_cast<long long>(m_length) - 1; i >= position; --i) {
                         pointer const cur = m_data + i;
 
-                        new(cur + length) value_type(std::move(*cur));
+                        memory::construct(cur + length, value_type(std::move(*cur)));
                     }
 
                     pointer const base_pos = m_data + position;
 
                     for(unsigned int i = 0; i < length; ++i) {
-                        jolt::memory::construct(base_pos + i, *(items + i));
+                        memory::construct(base_pos + i, *(items + i));
                     }
                 }
 

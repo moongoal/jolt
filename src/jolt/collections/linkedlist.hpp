@@ -67,15 +67,18 @@ namespace jolt {
             using const_iterator = base_iterator<const Node>;
 
           private:
-            Node *m_first;   //< First node in the list.
-            Node *m_last;    //< Last node in the list.
-            size_t m_length; //< List length.
+            Node *m_first;                 //< First node in the list.
+            Node *m_last;                  //< Last node in the list.
+            size_t m_length;               //< List length.
+            memory::flags_t m_alloc_flags; //< Allocator flags.
 
           public:
             /**
              * Create a new empty list.
              */
-            LinkedList() : m_first{nullptr}, m_last{nullptr}, m_length{0} {}
+            LinkedList() :
+              m_first{nullptr}, m_last{nullptr}, m_length{0},
+              m_alloc_flags{memory::get_current_force_flags()} {}
 
             /**
              * Create a new instance of this class.
@@ -111,7 +114,8 @@ namespace jolt {
              * @remarks After this constructor returns, the other list will be empty.
              */
             LinkedList(LinkedList &&other) :
-              m_first{other.m_first}, m_last{other.m_last}, m_length{other.m_length} {
+              m_first{other.m_first}, m_last{other.m_last}, m_length{other.m_length},
+              m_alloc_flags{other.m_alloc_flags} {
                 other.m_first = other.m_last = nullptr;
                 other.m_length = 0;
             }
@@ -133,8 +137,10 @@ namespace jolt {
              * at the beginning of the list.
              */
             Node *add_after(const_reference item, Node *const where) {
-                Node *const new_node =
-                  new(jolt::memory::allocate<Node>()) Node(item, where ? where->m_next : nullptr);
+                memory::push_force_flags(m_alloc_flags);
+
+                Node *const new_node = memory::construct<Node>(
+                  memory::allocate<Node>(), Node(item, where ? where->m_next : nullptr));
 
                 if(!where) {
                     m_first = new_node;
@@ -147,6 +153,8 @@ namespace jolt {
                 }
 
                 ++m_length;
+
+                memory::pop_force_flags();
 
                 return new_node;
             }

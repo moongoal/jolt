@@ -119,6 +119,20 @@ namespace jolt {
         }
 
         /**
+         * Simplified one-step allocation and construction function for a single object.
+         *
+         * @param ctor_params The parameters to be passed to the object constructor.
+         *
+         * @return A newly allocated and constructed object.
+         */
+        template<typename T, typename... Params>
+        T *allocate_and_construct(Params... ctor_params) {
+            T *ptr = allocate<T>();
+
+            return construct(ptr, ctor_params...);
+        }
+
+        /**
          * Construct an object.
          *
          * @tparam T The object type to construct.
