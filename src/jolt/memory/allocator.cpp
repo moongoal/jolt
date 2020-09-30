@@ -130,15 +130,11 @@ namespace jolt {
             AllocHeader *const hdr_ptr = get_alloc_header(ptr);
 
             if(hdr_ptr->m_flags & ALLOC_SCRATCH) {
-                slot.m_scratch.reallocate(ptr, new_size);
-
-                return ptr;
+                return slot.m_scratch.reallocate(ptr, new_size);
             }
 
             if(hdr_ptr->m_flags & ALLOC_PERSIST) {
-                slot.m_persist.reallocate(ptr, new_size);
-
-                return ptr;
+                return slot.m_persist.reallocate(ptr, new_size);
             }
 
             if(hdr_ptr->m_flags & ALLOC_BIG) {
@@ -152,8 +148,12 @@ namespace jolt {
             AllocatorSlot &slot = get_allocator_slot();
             AllocHeader *const hdr_ptr = get_alloc_header(ptr);
 
-            if((hdr_ptr->m_flags & ALLOC_SCRATCH) || (hdr_ptr->m_flags & ALLOC_PERSIST)) {
-                return false;
+            if(hdr_ptr->m_flags & ALLOC_SCRATCH) {
+                return slot.m_scratch.will_relocate(ptr, new_size);
+            }
+
+            if(hdr_ptr->m_flags & ALLOC_PERSIST) {
+                return slot.m_persist.will_relocate(ptr, new_size);
             }
 
             if(hdr_ptr->m_flags & ALLOC_BIG) {

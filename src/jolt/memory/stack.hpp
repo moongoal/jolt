@@ -12,6 +12,29 @@ namespace jolt {
         class JLTAPI Stack : public Heap {
             uint8_t *m_ptr_top; // Pointer to the top of the stack
 
+            /**
+             * Free any finalized allocation at the top of the stack.
+             */
+            void free_top_finalized();
+
+            /**
+             * Return the allocated region at the top of the stack.
+             *
+             * @return A pointer to the last allocation on the stack or `nullptr` if the stack is
+             * empty.
+             */
+            void *get_top_allocation();
+
+            /**
+             * Free a single allocated region.
+             */
+            void free_single_alloc(void *const ptr);
+
+            void
+            realloc_shrink_top(void *const ptr, size_t const new_size, AllocHeader *const ptr_hdr);
+            void
+            realloc_grow_top(void *const ptr, size_t const new_size, AllocHeader *const ptr_hdr);
+
           public:
             explicit Stack(size_t const memory_size) : Heap(memory_size) {
                 m_ptr_top = reinterpret_cast<uint8_t *>(get_base());
@@ -68,9 +91,8 @@ namespace jolt {
              *
              * @param ptr Pointer to the memory to reallocate.
              * @param new_size Size of the new allocation.
-             * @param alignment Alignment of the new allocation.
              */
-            void reallocate(void *const ptr, size_t const new_size);
+            void *reallocate(void *const ptr, size_t const new_size);
 
             /**
              * Check whether a given memory location is at the top of the stack.
@@ -122,11 +144,14 @@ namespace jolt {
              * doesn't.
              */
             static size_t get_total_allocation_size(size_t const size, size_t const padding) {
-                return size + padding + sizeof(AllocHeader)
-#ifdef JLT_WITH_MEM_CHECKS
-                       + JLT_MEM_CANARY_VALUE_SIZE
-#endif // JLT_WITH_MEM_CHECKS
-                  ;
+                return size + padding + sizeof(AllocHeader) + JLT_MEM_CANARY_VALUE_SIZE
+                       + sizeof(void *);
+            }
+
+            bool will_relocate(void *const ptr, size_t new_size) const {
+                AllocHeader *hdr_ptr = get_header(ptr);
+
+                return is_top(ptr) && (new_size > hdr_ptr->m_alloc_sz);
             }
         };
     } // namespace memory

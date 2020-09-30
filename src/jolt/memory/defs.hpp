@@ -12,15 +12,17 @@ namespace jolt {
          * The allocation flags values.
          */
         enum AllocFlags : flags_t {
-            ALLOC_NONE = 0,             // No flags specified.
-            ALLOC_BIG = 0x00000001,     // Allocate within big objects space.
-            ALLOC_PERSIST = 0x00000011, // Allocate within persistent objects space.
-            ALLOC_SCRATCH = 0x00000111  // Allocate within the scratch memory.
+            ALLOC_NONE = 0,              //< No flags specified.
+            ALLOC_BIG = 0x00000001,      //< Allocate within big objects space.
+            ALLOC_PERSIST = 0x00000003,  //< Allocate within persistent objects space.
+            ALLOC_SCRATCH = 0x00000007,  //< Allocate within the scratch memory.
+            ALLOC_FINALIZED = 0x00000100 /**< Memory region has been finalized and is ready to be
+                                         collected (internal use only). */
         };
 
         struct AllocHeader {
             uint32_t m_alloc_sz;
-            flags_t const m_flags;
+            flags_t m_flags;
             uint32_t const m_alloc_offset;
             uint32_t const m_alignment;
 
