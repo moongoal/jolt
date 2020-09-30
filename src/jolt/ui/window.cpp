@@ -41,14 +41,14 @@ static void unregister_window_class() { UnregisterClassA(MAIN_CLASS_NAME, g_hins
 
 namespace jolt {
     namespace ui {
+        HINSTANCE get_hinstance() { return g_hinstance; }
+        
         Window::Window(const text::String &name, const Rect &dimensions, const Point &location) :
-          m_name{name}, m_handle{NULL}, m_dc{NULL}, m_size{dimensions}, m_location{location} {}
+          m_name{name}, m_handle{NULL}, m_dc{NULL}, m_size{dimensions}, m_location{location} {
+              create();
+          }
 
         void Window::show(bool const visible) {
-            if(m_handle == NULL) {
-                create();
-            }
-
             console.info("Showing window " + m_name);
 
             if(visible) {
@@ -65,14 +65,14 @@ namespace jolt {
         }
 
         void Window::close() {
-            console.info("Destroying window " + m_name);
+            console.info("Destroying window \"" + m_name + "\"");
 
             ReleaseDC(m_handle, m_dc);
             DestroyWindow(m_handle);
         }
 
         void Window::create() {
-            console.info("Creating window " + m_name);
+            console.info("Creating window \"" + m_name + "\"");
 
             m_handle = CreateWindowExA(
               WS_EX_APPWINDOW,

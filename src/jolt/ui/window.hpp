@@ -88,6 +88,11 @@ namespace jolt {
          */
         void JLTAPI shutdown();
 
+        /**
+         * Return the Windows instance handle.
+         */
+        HINSTANCE JLTAPI get_hinstance();
+
     } // namespace ui
 } // namespace jolt
 

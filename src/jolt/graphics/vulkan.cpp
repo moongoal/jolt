@@ -1,5 +1,12 @@
+#ifdef _WIN32
+    #define VK_USE_PLATFORM_WIN32_KHR
+#else
+    #error OS not supported.
+#endif // _WIN32
+
 #include <cstdlib>
 #include <cstring>
+#include <Windows.h>
 #include <vulkan/vulkan.h>
 #include <jolt/version.hpp>
 #include <jolt/debug.hpp>
@@ -8,6 +15,12 @@
 #include <jolt/collections/valueset.hpp>
 #include <jolt/collections/array.hpp>
 #include "vulkan.hpp"
+
+#define N_SWAPCHAIN_IMAGES 3
+
+#ifdef _WIN32
+    #define OS_SPECIFIC_SURFACE_EXTENSION VK_KHR_WIN32_SURFACE_EXTENSION_NAME
+#endif // _WIN32
 
 static VkAllocationCallbacks *g_allocator = nullptr;
 static VkInstance g_instance;
@@ -23,6 +36,15 @@ static uint32_t g_q_graphics_fam_index, g_q_transfer_fam_index;
 static uint32_t g_q_graphics_index, g_q_transfer_index;
 static VkQueue g_q_graphics, g_q_transfer;
 static const float g_q_priorities[2] = {1.0f /* graphics */, 1.0f, /* transfer */};
+
+static VkSurfaceKHR g_win_surface;
+static VkSurfaceCapabilitiesKHR g_win_surface_caps;
+static VkImageFormatProperties g_phy_dev_image_fmt_props;
+static bool g_use_window;
+
+static VkSwapchainKHR g_swapchain;
+static jolt::collections::Array<VkImage> *g_swapchain_images = nullptr;
+static jolt::collections::Array<VkImageView> *g_swapchain_image_views = nullptr;
 
 using namespace jolt::text;
 
@@ -101,25 +123,21 @@ namespace jolt {
             return layers;
         }
 
-        static extension_vector select_required_extensions() {
+        static extension_vector select_required_instance_extensions() {
             extension_vector extensions; // Layers that will be returned
             uint32_t n_available_ext;
             const char *required_ext[] = {
-              "VK_KHR_surface",
-#ifdef _WIN32
-              "VK_KHR_win32_surface",
-#endif // _WIN32
+              VK_KHR_SURFACE_EXTENSION_NAME,
+              OS_SPECIFIC_SURFACE_EXTENSION,
 
 #ifdef _DEBUG
-              "VK_EXT_debug_utils",
+              VK_EXT_DEBUG_UTILS_EXTENSION_NAME
 #endif // _DEBUG
             };
             const size_t required_ext_length = sizeof(required_ext) / sizeof(const char *);
 
             vkEnumerateInstanceExtensionProperties(nullptr, &n_available_ext, nullptr);
-
             collections::Array<VkExtensionProperties> ext_props{n_available_ext};
-
             vkEnumerateInstanceExtensionProperties(nullptr, &n_available_ext, ext_props);
 
             for(size_t i = 0; i < required_ext_length; ++i) {
@@ -138,6 +156,40 @@ namespace jolt {
                     console.info("Found required extension " + s(required_ext[i]));
                 } else {
                     console.err("Required extension " + s(required_ext[i]) + " not found");
+                    abort();
+                }
+            }
+
+            return extensions;
+        }
+
+        static extension_vector select_required_device_extensions() {
+            extension_vector extensions; // Layers that will be returned
+            uint32_t n_available_ext;
+            const char *required_ext[] = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
+            const size_t required_ext_length = sizeof(required_ext) / sizeof(const char *);
+
+            vkEnumerateDeviceExtensionProperties(g_phy_device, nullptr, &n_available_ext, nullptr);
+            collections::Array<VkExtensionProperties> ext_props{n_available_ext};
+            vkEnumerateDeviceExtensionProperties(
+              g_phy_device, nullptr, &n_available_ext, ext_props);
+
+            for(size_t i = 0; i < required_ext_length; ++i) {
+                bool found = false;
+
+                for(auto it = ext_props.begin(), end = ext_props.end(); it != end; ++it) {
+                    if(strcmp(required_ext[i], (*it).extensionName) == 0) {
+                        found = true;
+
+                        extensions.push(required_ext[i]);
+                        break;
+                    }
+                }
+
+                if(found) {
+                    console.info("Found required device extension " + s(required_ext[i]));
+                } else {
+                    console.err("Required device extension " + s(required_ext[i]) + " not found");
                     abort();
                 }
             }
@@ -217,7 +269,7 @@ namespace jolt {
               VK_API_VERSION_1_2                                          // apiVersion
             };
             layer_vector layers = select_required_layers();
-            extension_vector extensions = select_required_extensions();
+            extension_vector extensions = select_required_instance_extensions();
 
             VkInstanceCreateInfo icf{
               VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO, // sType
@@ -290,9 +342,7 @@ namespace jolt {
             uint32_t n_families;
 
             vkGetPhysicalDeviceQueueFamilyProperties(g_phy_device, &n_families, nullptr);
-
             collections::Array<VkQueueFamilyProperties> fam_props{n_families};
-
             vkGetPhysicalDeviceQueueFamilyProperties(g_phy_device, &n_families, fam_props);
 
             bool found_graphics = false, found_transfer = false;
@@ -367,6 +417,7 @@ namespace jolt {
             features.features.multiViewport = VK_TRUE;
 
             queue_ci_vector q_cinfo = select_device_queues();
+            extension_vector exts = select_required_device_extensions();
 
             VkDeviceCreateInfo cinfo{
               VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO, // sType
@@ -376,8 +427,8 @@ namespace jolt {
               &q_cinfo[0],                          // pQueueCreateInfos
               0,                                    // enabledLayerCount
               nullptr,                              // ppEnabledLayerNames
-              0,                                    // enabledExtensionCount
-              nullptr,                              // ppEnabledExtensionNames
+              exts.get_length(),                    // enabledExtensionCount
+              &exts[0],                             // ppEnabledExtensionNames
               nullptr                               // pEnabledFeatures
             };
 
@@ -403,6 +454,194 @@ namespace jolt {
             vkDestroyDevice(g_device, g_allocator);
         }
 
+        static void populate_device_image_metadata() {
+            VkResult result = vkGetPhysicalDeviceImageFormatProperties(
+              g_phy_device,
+              VK_FORMAT_B8G8R8A8_UNORM,
+              VK_IMAGE_TYPE_2D,
+              VK_IMAGE_TILING_OPTIMAL,
+              VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
+              VK_IMAGE_CREATE_2D_ARRAY_COMPATIBLE_BIT,
+              &g_phy_dev_image_fmt_props);
+
+            switch(result) {
+            case VK_SUCCESS: break;
+
+            case VK_ERROR_FORMAT_NOT_SUPPORTED: console.err("Image format not supported"); abort();
+
+            default: console.err("Out of memory while querying for image format support"); abort();
+            }
+
+            result = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(
+              g_phy_device, g_win_surface, &g_win_surface_caps);
+
+            jltassert2(result == VK_SUCCESS, "Unable to get image capabilities");
+        }
+
+        static void initialize_window_surface(ui::Window &window) {
+            console.debug("Creating window surface");
+
+            VkResult result;
+            VkBool32 surface_support;
+            VkWin32SurfaceCreateInfoKHR cinfo{
+              VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR, // sType
+              nullptr,                                         // pNext
+              0,                                               // flags
+              ui::get_hinstance(),                             // hinstance
+              window.get_handle()                              // hwnd
+            };
+
+            result = vkCreateWin32SurfaceKHR(g_instance, &cinfo, g_allocator, &g_win_surface);
+
+            jltassert2(result == VK_SUCCESS, "Unable to create window surface");
+
+            vkGetPhysicalDeviceSurfaceSupportKHR(
+              g_phy_device, g_q_graphics_fam_index, g_win_surface, &surface_support);
+
+            jltassert2(result == VK_SUCCESS, "Unable to query for surface support");
+            jltassert2(surface_support == VK_TRUE, "Current device doesn't support window");
+        }
+
+        static void shutdown_window_surface() {
+            console.debug("Destroying window surface");
+
+            vkDestroySurfaceKHR(g_instance, g_win_surface, g_allocator);
+        }
+
+        static void initialize_swapchain() {
+            console.debug("Creating swapchain");
+
+            VkResult result;
+            uint32_t n_fmts;
+            uint32_t n_present_modes;
+
+            result =
+              vkGetPhysicalDeviceSurfaceFormatsKHR(g_phy_device, g_win_surface, &n_fmts, nullptr);
+            jltassert2(result == VK_SUCCESS, "Unable to get available device surface formats");
+
+            collections::Array<VkSurfaceFormatKHR> fmts{n_fmts};
+            result =
+              vkGetPhysicalDeviceSurfaceFormatsKHR(g_phy_device, g_win_surface, &n_fmts, fmts);
+            jltassert2(result == VK_SUCCESS, "Unable to get available device surface formats");
+
+            result = vkGetPhysicalDeviceSurfacePresentModesKHR(
+              g_phy_device, g_win_surface, &n_present_modes, nullptr);
+            jltassert2(
+              result == VK_SUCCESS, "Unable to get available device surface presentation formats");
+
+            collections::Array<VkPresentModeKHR> present_modes{n_present_modes};
+            result = vkGetPhysicalDeviceSurfacePresentModesKHR(
+              g_phy_device, g_win_surface, &n_present_modes, present_modes);
+            jltassert2(
+              result == VK_SUCCESS, "Unable to get available device surface presentation formats");
+
+            bool present_mode_fifo_supported = false, present_mode_mailbox_supported = false;
+            VkPresentModeKHR chosen_present_mode = VK_PRESENT_MODE_IMMEDIATE_KHR;
+
+            for(VkPresentModeKHR pm : present_modes) {
+                if(pm == VK_PRESENT_MODE_MAILBOX_KHR) {
+                    present_mode_mailbox_supported = true;
+                }
+
+                if(pm == VK_PRESENT_MODE_FIFO_KHR) {
+                    present_mode_fifo_supported = true;
+                }
+            }
+
+            if(present_mode_mailbox_supported) {
+                chosen_present_mode = VK_PRESENT_MODE_MAILBOX_KHR;
+            } else if(present_mode_fifo_supported) {
+                chosen_present_mode = VK_PRESENT_MODE_FIFO_KHR;
+            } // TODO: Check FIFO relaxed mode
+
+            VkSwapchainCreateInfoKHR cinfo{
+              VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR, // sType
+              nullptr,                                     // pNext
+              0,                                           // flags
+              g_win_surface,                               // surface
+              N_SWAPCHAIN_IMAGES,                          // minImageCount
+              fmts[0].format,                              // imageFormat
+              fmts[0].colorSpace,                          // imageColorSpace
+              g_win_surface_caps.currentExtent,            // imageExtent
+              1,                                           // imageArrayLayers
+              VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT, // imageUsage
+              VK_SHARING_MODE_EXCLUSIVE,           // imageSharingMode
+              1,                                   // queueFamilyIndexCount
+              &g_q_graphics_fam_index,             // pQueueFamilyIndices
+              g_win_surface_caps.currentTransform, // preTransform
+              VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR,   // compositeAlpha
+              chosen_present_mode,                 // presentMode
+              VK_TRUE,                             // clipped
+              VK_NULL_HANDLE,                      // oldSwapchain
+            };
+
+            result = vkCreateSwapchainKHR(g_device, &cinfo, g_allocator, &g_swapchain);
+            jltassert2(result == VK_SUCCESS, "Unable to create swapchain");
+
+            // Get images
+            uint32_t n_images;
+
+            result = vkGetSwapchainImagesKHR(g_device, g_swapchain, &n_images, nullptr);
+            jltassert2(result == VK_SUCCESS, "Unable to get swapchain images");
+
+            g_swapchain_images =
+              memory::allocate<typeof(*g_swapchain_images)>(1, memory::ALLOC_PERSIST);
+            g_swapchain_image_views =
+              memory::allocate<typeof(*g_swapchain_image_views)>(1, memory::ALLOC_PERSIST);
+
+            jltassert(g_swapchain_images);
+            memory::construct(g_swapchain_images, n_images);
+            memory::construct(g_swapchain_image_views, n_images);
+
+            result = vkGetSwapchainImagesKHR(g_device, g_swapchain, &n_images, *g_swapchain_images);
+            jltassert2(result == VK_SUCCESS, "Unable to get swapchain images");
+
+            { // Create image
+                for(size_t i = 0; i < g_swapchain_images->get_length(); ++i) {
+                    VkImageViewCreateInfo cinfo{
+                      VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO, // sType
+                      nullptr,                                  // pNext
+                      0,                                        // flags
+                      (*g_swapchain_images)[i],                 // image
+                      VK_IMAGE_VIEW_TYPE_2D,                    // viewType
+                      fmts[0].format,                           // format
+                      {
+                        // components
+                        VK_COMPONENT_SWIZZLE_IDENTITY, // r
+                        VK_COMPONENT_SWIZZLE_IDENTITY, // g
+                        VK_COMPONENT_SWIZZLE_IDENTITY, // b
+                        VK_COMPONENT_SWIZZLE_IDENTITY  // a
+                      },
+                      {
+                        // subresourceRange
+                        VK_IMAGE_ASPECT_COLOR_BIT, // aspectMask
+                        0,                         // baseMipLevel
+                        1,                         // levelCount
+                        0,                         // baseArrayLayer
+                        1,                         // layerCount
+                      }};
+
+                    result = vkCreateImageView(
+                      g_device, &cinfo, g_allocator, *g_swapchain_image_views + i);
+
+                    jltassert2(result == VK_SUCCESS, "Unable to create swapchain image views");
+                }
+            }
+        }
+
+        static void shutdown_swapchain() {
+            console.debug("Destroying swapchain");
+
+            for(VkImageView vw : *g_swapchain_image_views) {
+                vkDestroyImageView(g_device, vw, g_allocator);
+            }
+
+            memory::free(g_swapchain_image_views);
+            memory::free(g_swapchain_images);
+
+            vkDestroySwapchainKHR(g_device, g_swapchain, g_allocator);
+        }
+
         /**
          * To be called at initialization time or when the logical device is reported as lost.
          */
@@ -414,12 +653,28 @@ namespace jolt {
         void initialize(GraphicsEngineInitializationParams &params) {
             initialize_instance(params);
             select_physical_device();
+
+            if(params.wnd) {
+                initialize_window_surface(*params.wnd);
+                g_use_window = true;
+            } else {
+                g_use_window = false;
+            }
+
+            populate_device_image_metadata();
             reset_device();
+            initialize_swapchain();
         }
 
         void shutdown() {
+            shutdown_swapchain();
             shutdown_debug_logger();
             shutdown_device();
+
+            if(g_use_window) {
+                shutdown_window_surface();
+            }
+
             shutdown_instance();
         }
     } // namespace graphics
