@@ -19,7 +19,7 @@ namespace jolt {
                 commit(total_alloc_sz - sz_free); // Extend by the excess
             }
 
-            new(ptr_hdr) AllocHeader(size, flags, static_cast<uint32_t>(padding));
+            new(ptr_hdr) AllocHeader(size, flags, static_cast<uint32_t>(padding), alignment);
 
             m_ptr_top += get_total_allocation_size(size, padding);
 

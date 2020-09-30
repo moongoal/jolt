@@ -19,6 +19,7 @@ namespace jolt {
         constexpr size_t BIG_HEAP_MEMORY_SIZE = 4LL * 1024 * 1024 * 1024;   // 4 GiB
         constexpr size_t PERSISTENT_MEMORY_SIZE = 4LL * 1024 * 1024 * 1024; // 4 GiB
         constexpr size_t SCRATCH_MEMORY_SIZE = 256LL * 1024 * 1024;         // 256 MiB
+        constexpr size_t JLT_ALLOC_FLAGS_STACK_LEN = 256; // Length of force-flags stack
 
         /**
          * Allocator slot. Each thread will share its slot with its siblings based
@@ -67,6 +68,16 @@ namespace jolt {
          * @param flags The flags to be forced ON.
          */
         void JLTAPI push_force_flags(flags_t const flags);
+
+        /**
+         * Save the previously enabled flags and substitute those with those of a memory region.
+         *
+         * @param ptr The pointer to the memory region.
+         *
+         * @remarks Only pointers returned by `allocate()` or `reallocate()` represent valid memory
+         * regions for this command. Any other pointer will cause undefined behaviour.
+         */
+        void JLTAPI push_force_flags(void *const ptr);
 
         /**
          * Restore the last previously saved flags set (saved by using `push_force_flags()`.
@@ -119,13 +130,7 @@ namespace jolt {
          */
         template<typename T, typename... Params>
         T *construct(T *const ptr, Params... ctor_params) {
-            push_force_flags(get_alloc_flags(ptr));
-
-            auto ptr_new = new(ptr) T(ctor_params...);
-
-            pop_force_flags();
-
-            return ptr_new;
+            return new(ptr) T(ctor_params...);
         }
 
         /**
@@ -160,20 +165,33 @@ namespace jolt {
          */
         JLTAPI AllocatorSlot &get_allocator_slot();
 
-        void JLTAPI *_reallocate(void *const ptr, size_t const new_size, size_t const alignment);
+        void JLTAPI *_reallocate(void *const ptr, size_t const new_size);
 
+        /**
+         * Reallocate a previously allocated memory region, shrinking or growing its size.
+         *
+         * If the size of the memory region is increased, the previously allocated elements are
+         * preserved. If the size of the memory region is shrunk, the previously allocated elements
+         * are preserved for the first part of the region that will remain allocated.
+         *
+         * @tparam T The type of the element stored at `ptr`.
+         *
+         * @param ptr The pointer to the memory region to reallcate.
+         * @param new_length The new number of elements in the memory region.
+         *
+         * @return A possibly new pointer to the reallocated memory region.
+         */
         template<typename T>
         T *reallocate(T *const ptr, size_t const new_length) {
             AllocatorSlot &slot = get_allocator_slot();
+            AllocHeader &hdr = *get_alloc_header(ptr);
             jolt::threading::LockGuard lock{slot.m_lock};
 
             if constexpr(std::is_trivial<T>::value) {
-                return reinterpret_cast<T *>(_reallocate(ptr, new_length * sizeof(T), alignof(T)));
+                return reinterpret_cast<T *>(_reallocate(ptr, new_length * sizeof(T)));
             } else {
                 if(will_relocate(ptr, new_length)) {
-                    flags_t old_flags = get_alloc_flags(ptr);
-                    // TODO: Alignment should be propagated here
-                    T *const data_new = allocate<T>(new_length, old_flags);
+                    T *const data_new = allocate<T>(new_length, hdr.m_flags, hdr.m_alignment);
 
                     for(size_t i = 0; i < new_length; ++i) {
                         construct(data_new + i, std::move(ptr[i]));
@@ -186,8 +204,7 @@ namespace jolt {
                 }
             }
 
-            // TODO: Alignment should be propagated here
-            return reinterpret_cast<T *>(_reallocate(ptr, new_length * sizeof(T), alignof(T)));
+            return reinterpret_cast<T *>(_reallocate(ptr, new_length * sizeof(T)));
         }
     } // namespace memory
 } // namespace jolt

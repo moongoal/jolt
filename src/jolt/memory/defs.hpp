@@ -20,15 +20,21 @@ namespace jolt {
 
         struct AllocHeader {
             uint32_t m_alloc_sz;
-            uint32_t const m_alloc_offset;
             flags_t const m_flags;
+            uint32_t const m_alloc_offset;
+            uint32_t const m_alignment;
 
 #ifdef JLT_WITH_MEM_CHECKS
             JLT_MEM_CANARY_VALUE_TYPE m_free_canary = JLT_MEM_CANARY_VALUE;
 #endif // JLT_WITH_MEM_CHECKS
 
-            AllocHeader(uint32_t const alloc_sz, flags_t flags, uint32_t const offset) :
-                m_alloc_sz(alloc_sz), m_alloc_offset(offset), m_flags(flags) {}
+            AllocHeader(
+              uint32_t const alloc_sz,
+              flags_t flags,
+              uint32_t const offset,
+              uint32_t const alignment) :
+              m_alloc_sz{alloc_sz},
+              m_flags{flags}, m_alloc_offset{offset}, m_alignment{alignment} {}
         };
     } // namespace memory
 } // namespace jolt

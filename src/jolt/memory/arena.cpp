@@ -188,7 +188,7 @@ namespace jolt {
             m_free_list = choose(m_free_list, cur_slot, m_free_list != free_slot);
 
             new(hdr_ptr) AllocHeader(
-              adjusted_size - sizeof(AllocHeader) - JLT_MEM_CANARY_VALUE_SIZE, flags, padding);
+              adjusted_size - sizeof(AllocHeader) - JLT_MEM_CANARY_VALUE_SIZE, flags, padding, alignment);
 
             JLT_FILL_OVERFLOW(alloc_ptr, hdr_ptr->m_alloc_sz);
             m_allocated_size += adjusted_size + padding;

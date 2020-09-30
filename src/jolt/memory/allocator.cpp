@@ -3,16 +3,14 @@
 #include <jolt/threading/thread.hpp>
 #include "allocator.hpp"
 
-#define FLAGS_STACK_LEN 256
-
 using namespace jolt::threading;
 
 namespace jolt {
     namespace memory {
         static AllocatorSlot g_alloc_slots[ALLOCATOR_SLOTS];
-        static flags_t flags_override = ALLOC_NONE;
-        static flags_t flags_stack[FLAGS_STACK_LEN];
-        static size_t flags_stack_top = 0;
+        static thread_local flags_t flags_override = ALLOC_NONE;
+        static thread_local flags_t flags_stack[JLT_ALLOC_FLAGS_STACK_LEN];
+        static thread_local size_t flags_stack_top = 0;
 
         inline uint32_t map_thread_id_to_allocator_slot(thread_id id) {
             return id % ALLOCATOR_SLOTS;
@@ -25,8 +23,8 @@ namespace jolt {
         }
 
         AllocatorSlot::AllocatorSlot() :
-          m_sm_alloc(SMALL_HEAP_MEMORY_SIZE), m_bg_alloc(BIG_HEAP_MEMORY_SIZE),
-          m_persist(PERSISTENT_MEMORY_SIZE), m_scratch(SCRATCH_MEMORY_SIZE) {}
+          m_sm_alloc{SMALL_HEAP_MEMORY_SIZE}, m_bg_alloc{BIG_HEAP_MEMORY_SIZE},
+          m_persist{PERSISTENT_MEMORY_SIZE}, m_scratch{SCRATCH_MEMORY_SIZE} {}
 
         void *_allocate(const size_t size, flags_t const flags, size_t const alignment) {
             AllocatorSlot &slot = get_allocator_slot();
@@ -127,7 +125,7 @@ namespace jolt {
             return sz;
         }
 
-        void *_reallocate(void *const ptr, size_t const new_size, size_t const alignment) {
+        void *_reallocate(void *const ptr, size_t const new_size) {
             AllocatorSlot &slot = get_allocator_slot();
             AllocHeader *const hdr_ptr = get_alloc_header(ptr);
 
@@ -144,10 +142,10 @@ namespace jolt {
             }
 
             if(hdr_ptr->m_flags & ALLOC_BIG) {
-                return slot.m_bg_alloc.reallocate(ptr, new_size, alignment);
+                return slot.m_bg_alloc.reallocate(ptr, new_size, hdr_ptr->m_alignment);
             }
 
-            return slot.m_sm_alloc.reallocate(ptr, new_size, alignment);
+            return slot.m_sm_alloc.reallocate(ptr, new_size, hdr_ptr->m_alignment);
         }
 
         bool will_relocate(void *const ptr, size_t const new_size) {
@@ -168,11 +166,13 @@ namespace jolt {
         void force_flags(flags_t const flags) { flags_override = flags; }
 
         void push_force_flags(flags_t const flags) {
-            jltassert(flags_stack_top < FLAGS_STACK_LEN);
+            jltassert(flags_stack_top < JLT_ALLOC_FLAGS_STACK_LEN);
 
             flags_stack[flags_stack_top++] = flags_override;
             force_flags(flags);
         }
+
+        void JLTAPI push_force_flags(void *const ptr) { push_force_flags(get_alloc_flags(ptr)); }
 
         void pop_force_flags() {
             jltassert(flags_stack_top);
