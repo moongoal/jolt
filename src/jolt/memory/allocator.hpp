@@ -49,6 +49,45 @@ namespace jolt {
         void JLTAPI _free(void *const ptr);
 
         /**
+         * Force some allocator flags ON.
+         *
+         * When using the allocator, these enabled flags will always be active regardless of the
+         * flags parameter passed to the function.
+         *
+         * @param flags The flags to be forced ON.
+         *
+         * @remarks The effects of this function are not cumulative. Calling it multiple times will
+         * disable the previous forced flags and enable this new passed set.
+         */
+        void JLTAPI force_flags(flags_t const flags);
+
+        /**
+         * Save the previously enabled flags and substitute those with a new set.
+         *
+         * @param flags The flags to be forced ON.
+         */
+        void JLTAPI push_force_flags(flags_t const flags);
+
+        /**
+         * Restore the last previously saved flags set (saved by using `push_force_flags()`.
+         *
+         * @see push_force_flags()
+         */
+        void JLTAPI pop_force_flags();
+
+        /**
+         * Return the current forced flags.
+         */
+        flags_t JLTAPI get_current_force_flags();
+
+        /**
+         * Diable any forced flag currently active.
+         *
+         * @remarks This has the same effect as calling `force_flags(ALLOC_NONE)`.
+         */
+        inline void reset_force_flags() { force_flags(ALLOC_NONE); }
+
+        /**
          * Allocate memory for an object of type T. This function will not construct the object. Use
          * `construct()` after allocating the memory to construct the object.
          *
@@ -59,9 +98,9 @@ namespace jolt {
          */
         template<typename T>
         T *allocate(
-          size_t const n = 1,
-          flags_t const flags = ALLOC_NONE,
-          size_t const alignment = alignof(T)) {
+          size_t const n = 1, flags_t flags = ALLOC_NONE, size_t const alignment = alignof(T)) {
+            flags |= get_current_force_flags();
+
             return reinterpret_cast<T *>(_allocate(
               n * sizeof(T),
               choose(flags, flags | ALLOC_BIG, sizeof(T) < BIG_OBJECT_MIN_SIZE),
@@ -80,7 +119,13 @@ namespace jolt {
          */
         template<typename T, typename... Params>
         T *construct(T *const ptr, Params... ctor_params) {
-            return new(ptr) T(ctor_params...);
+            push_force_flags(get_alloc_flags(ptr));
+
+            auto ptr_new = new(ptr) T(ctor_params...);
+
+            pop_force_flags();
+
+            return ptr_new;
         }
 
         /**
@@ -106,6 +151,8 @@ namespace jolt {
             return reinterpret_cast<AllocHeader *>(ptr) - 1;
         }
 
+        inline flags_t get_alloc_flags(void *const ptr) { return get_alloc_header(ptr)->m_flags; }
+
         size_t JLTAPI get_allocated_size();
 
         /**
@@ -124,7 +171,9 @@ namespace jolt {
                 return reinterpret_cast<T *>(_reallocate(ptr, new_length * sizeof(T), alignof(T)));
             } else {
                 if(will_relocate(ptr, new_length)) {
-                    T *const data_new = allocate<T>(new_length);
+                    flags_t old_flags = get_alloc_flags(ptr);
+                    // TODO: Alignment should be propagated here
+                    T *const data_new = allocate<T>(new_length, old_flags);
 
                     for(size_t i = 0; i < new_length; ++i) {
                         construct(data_new + i, std::move(ptr[i]));
@@ -136,6 +185,8 @@ namespace jolt {
                     return data_new;
                 }
             }
+
+            // TODO: Alignment should be propagated here
             return reinterpret_cast<T *>(_reallocate(ptr, new_length * sizeof(T), alignof(T)));
         }
     } // namespace memory

@@ -43,3 +43,20 @@ TEST(free__mt) {
 
     assert(mem_alloc == jolt::memory::get_allocated_size());
 }
+
+TEST(force_alloc_flags) {
+    assert(jolt::memory::get_current_force_flags() == jolt::memory::ALLOC_NONE);
+
+    jolt::memory::force_flags(jolt::memory::ALLOC_BIG | jolt::memory::ALLOC_SCRATCH);
+    assert(
+      jolt::memory::get_current_force_flags()
+      == (jolt::memory::ALLOC_BIG | jolt::memory::ALLOC_SCRATCH));
+
+    jolt::memory::push_force_flags(jolt::memory::ALLOC_PERSIST);
+    assert(jolt::memory::get_current_force_flags() == jolt::memory::ALLOC_PERSIST);
+
+    jolt::memory::pop_force_flags();
+    assert(
+      jolt::memory::get_current_force_flags()
+      == (jolt::memory::ALLOC_BIG | jolt::memory::ALLOC_SCRATCH));
+}

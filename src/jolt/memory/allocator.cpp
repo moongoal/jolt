@@ -3,11 +3,16 @@
 #include <jolt/threading/thread.hpp>
 #include "allocator.hpp"
 
+#define FLAGS_STACK_LEN 256
+
 using namespace jolt::threading;
 
 namespace jolt {
     namespace memory {
         static AllocatorSlot g_alloc_slots[ALLOCATOR_SLOTS];
+        static flags_t flags_override = ALLOC_NONE;
+        static flags_t flags_stack[FLAGS_STACK_LEN];
+        static size_t flags_stack_top = 0;
 
         inline uint32_t map_thread_id_to_allocator_slot(thread_id id) {
             return id % ALLOCATOR_SLOTS;
@@ -89,18 +94,18 @@ namespace jolt {
 
         void _free(void *const ptr) {
             AllocatorSlot &slot = get_allocator_slot();
-            AllocHeader *const hdr_ptr = get_alloc_header(ptr);
+            flags_t flags = get_alloc_flags(ptr);
             LockGuard lock{slot.m_lock};
 
-            if(hdr_ptr->m_flags & ALLOC_SCRATCH) {
+            if(flags & ALLOC_SCRATCH) {
                 return slot.m_scratch.free(ptr);
             }
 
-            if(hdr_ptr->m_flags & ALLOC_PERSIST) {
+            if(flags & ALLOC_PERSIST) {
                 return slot.m_persist.free(ptr);
             }
 
-            if(hdr_ptr->m_flags & ALLOC_BIG) {
+            if(flags & ALLOC_BIG) {
                 return slot.m_bg_alloc.free(ptr);
             }
 
@@ -159,5 +164,22 @@ namespace jolt {
 
             return slot.m_sm_alloc.will_relocate(ptr, new_size);
         }
+
+        void force_flags(flags_t const flags) { flags_override = flags; }
+
+        void push_force_flags(flags_t const flags) {
+            jltassert(flags_stack_top < FLAGS_STACK_LEN);
+
+            flags_stack[flags_stack_top++] = flags_override;
+            force_flags(flags);
+        }
+
+        void pop_force_flags() {
+            jltassert(flags_stack_top);
+
+            force_flags(flags_stack[--flags_stack_top]);
+        }
+
+        flags_t get_current_force_flags() { return flags_override; }
     } // namespace memory
 } // namespace jolt
