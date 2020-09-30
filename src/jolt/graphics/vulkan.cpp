@@ -6,6 +6,7 @@
 
 #include <cstdlib>
 #include <cstring>
+#include <limits>
 #include <Windows.h>
 #include <vulkan/vulkan.h>
 #include <jolt/version.hpp>
@@ -31,6 +32,7 @@ static VkPhysicalDeviceVulkan11Properties g_phy_props11;
 static VkPhysicalDeviceFeatures2 g_phy_feats;
 static VkPhysicalDeviceVulkan11Features g_phy_feats11;
 static VkPhysicalDeviceVulkan12Features g_phy_feats12;
+static VkPhysicalDeviceMemoryProperties g_phy_mem_props;
 
 static uint32_t g_q_graphics_fam_index, g_q_transfer_fam_index;
 static uint32_t g_q_graphics_index, g_q_transfer_index;
@@ -45,6 +47,11 @@ static bool g_use_window;
 static VkSwapchainKHR g_swapchain;
 static jolt::collections::Array<VkImage> *g_swapchain_images = nullptr;
 static jolt::collections::Array<VkImageView> *g_swapchain_image_views = nullptr;
+
+static VkImage g_ds_image;
+static VkImageView g_ds_image_view;
+static VkDeviceMemory g_ds_image_memory;
+static VkFormat g_ds_image_fmt;
 
 using namespace jolt::text;
 
@@ -335,6 +342,8 @@ namespace jolt {
             }
 
             jltassert2(found, "No suitable physical device found");
+
+            vkGetPhysicalDeviceMemoryProperties(g_phy_device, &g_phy_mem_props);
         }
 
         static queue_ci_vector select_device_queues() {
@@ -642,6 +651,134 @@ namespace jolt {
             vkDestroySwapchainKHR(g_device, g_swapchain, g_allocator);
         }
 
+        static void select_depth_stencil_image_format() {
+            VkFormat allowed_fmts[] = {VK_FORMAT_D32_SFLOAT, VK_FORMAT_D16_UNORM};
+            constexpr const size_t allowed_fmts_len = sizeof(allowed_fmts) / sizeof(VkFormat);
+
+            for(size_t i = 0; i < allowed_fmts_len; ++i) {
+                VkFormatProperties props;
+
+                // TODO: Apply this same logic for the other image formats
+                vkGetPhysicalDeviceFormatProperties(g_phy_device, allowed_fmts[i], &props);
+
+                if(props.optimalTilingFeatures & VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT) {
+                    g_ds_image_fmt = allowed_fmts[i];
+                    return;
+                }
+            }
+
+            console.err("Unable to find a suitable format for depth/stencil buffer");
+            abort();
+        }
+
+        static void initialize_depth_stencil_buffer() {
+            console.debug("Initializing depth/stencil buffer");
+
+            VkResult result;
+
+            select_depth_stencil_image_format();
+
+            VkImageCreateInfo cinfo{
+              VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO, // stype
+              nullptr,                             // pNext
+              0,                                   // flags
+              VK_IMAGE_TYPE_2D,                    // imageType
+              g_ds_image_fmt,                      // format
+              {
+                // extent
+                g_win_surface_caps.currentExtent.width,  // width
+                g_win_surface_caps.currentExtent.height, // height
+                1                                        // depth
+              },
+              1,                                           // mipLevels
+              1,                                           // arrayLayers
+              VK_SAMPLE_COUNT_1_BIT,                       // samples
+              VK_IMAGE_TILING_OPTIMAL,                     // tiling
+              VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, // usage
+              VK_SHARING_MODE_EXCLUSIVE,                   // sharingMode
+              0,                                           // queueFamilyIndexCount
+              nullptr,                                     // pQueueFamilyIndices
+              VK_IMAGE_LAYOUT_UNDEFINED                    // initialLayout
+            };
+
+            result = vkCreateImage(g_device, &cinfo, g_allocator, &g_ds_image);
+            jltassert2(result == VK_SUCCESS, "Unable to create image for depth/stencil buffer");
+
+            { // Image storage
+                constexpr uint32_t mti_invalid = std::numeric_limits<uint32_t>::max();
+                uint32_t mti = mti_invalid; // Memory Type Index
+                VkMemoryRequirements reqs;
+
+                vkGetImageMemoryRequirements(g_device, g_ds_image, &reqs);
+
+                // Check if requirements are satisfied both for device & image
+                for(uint32_t i = 0; i < g_phy_mem_props.memoryTypeCount; ++i) {
+                    if(
+                      (g_phy_mem_props.memoryTypes[i].propertyFlags
+                       & VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
+                      && (reqs.memoryTypeBits & (1 << i))) {
+                        mti = i;
+                        break;
+                    }
+                }
+
+                jltassert2(
+                  mti != mti_invalid,
+                  "Required image memory type for depth/stencil buffer unavailable");
+
+                VkMemoryAllocateInfo cinfo{
+                  VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO, // sType
+                  nullptr,                                // pNext
+                  reqs.size,                              // allocationSize
+                  mti                                     // memoryTypeIndex
+                };
+
+                result = vkAllocateMemory(g_device, &cinfo, g_allocator, &g_ds_image_memory);
+                jltassert2(
+                  result == VK_SUCCESS, "Unable to allocate storage for depth/stencil buffer");
+            }
+
+            result = vkBindImageMemory(g_device, g_ds_image, g_ds_image_memory, 0);
+            jltassert2(
+              result == VK_SUCCESS, "Unable to bind image memory for depth/stencil buffer");
+
+            { // Image view
+                VkImageViewCreateInfo cinfo{
+                  VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO, // sType
+                  nullptr,                                  // pNext
+                  0,                                        // flags
+                  g_ds_image,                               // image
+                  VK_IMAGE_VIEW_TYPE_2D,                    // viewType
+                  g_ds_image_fmt,                           // format
+                  {
+                    // components
+                    VK_COMPONENT_SWIZZLE_IDENTITY, // r
+                    VK_COMPONENT_SWIZZLE_IDENTITY, // g
+                    VK_COMPONENT_SWIZZLE_IDENTITY, // b
+                    VK_COMPONENT_SWIZZLE_IDENTITY  // a
+                  },
+                  {
+                    // subresourceRange
+                    VK_IMAGE_ASPECT_DEPTH_BIT, // aspectMask
+                    0,                         // baseMipLevel
+                    1,                         // levelCount
+                    0,                         // baseArrayLayer
+                    1,                         // layerCount
+                  }};
+
+                result = vkCreateImageView(g_device, &cinfo, g_allocator, &g_ds_image_view);
+                jltassert2(result == VK_SUCCESS, "Unable to create view for depth/stencil buffer");
+            }
+        }
+
+        static void shutdown_depth_stencil_buffer() {
+            console.debug("Destroying depth/stencil buffer");
+
+            vkDestroyImageView(g_device, g_ds_image_view, g_allocator);
+            vkFreeMemory(g_device, g_ds_image_memory, g_allocator);
+            vkDestroyImage(g_device, g_ds_image, g_allocator);
+        }
+
         /**
          * To be called at initialization time or when the logical device is reported as lost.
          */
@@ -664,9 +801,11 @@ namespace jolt {
             populate_device_image_metadata();
             reset_device();
             initialize_swapchain();
+            initialize_depth_stencil_buffer();
         }
 
         void shutdown() {
+            shutdown_depth_stencil_buffer();
             shutdown_swapchain();
             shutdown_debug_logger();
             shutdown_device();
