@@ -11,6 +11,44 @@
 #include "arena.hpp"
 #include "stack.hpp"
 
+/**
+ * Shortcut to jolt::memory::allocate.
+ *
+ * @see jolt::memory::allocate().
+ */
+#define jltalloc(object_type, ...) jolt::memory::allocate<object_type>(__VA_ARGS__)
+
+/**
+ * Construct an already allocated object.
+ *
+ * @param ptr Pointer the the allocated memory.
+ * @param ... Arguments to pass to the object's constructor.
+ *
+ * @return Pointer to the constructed memory.
+ */
+#define jltconstruct(ptr, ...) jolt::memory::construct(ptr, __VA_ARGS__)
+
+/**
+ * Shortcut to jolt::memory::allocate_and_construct.
+ *
+ * @see jolt::memory::allocate_and_construct().
+ */
+#define jltnew(object_type, ...) jolt::memory::allocate_and_construct<object_type>(__VA_ARGS__)
+
+/**
+ * Shortcut to jolt::memory::free.
+ *
+ * @see jolt::memory::free().
+ */
+#define jltfree(ptr) jolt::memory::free(ptr)
+
+/**
+ * Shortcut to jolt::memory::free.
+ *
+ * @see jolt::memory::free().
+ */
+#define jltfreearray(ptr, n) jolt::memory::free(ptr, n)
+
 namespace jolt {
     namespace memory {
         constexpr size_t BIG_OBJECT_MIN_SIZE = 2 * 1024 * 1024; // 2 MiB
@@ -126,7 +164,7 @@ namespace jolt {
          * @return A newly allocated and constructed object.
          */
         template<typename T, typename... Params>
-        T *allocate_and_construct(Params... ctor_params) {
+        T *allocate_and_construct(Params &&... ctor_params) {
             T *ptr = allocate<T>();
 
             return construct(ptr, ctor_params...);
@@ -138,12 +176,13 @@ namespace jolt {
          * @tparam T The object type to construct.
          * @tparam Params The constructor parameters types.
          * @param ptr A pointer to the memory location where the object will be constructed.
-         * @param ctor_params The values of the parameters that will be passed to the constructor.
+         * @param ctor_params The values of the parameters that will be passed to the
+         constructor.
          *
          * @return The same value as `ptr`.
          */
         template<typename T, typename... Params>
-        T *construct(T *const ptr, Params... ctor_params) {
+        T *construct(T *const ptr, Params &&... ctor_params) {
             return new(ptr) T(ctor_params...);
         }
 

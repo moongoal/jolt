@@ -95,7 +95,7 @@ namespace jolt {
 
             jltassert(m_dc);
 
-            console.info("Created window " + m_name);
+            console.info("Created window \"" + m_name + "\"");
         }
 
         LRESULT CALLBACK Window::WindowProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam) {

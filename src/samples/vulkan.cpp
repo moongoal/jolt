@@ -2,6 +2,8 @@
 
 using namespace jolt;
 
+graphics::VulkanRenderer renderer;
+
 int main(int argc, char **argv) {
     graphics::GraphicsEngineInitializationParams gparams{0};
 
@@ -12,12 +14,12 @@ int main(int argc, char **argv) {
     gparams.app_name = "Vulkan initialization";
     gparams.wnd = &wnd;
 
-    //wnd.show();
+    // wnd.show();
 
-    //for(size_t i = 0; i < 60; i++) { ui::Window::cycle(); }
+    // for(size_t i = 0; i < 60; i++) { ui::Window::cycle(); }
 
-    graphics::initialize(gparams);
+    renderer.initialize(gparams);
 
-    graphics::shutdown();
+    renderer.shutdown();
     shutdown();
 }

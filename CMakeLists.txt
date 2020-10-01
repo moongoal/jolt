@@ -64,7 +64,7 @@ find_package(Vulkan REQUIRED)
 #find_library(VULKAN_LIBRARY vulkan REQUIRED)
 
 target_include_directories(libjolt PUBLIC ${XXHASH_INCLUDE_DIR})
-target_link_libraries(libjolt PRIVATE ${XXHASH_LIBRARY} Vulkan::Vulkan)
+target_link_libraries(libjolt PRIVATE ${XXHASH_LIBRARY} PUBLIC Vulkan::Vulkan)
 
 add_subdirectory(${PATH_TESTS})
 add_subdirectory(${PATH_SAMPLES})
