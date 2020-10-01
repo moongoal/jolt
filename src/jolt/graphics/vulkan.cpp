@@ -55,6 +55,7 @@ static VkDeviceMemory g_ds_image_memory;
 static VkFormat g_ds_image_fmt;
 
 static VkRenderPass g_render_pass;
+static jolt::collections::Array<VkFramebuffer> *g_framebuffers;
 
 using namespace jolt::text;
 
@@ -583,15 +584,15 @@ namespace jolt {
               fmts[0].colorSpace,                          // imageColorSpace
               g_win_surface_caps.currentExtent,            // imageExtent
               1,                                           // imageArrayLayers
-              VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, // imageUsage
-              VK_SHARING_MODE_EXCLUSIVE,           // imageSharingMode
-              1,                                   // queueFamilyIndexCount
-              &g_q_graphics_fam_index,             // pQueueFamilyIndices
-              g_win_surface_caps.currentTransform, // preTransform
-              VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR,   // compositeAlpha
-              chosen_present_mode,                 // presentMode
-              VK_TRUE,                             // clipped
-              VK_NULL_HANDLE,                      // oldSwapchain
+              VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,         // imageUsage
+              VK_SHARING_MODE_EXCLUSIVE,                   // imageSharingMode
+              1,                                           // queueFamilyIndexCount
+              &g_q_graphics_fam_index,                     // pQueueFamilyIndices
+              g_win_surface_caps.currentTransform,         // preTransform
+              VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR,           // compositeAlpha
+              chosen_present_mode,                         // presentMode
+              VK_TRUE,                                     // clipped
+              VK_NULL_HANDLE,                              // oldSwapchain
             };
 
             result = vkCreateSwapchainKHR(g_device, &cinfo, g_allocator, &g_swapchain);
@@ -859,11 +860,41 @@ namespace jolt {
 
             result = vkCreateRenderPass(g_device, &cinfo, g_allocator, &g_render_pass);
             jltassert2(result == VK_SUCCESS, "Unable to create render pass");
+
+            console.debug("Creating framebuffer");
+
+            g_framebuffers = memory::allocate_and_construct<typeof(*g_framebuffers)>(
+              g_swapchain_image_views->get_length());
+
+            for(size_t i = 0; i < g_swapchain_image_views->get_length(); ++i) {
+                VkImageView views[] = {(*g_swapchain_image_views)[i], g_ds_image_view};
+                constexpr const size_t n_views = sizeof(views) / sizeof(VkImageView);
+
+                VkFramebufferCreateInfo cinfo{
+                  VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO, // sType
+                  nullptr,                                   // pNext
+                  0,                                         // flags
+                  g_render_pass,                             // renderPass
+                  n_views,                                   // attachmentCount
+                  views,                                     // pAttachments
+                  g_win_surface_caps.currentExtent.width,    // width
+                  g_win_surface_caps.currentExtent.height,   // height
+                  1                                          // layers
+                };
+
+                result = vkCreateFramebuffer(g_device, &cinfo, g_allocator, &(*g_framebuffers)[i]);
+                jltassert2(result == VK_SUCCESS, "Unable to create framebuffer");
+            }
         }
 
         static void shutdown_render_pass() {
-            console.debug("Destroying render pass");
+            console.debug("Destroying framebuffer");
 
+            for(auto fb : *g_framebuffers) { vkDestroyFramebuffer(g_device, fb, g_allocator); }
+
+            memory::free(g_framebuffers);
+
+            console.debug("Destroying render pass");
             vkDestroyRenderPass(g_device, g_render_pass, g_allocator);
         }
 
