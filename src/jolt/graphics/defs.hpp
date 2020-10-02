@@ -12,6 +12,11 @@
  */
 #define JLT_MAX_SEMAPHORES 16
 
+/**
+ * The optimal number of swapchain images to request.
+ */
+#define JLT_OPTIMAL_SWAPCHAIN_IMAGE_COUNT 3
+
 #include <cstdint>
 #include <limits>
 #include <Windows.h>

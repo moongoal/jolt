@@ -1,7 +1,5 @@
+#include <jolt/util.hpp>
 #include "vulkan.hpp"
-
-// TODO: Programmatically find best match
-#define N_SWAPCHAIN_IMAGES 3
 
 namespace jolt {
     namespace graphics {
@@ -43,13 +41,16 @@ namespace jolt {
             }
 
             uint32_t fam_index = m_renderer.get_graphics_queue_family_index();
+            uint32_t max_imgs = min(
+              static_cast<uint32_t>(JLT_OPTIMAL_SWAPCHAIN_IMAGE_COUNT),
+              m_renderer.get_window()->get_surface_capabilities().maxImageCount);
 
             VkSwapchainCreateInfoKHR cinfo{
               VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR,        // sType
               nullptr,                                            // pNext
               0,                                                  // flags
               window.get_surface(),                               // surface
-              N_SWAPCHAIN_IMAGES,                                 // minImageCount
+              max_imgs + 1,                                       // minImageCount
               window.get_surface_format(),                        // imageFormat
               window.get_surface_colorspace(),                    // imageColorSpace
               window.get_surface_capabilities().currentExtent,    // imageExtent
@@ -65,8 +66,13 @@ namespace jolt {
               VK_NULL_HANDLE,                                     // oldSwapchain
             };
 
-            result = vkCreateSwapchainKHR(
-              m_renderer.get_device(), &cinfo, get_vulkan_allocator(), &m_swapchain);
+            do {
+                cinfo.minImageCount--;
+
+                result = vkCreateSwapchainKHR(
+                  m_renderer.get_device(), &cinfo, get_vulkan_allocator(), &m_swapchain);
+            } while(result == VK_ERROR_INITIALIZATION_FAILED && cinfo.minImageCount > 1);
+
             jltassert2(result == VK_SUCCESS, "Unable to create swapchain");
 
             // Get images

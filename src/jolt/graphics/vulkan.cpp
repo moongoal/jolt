@@ -3,6 +3,7 @@
 #include <jolt/version.hpp>
 #include <jolt/debug.hpp>
 #include <jolt/memory/allocator.hpp>
+#include <jolt/text/stringbuilder.hpp>
 #include "vulkan.hpp"
 
 #ifdef _WIN32
@@ -44,6 +45,46 @@ VkBool32 VKAPI_PTR debug_logger_clbk(
     return VK_FALSE;
 }
 #endif // _DEBUG
+
+template<typename It>
+static void log_phy_devs(It const &begin, It const &end) {
+    // Output available devices to log
+    jolt::console.info("Available physical devices:");
+    StringBuilder sb{5};
+
+    for(auto it = begin; it != end; ++it) {
+        VkPhysicalDeviceProperties2 props{
+          VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2, // sType
+          nullptr,                                        // pNext
+          {0}                                             // properties
+        };
+
+        vkGetPhysicalDeviceProperties2(*it, &props);
+
+        sb.add(" - ");
+        sb.add(props.properties.deviceName);
+        sb.add(" (");
+
+        switch(props.properties.deviceType) {
+        case VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU: sb.add("discrete GPU"); break;
+
+        case VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU: sb.add("integrated GPU"); break;
+
+        case VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU: sb.add("virtual GPU"); break;
+
+        case VK_PHYSICAL_DEVICE_TYPE_CPU: sb.add("CPU"); break;
+
+        case VK_PHYSICAL_DEVICE_TYPE_OTHER: sb.add("other"); break;
+
+        default: sb.add("unknown"); break;
+        }
+
+        sb.add(")");
+
+        jolt::console.info(sb);
+        sb.reset();
+    }
+}
 
 namespace jolt {
     namespace graphics {
@@ -220,6 +261,8 @@ namespace jolt {
             m_phy_feats12.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES;
             m_phy_feats12.pNext = nullptr;
 
+            log_phy_devs(devs.begin(), devs.end());
+
             bool found = false; // Suitable device found?
 
             for(auto it = devs.begin(), end = devs.end(); it != end; ++it) {
@@ -232,7 +275,6 @@ namespace jolt {
 
                     console.info("Chosen physical device " + s(m_phy_props.properties.deviceName));
                     break;
-                    // TODO: Log available physical devices and improve selection algorithm
                 }
             }
 
@@ -247,21 +289,19 @@ namespace jolt {
             VkResult result;
 
             VkPhysicalDeviceVulkan12Features features12 = {};
-
             features12.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES;
-            features12.separateDepthStencilLayouts = VK_TRUE;
 
             VkPhysicalDeviceFeatures2 features{
               VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2, // sType
               &features12,                                  // pNext
               {0}};
 
-            // TODO: These features must be checked for in the physical device selection algorithm
             features.features.logicOp = VK_TRUE;
             features.features.fillModeNonSolid = VK_TRUE;
             features.features.wideLines = VK_TRUE;
             features.features.alphaToOne = VK_TRUE;
-            features.features.multiViewport = VK_TRUE;
+
+            features12.separateDepthStencilLayouts = VK_TRUE;
 
             queue_ci_vector q_cinfo = select_device_queues();
             extension_vector exts = select_required_device_extensions();
