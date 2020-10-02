@@ -402,10 +402,7 @@ namespace jolt {
                 }
 
                 if(!found_transfer && p->queueCount > 0) {
-                    if(
-                      (p->queueFlags & VK_QUEUE_TRANSFER_BIT)
-                      || (p->queueFlags & VK_QUEUE_GRAPHICS_BIT)
-                      || (p->queueFlags & VK_QUEUE_COMPUTE_BIT)) {
+                    if(p->queueFlags & VK_QUEUE_TRANSFER_BIT) {
                         --p->queueCount;
                         m_q_transfer_fam_index = i;
                         found_transfer = true;
@@ -413,11 +410,37 @@ namespace jolt {
                 }
             }
 
+            if(!found_transfer) {
+                console.debug("No transfer-specific queue family found. Looking for anything able "
+                              "to transfer data");
+
+                for(uint32_t i = 0; i < n_families; ++i) {
+                    VkQueueFamilyProperties *const p = fam_props + i;
+
+                    if(!found_transfer && p->queueCount > 0) {
+                        if(
+                          (p->queueFlags & VK_QUEUE_TRANSFER_BIT)
+                          || (p->queueFlags & VK_QUEUE_GRAPHICS_BIT)
+                          || (p->queueFlags & VK_QUEUE_COMPUTE_BIT)) {
+                            --p->queueCount; // Currently not needed but a compute queue will need
+                                             // to be added :)
+                            m_q_transfer_fam_index = i;
+                            found_transfer = true;
+                            break;
+                        }
+                    }
+                }
+            }
+
             jltassert2(found_graphics, "Unable to find a suitable graphics queue");
-            jltassert2(found_transfer, "Unable to find a suitable transfer queue");
 
             m_q_graphics_index = 0;
-            m_q_transfer_index = m_q_graphics_fam_index == m_q_transfer_fam_index ? 1 : 0;
+
+            if(found_transfer) {
+                m_q_transfer_index = m_q_graphics_fam_index == m_q_transfer_fam_index ? 1 : 0;
+            } else { // Only one queue in the system
+                m_q_transfer_index = m_q_graphics_index;
+            }
 
             result.push({
               // Graphics queue
