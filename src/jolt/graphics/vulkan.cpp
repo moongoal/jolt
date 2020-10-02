@@ -455,5 +455,13 @@ namespace jolt {
         }
 
         VkAllocationCallbacks JLTAPI *get_vulkan_allocator() { return g_allocator; }
+
+        VulkanCommandPool VulkanRenderer::create_graphics_command_pool() {
+            return VulkanCommandPool(*this, false, true, m_q_graphics_fam_index);
+        }
+        
+        VulkanCommandPool VulkanRenderer::create_transfer_command_pool() {
+            return VulkanCommandPool(*this, false, true, m_q_transfer_fam_index);
+        }
     } // namespace graphics
 } // namespace jolt

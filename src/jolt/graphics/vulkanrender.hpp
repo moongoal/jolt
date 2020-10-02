@@ -58,6 +58,8 @@ namespace jolt {
             VkRenderPass get_render_pass() const { return m_render_pass; }
 
             fb_array &get_framebuffers() const { return *m_framebuffers; }
+
+            VkFramebuffer get_active_framebuffer() const;
         };
     } // namespace graphics
 } // namespace jolt

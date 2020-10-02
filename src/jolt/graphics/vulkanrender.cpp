@@ -259,5 +259,16 @@ namespace jolt {
             vkFreeMemory(m_renderer.get_device(), m_ds_image_memory, get_vulkan_allocator());
             vkDestroyImage(m_renderer.get_device(), m_ds_image, get_vulkan_allocator());
         }
+
+        VkFramebuffer VulkanRenderTarget::get_active_framebuffer() const {
+            uint32_t active_idx =
+              m_renderer.get_presentation_target()->get_active_swapchain_image_index();
+
+            jltassert2(
+              active_idx != VulkanPresentationTarget::INVALID_SWAPCHAIN_IMAGE,
+              "Invalid swapchain image");
+
+            return (*m_framebuffers)[active_idx];
+        }
     } // namespace graphics
 } // namespace jolt

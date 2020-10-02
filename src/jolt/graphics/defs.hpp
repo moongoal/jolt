@@ -7,4 +7,9 @@
     #error OS not supported.
 #endif // _WIN32
 
+#include <cstdint>
+#include <limits>
+#include <Windows.h>
+#include <vulkan/vulkan.h>
+
 #endif /* JLT_GRAPHICS_DEFS_HPP */

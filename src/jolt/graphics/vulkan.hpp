@@ -14,6 +14,8 @@
 #include "vulkanwindow.hpp"
 #include "vulkanrender.hpp"
 #include "vulkanpresentation.hpp"
+#include "vulkancmd.hpp"
+#include "vulkansynchro.hpp"
 
 namespace jolt {
     namespace graphics {
@@ -120,6 +122,18 @@ namespace jolt {
 
             void initialize(GraphicsEngineInitializationParams const &params);
             void shutdown();
+
+            /**
+             * Create a non-transient, resettable command pool suitable for operating the graphics
+             * queue.
+             */
+            VulkanCommandPool create_graphics_command_pool();
+
+            /**
+             * Create a non-transient, resettable command pool suitable for operating the transfer
+             * queue.
+             */
+            VulkanCommandPool create_transfer_command_pool();
         };
 
         VkAllocationCallbacks JLTAPI *get_vulkan_allocator();

@@ -12,7 +12,7 @@ namespace jolt {
               VK_FORMAT_B8G8R8A8_UNORM,
               VK_IMAGE_TYPE_2D,
               VK_IMAGE_TILING_OPTIMAL,
-              VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
+              VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
               VK_IMAGE_CREATE_2D_ARRAY_COMPATIBLE_BIT,
               &m_phy_dev_image_fmt_props);
 
