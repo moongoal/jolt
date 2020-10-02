@@ -60,11 +60,10 @@ find_library(XXHASH_LIBRARY xxhash REQUIRED)
 # Vulkan
 include(FindVulkan)
 find_package(Vulkan REQUIRED)
-#find_path(VULKAN_INCLUDE_DIR vulkan.h REQUIRED)
-#find_library(VULKAN_LIBRARY vulkan REQUIRED)
+find_package(glm CONFIG REQUIRED)
 
 target_include_directories(libjolt PUBLIC ${XXHASH_INCLUDE_DIR})
-target_link_libraries(libjolt PRIVATE ${XXHASH_LIBRARY} PUBLIC Vulkan::Vulkan)
+target_link_libraries(libjolt PRIVATE ${XXHASH_LIBRARY} PUBLIC Vulkan::Vulkan glm)
 
 add_subdirectory(${PATH_TESTS})
 add_subdirectory(${PATH_SAMPLES})
