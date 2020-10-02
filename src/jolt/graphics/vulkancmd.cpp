@@ -69,6 +69,25 @@ namespace jolt {
             jltassert2(result == VK_SUCCESS, "Unable to allocate command buffers");
         }
 
+        VulkanCommandBuffer VulkanCommandPool::allocate_single_command_buffer(bool const primary) {
+            VkCommandBufferAllocateInfo ainfo{
+              VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO, // sType
+              nullptr,                                        // pNext
+              m_pool,                                         // commandPool
+              primary ? VK_COMMAND_BUFFER_LEVEL_PRIMARY
+                      : VK_COMMAND_BUFFER_LEVEL_SECONDARY, // level
+              1                                            // commandBufferCount
+            };
+            VkCommandBuffer raw_cmd_buffer;
+
+            VkResult result =
+              vkAllocateCommandBuffers(m_renderer.get_device(), &ainfo, &raw_cmd_buffer);
+
+            jltassert2(result == VK_SUCCESS, "Unable to allocate command buffers");
+
+            return VulkanCommandBuffer{m_renderer, raw_cmd_buffer, primary};
+        }
+
         void
         VulkanCommandPool::free_command_buffers(VulkanCommandBuffer *buffers, uint32_t const n) {
             collections::Array<VkCommandBuffer> raw_buffers{n};
@@ -76,6 +95,12 @@ namespace jolt {
             for(size_t i = 0; i < n; ++i) { raw_buffers[i] = buffers[i].get_buffer(); }
 
             vkFreeCommandBuffers(m_renderer.get_device(), m_pool, n, raw_buffers);
+        }
+
+        void VulkanCommandPool::free_single_command_buffer(VulkanCommandBuffer &buffer) {
+            VkCommandBuffer raw_buffer = buffer.get_buffer();
+
+            vkFreeCommandBuffers(m_renderer.get_device(), m_pool, 1, &raw_buffer);
         }
 
         void VulkanCommandBuffer::reset(bool release_resources) {
@@ -118,16 +143,16 @@ namespace jolt {
             jltassert2(result == VK_SUCCESS, "Unable to end recording of the command buffer");
         }
 
-        void VulkanCommandBuffer::cmd_begin_render_pass(bool inline_commands) {
+        void VulkanCommandBuffer::cmd_begin_render_pass(bool const inline_commands) {
             VulkanRenderTarget const &tgt = *m_renderer.get_render_target();
             VkExtent2D const &win_extent =
               m_renderer.get_window()->get_surface_capabilities().currentExtent;
-            VkClearValue clear_values[2] = {};
+            VkClearValue clear_values[2] = {0};
 
-            clear_values[0].color.float32[0] = 1.0f;
-            clear_values[0].color.float32[1] = 0.0f;
+            clear_values[0].color.float32[0] = 0.0f;
+            clear_values[0].color.float32[1] = 1.0f;
             clear_values[0].color.float32[2] = 0.0f;
-            clear_values[0].color.float32[3] = 1.0f;
+            clear_values[0].color.float32[3] = 0.0f;
 
             VkRenderPassBeginInfo binfo{
               VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO, // sType
@@ -154,25 +179,21 @@ namespace jolt {
 
         void VulkanCommandBuffer::cmd_end_render_pass() { vkCmdEndRenderPass(m_buffer); }
 
-        void VulkanCommandBuffer::submit(VulkanFence *const fence) {
+        void VulkanCommandBuffer::submit(VkQueue const queue, VulkanActionSynchro const &synchro) {
             VkSubmitInfo sinfo{
-              VK_STRUCTURE_TYPE_SUBMIT_INFO, // sType
-              nullptr,                       // pNext
-              0,                             // waitSemaphoreCount TODO
-              nullptr,                       // pSemaphores
-              nullptr,                       // pWaitDstStageMask TODO
-              1,                             // commandBufferCount
-              &m_buffer,                     // pCommandBuffers
-              0,                             // signalSemaphoreCount TODO
-              nullptr,                       // pSignalSemaphores
+              VK_STRUCTURE_TYPE_SUBMIT_INFO,  // sType
+              nullptr,                        // pNext
+              synchro.wait_semaphore_count,   // waitSemaphoreCount
+              synchro.wait_semaphores,        // pWaitSemaphores
+              synchro.wait_semaphores_stages, // pWaitDstStageMask
+              1,                              // commandBufferCount
+              &m_buffer,                      // pCommandBuffers
+              synchro.signal_semaphore_count, // signalSemaphoreCount
+              synchro.signal_semaphores,      // pSignalSemaphores
             };
 
-            // TODO graphics queue not always
-            VkResult result = vkQueueSubmit(
-              m_renderer.get_graphics_queue(),
-              1,
-              &sinfo,
-              fence ? fence->get_fence() : VK_NULL_HANDLE);
+            VkResult result = vkQueueSubmit(queue, 1, &sinfo, synchro.fence);
+            jltassert2(result == VK_SUCCESS, "Error while submitting queue");
         }
     } // namespace graphics
 } // namespace jolt

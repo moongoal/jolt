@@ -99,6 +99,8 @@ namespace jolt {
               uint32_t const n,
               uint64_t const timeout = 0,
               bool const all = true);
+
+            operator VkFence() const { return m_fence; }
         };
 
         class JLTAPI VulkanSemaphore {
@@ -109,12 +111,6 @@ namespace jolt {
             void create(VkSemaphoreType const sem_type, uint64_t const value);
 
           public:
-            static constexpr const uint64_t SIGNALED =
-              std::numeric_limits<uint64_t>::max(); /*< A value indicating the semaphore is in the
-                                                    signaled state. */
-            static constexpr const uint64_t NOT_SIGNALED =
-              0; //< A value indicating the semaphore is not in the signaled state.
-
             /**
              * Acquire an externally obtained semaphore.
              *
@@ -206,6 +202,34 @@ namespace jolt {
              * @param value The value to signal.
              */
             void signal(uint64_t value);
+
+            operator VkSemaphore() const { return m_semaphore; }
+        };
+
+        struct VulkanWaitSemaphoreActionSynchro {
+            uint32_t wait_semaphore_count =
+              0; //< Number of elements pointed to by `wait_semaphores`.
+            VkSemaphore wait_semaphores[JLT_MAX_SEMAPHORES]; /*< Semaphores to wait before
+                                                                performing the action. */
+            VkPipelineStageFlags
+              wait_semaphores_stages[JLT_MAX_SEMAPHORES]; /*< A bitmask indicating where each
+                                                             `wait_semaphore` must be awaited at. */
+        };
+
+        struct VulkanSignalSemaphoreActionSynchro {
+            uint32_t signal_semaphore_count =
+              0; //< Number of elements pointed to by `signalSemaphores`.
+            VkSemaphore signal_semaphores[JLT_MAX_SEMAPHORES]; /*< Semaphores to be signeled after
+                                                                  the action has been completed. */
+        };
+
+        struct VulkanSemaphoreActionSynchro :
+          public VulkanWaitSemaphoreActionSynchro,
+          public VulkanSignalSemaphoreActionSynchro {};
+
+        struct VulkanActionSynchro : public VulkanSemaphoreActionSynchro {
+            VkFence fence =
+              VK_NULL_HANDLE; //< The fence to signal after the action has been completed.
         };
     } // namespace graphics
 } // namespace jolt

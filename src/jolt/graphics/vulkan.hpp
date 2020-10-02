@@ -127,13 +127,18 @@ namespace jolt {
              * Create a non-transient, resettable command pool suitable for operating the graphics
              * queue.
              */
-            VulkanCommandPool create_graphics_command_pool();
+            VulkanCommandPool create_graphics_command_pool(
+              bool const transient = false, bool const allow_reset = true);
 
             /**
              * Create a non-transient, resettable command pool suitable for operating the transfer
              * queue.
              */
-            VulkanCommandPool create_transfer_command_pool();
+            VulkanCommandPool create_transfer_command_pool(
+              bool const transient = false, bool const allow_reset = true);
+
+            void wait_graphics_queue_idle() const;
+            void wait_transfer_queue_idle() const;
         };
 
         VkAllocationCallbacks JLTAPI *get_vulkan_allocator();

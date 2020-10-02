@@ -7,6 +7,11 @@
     #error OS not supported.
 #endif // _WIN32
 
+/**
+ * The maximum number of semaphores that can be operated on simultaneously.
+ */
+#define JLT_MAX_SEMAPHORES 16
+
 #include <cstdint>
 #include <limits>
 #include <Windows.h>

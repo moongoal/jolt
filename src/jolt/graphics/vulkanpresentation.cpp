@@ -137,31 +137,34 @@ namespace jolt {
             vkDestroySwapchainKHR(m_renderer.get_device(), m_swapchain, get_vulkan_allocator());
         }
 
-        void VulkanPresentationTarget::acquire_next_image(VulkanFence *fence) {
+        void VulkanPresentationTarget::acquire_next_image(
+          VulkanSemaphore const *const semaphore, VulkanFence const *const fence) {
             VkResult result;
 
             result = vkAcquireNextImageKHR(
               m_renderer.get_device(),
               m_swapchain,
               m_acquire_timeout,
-              nullptr, // TODO
+              semaphore ? semaphore->get_semaphore() : VK_NULL_HANDLE,
               fence ? fence->get_fence() : VK_NULL_HANDLE,
               &m_active_swapchain_image);
 
             jltassert2(result == VK_SUCCESS, "Unable to acquire next swapchain image");
         }
 
-        void VulkanPresentationTarget::present_active_image() {
+        void VulkanPresentationTarget::present_active_image(
+          VulkanWaitSemaphoreActionSynchro const &synchro) {
             VkPresentInfoKHR pinfo{
               VK_STRUCTURE_TYPE_PRESENT_INFO_KHR, // sType
               nullptr,                            // pNext
-              0,                                  // semaphoreCount
-              nullptr,                            // pWaitSemaphores
+              synchro.wait_semaphore_count,       // semaphoreCount
+              synchro.wait_semaphores,            // pWaitSemaphores
               1,                                  // swapchainCount
               &m_swapchain,                       // pSwapchains
               &m_active_swapchain_image,          // pImageIndices
               nullptr                             // pResults
             };
+
             VkResult result = vkQueuePresentKHR(m_renderer.get_graphics_queue(), &pinfo);
             jltassert2(result == VK_SUCCESS, "Unable to present active swapchain image");
         }

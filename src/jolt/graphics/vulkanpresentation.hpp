@@ -13,6 +13,8 @@ namespace jolt {
         class VulkanRenderer;
         class VulkanWindow;
         class VulkanFence;
+        class VulkanSemaphore;
+        struct VulkanWaitSemaphoreActionSynchro;
 
         class JLTAPI VulkanPresentationTarget {
           public:
@@ -50,8 +52,10 @@ namespace jolt {
             void set_acquire_timeout(uint64_t timeout) { m_acquire_timeout = timeout; }
             uint32_t get_active_swapchain_image_index() const { return m_active_swapchain_image; }
 
-            void acquire_next_image(VulkanFence *fence = nullptr);
-            void present_active_image();
+            void acquire_next_image(
+              VulkanSemaphore const *const semaphore = nullptr,
+              VulkanFence const *const fence = nullptr);
+            void present_active_image(VulkanWaitSemaphoreActionSynchro const &synchro);
         };
     } // namespace graphics
 } // namespace jolt

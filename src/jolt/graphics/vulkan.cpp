@@ -424,6 +424,9 @@ namespace jolt {
         void VulkanRenderer::shutdown() {
             console.info("Shutting down Vulkan renderer");
 
+            wait_graphics_queue_idle();
+            wait_transfer_queue_idle();
+
             if(m_render_target) {
                 jltfree(m_render_target);
                 m_render_target = nullptr;
@@ -456,12 +459,24 @@ namespace jolt {
 
         VkAllocationCallbacks JLTAPI *get_vulkan_allocator() { return g_allocator; }
 
-        VulkanCommandPool VulkanRenderer::create_graphics_command_pool() {
-            return VulkanCommandPool(*this, false, true, m_q_graphics_fam_index);
+        VulkanCommandPool
+        VulkanRenderer::create_graphics_command_pool(bool const transient, bool const allow_reset) {
+            return VulkanCommandPool{*this, transient, allow_reset, m_q_graphics_fam_index};
         }
-        
-        VulkanCommandPool VulkanRenderer::create_transfer_command_pool() {
-            return VulkanCommandPool(*this, false, true, m_q_transfer_fam_index);
+
+        VulkanCommandPool
+        VulkanRenderer::create_transfer_command_pool(bool const transient, bool const allow_reset) {
+            return VulkanCommandPool{*this, transient, allow_reset, m_q_transfer_fam_index};
+        }
+
+        void VulkanRenderer::wait_graphics_queue_idle() const {
+            VkResult result = vkQueueWaitIdle(m_q_graphics);
+            jltassert2(result == VK_SUCCESS, "Error while waiting for graphics queue to be idle");
+        }
+
+        void VulkanRenderer::wait_transfer_queue_idle() const {
+            VkResult result = vkQueueWaitIdle(m_q_transfer);
+            jltassert2(result == VK_SUCCESS, "Error while waiting for transfer queue to be idle");
         }
     } // namespace graphics
 } // namespace jolt

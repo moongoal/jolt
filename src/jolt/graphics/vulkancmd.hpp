@@ -13,6 +13,8 @@ namespace jolt {
         class VulkanRenderer;
         class VulkanCommandBuffer;
         class VulkanFence;
+        class VulkanSemaphore;
+        struct VulkanActionSynchro;
 
         /**
          * Command buffer record params.
@@ -97,7 +99,22 @@ namespace jolt {
             void allocate_command_buffers(
               VulkanCommandBuffer *out_buffers, uint32_t const n, bool const primary);
 
+            /**
+             * Allocate new command buffer.
+             *
+             * @param primary True if the allocated command buffer will be primary, false if
+             * it'll be secondary.
+             *
+             * @return The newly allocated command buffer.
+             *
+             * @remarks Primary command buffers are directly executable, secondary command buffers
+             * can only be executed by a primary command buffer.
+             */
+            VulkanCommandBuffer allocate_single_command_buffer(bool const primary);
+
             void free_command_buffers(VulkanCommandBuffer *buffers, uint32_t const n);
+
+            void free_single_command_buffer(VulkanCommandBuffer &buffer);
         };
 
         class JLTAPI VulkanCommandBuffer {
@@ -140,10 +157,10 @@ namespace jolt {
               VulkanCommandBufferRecordParams *const params = nullptr);
             void end_record();
 
-            void cmd_begin_render_pass(bool inline_commands);
+            void cmd_begin_render_pass(bool const inline_commands);
             void cmd_end_render_pass();
 
-            void submit(VulkanFence * const fence = nullptr);
+            void submit(VkQueue const queue, VulkanActionSynchro const &synchro);
         };
     } // namespace graphics
 } // namespace jolt
