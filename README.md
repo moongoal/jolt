@@ -10,6 +10,7 @@ The following packages must be installed before running the configuration step:
 
 - Vulkan SDK >= 1.2
 - xxHash (static library) >= 0.7.0
+- GLM 0.9.9.8
 
 
 ## Configuring the development environment
