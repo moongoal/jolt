@@ -47,7 +47,10 @@ target_compile_features(
 )
 
 target_compile_definitions(libjolt
-    PRIVATE JLT_INTERNAL
+    PRIVATE
+        JLT_INTERNAL
+        GLM_FORCE_UNRESTRICTED_GENTYPE
+        GLM_FORECE_DEPTH_ZERO_TO_ONE
     PUBLIC NOMINMAX
 )
 
