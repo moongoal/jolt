@@ -7,7 +7,7 @@ BinPackParameters: false
 AllowAllArgumentsOnNextLine: true
 AllowAllConstructorInitializersOnNextLine: false
 AllowShortBlocksOnASingleLine: Always
-AllowShortCaseLabelsOnASingleLine: true
+AllowShortCaseLabelsOnASingleLine: false
 AllowShortFunctionsOnASingleLine: All
 AllowShortLambdasOnASingleLine: All
 AllowShortLoopsOnASingleLine: true
@@ -45,3 +45,4 @@ AlignAfterOpenBracket: AlwaysBreak
 BreakBeforeBinaryOperators: NonAssignment
 ContinuationIndentWidth: 2
 ConstructorInitializerIndentWidth: 2
+IndentCaseLabels: true

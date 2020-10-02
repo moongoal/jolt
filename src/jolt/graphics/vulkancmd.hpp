@@ -136,6 +136,7 @@ namespace jolt {
 
             VulkanCommandBuffer(VulkanCommandBuffer const &other) = delete;
 
+            VulkanRenderer const &get_renderer() const { return m_renderer; }
             VkCommandBuffer get_buffer() const { return m_buffer; }
 
             /**

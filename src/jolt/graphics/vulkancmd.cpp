@@ -193,7 +193,7 @@ namespace jolt {
             };
 
             VkResult result = vkQueueSubmit(queue, 1, &sinfo, synchro.fence);
-            jltassert2(result == VK_SUCCESS, "Error while submitting queue");
+            jltvkcheck(result, "Error while submitting queue");
         }
     } // namespace graphics
 } // namespace jolt

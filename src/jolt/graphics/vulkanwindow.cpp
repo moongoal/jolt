@@ -27,7 +27,7 @@ namespace jolt {
             result = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(
               m_renderer.get_phy_device(), m_surface, &m_surface_caps);
 
-            jltassert2(result == VK_SUCCESS, "Unable to get image capabilities");
+            jltvkcheck(result, "Unable to get image capabilities");
         }
 
         void VulkanWindow::initialize() {
@@ -60,17 +60,17 @@ namespace jolt {
               m_surface,
               &surface_support);
 
-            jltassert2(result == VK_SUCCESS, "Unable to query for surface support");
+            jltvkcheck(result, "Unable to query for surface support");
             jltassert2(surface_support == VK_TRUE, "Current device doesn't support window");
 
             result = vkGetPhysicalDeviceSurfaceFormatsKHR(
               m_renderer.get_phy_device(), m_surface, &n_fmts, nullptr);
-            jltassert2(result == VK_SUCCESS, "Unable to get available device surface formats");
+            jltvkcheck(result, "Unable to get available device surface formats");
 
             collections::Array<VkSurfaceFormatKHR> fmts{n_fmts};
             result = vkGetPhysicalDeviceSurfaceFormatsKHR(
               m_renderer.get_phy_device(), m_surface, &n_fmts, fmts);
-            jltassert2(result == VK_SUCCESS, "Unable to get available device surface formats");
+            jltvkcheck(result, "Unable to get available device surface formats");
 
             m_surface_fmt = fmts[0].format;
             m_surface_colorspace = fmts[0].colorSpace;

@@ -1,9 +1,15 @@
+/*
+ * This example shows how to use the low-level Vulkan renderer API to initialize an application and
+ * run its loop.
+ */
 #include <jolt/jolt.hpp>
+
+#define APP_TITLE "Vulkan initialization"
 
 using namespace jolt;
 using namespace jolt::graphics;
 
-static constexpr const uint64_t ms = 1'000'000;
+static constexpr const uint64_t ns_to_ms = 1'000'000;
 VulkanRenderer renderer;
 
 void main_loop(ui::Window const &wnd);
@@ -13,15 +19,23 @@ int main(int argc, char **argv) {
 
     initialize();
     console.set_output_stream(&io::standard_error_stream);
-    ui::Window wnd{"Vulkan initialization"};
+    ui::Window wnd{APP_TITLE};
 
-    gparams.app_name = "Vulkan initialization";
+    gparams.app_name = APP_TITLE;
     gparams.wnd = &wnd;
 
     renderer.initialize(gparams);
-
     wnd.show();
-    main_loop(wnd);
+
+    while(true) {
+        main_loop(wnd);
+
+        if(renderer.is_lost()) {
+            renderer.reset(gparams);
+        } else {
+            break;
+        }
+    }
 
     renderer.shutdown();
     shutdown();
@@ -53,10 +67,15 @@ void main_loop(ui::Window const &wnd) {
 
     // Command execution
     do {
+        if(wnd.is_minimized()) {
+            jolt::threading::sleep(50);
+            continue;
+        }
+
         VulkanCommandBuffer cmd = cmd_pool.allocate_single_command_buffer(true);
         renderer.get_presentation_target()->acquire_next_image(&sem_acquire, &fence_acquire);
 
-        fence_acquire.wait(500 * ms);
+        fence_acquire.wait(500 * ns_to_ms);
         cmd.begin_record();
 
         cmd.cmd_begin_render_pass(true);
@@ -67,10 +86,10 @@ void main_loop(ui::Window const &wnd) {
         cmd.submit(renderer.get_graphics_queue(), submit_synchro);
 
         renderer.get_presentation_target()->present_active_image(present_synchro);
-        fence_submit.wait(500 * ms);
+        fence_submit.wait(500 * ns_to_ms);
 
         fence_acquire.reset();
         fence_submit.reset();
         cmd_pool.free_single_command_buffer(cmd);
-    } while(wnd.cycle());
+    } while(wnd.cycle() && !renderer.is_lost());
 }

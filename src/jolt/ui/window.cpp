@@ -108,51 +108,52 @@ namespace jolt {
 #endif // JLT_WITH_MULTI_WINDOWS
 
             switch(msg) {
-            case WM_CREATE: {
-                auto screate = reinterpret_cast<LPCREATESTRUCTA>(lparam);
-                auto window = reinterpret_cast<jolt::ui::Window *>(screate->lpCreateParams);
+                case WM_CREATE: {
+                    auto screate = reinterpret_cast<LPCREATESTRUCTA>(lparam);
+                    auto window = reinterpret_cast<jolt::ui::Window *>(screate->lpCreateParams);
 
 #ifdef JLT_WITH_MULTI_WINDOWS
-                g_windows->add(wnd, window);
+                    g_windows->add(wnd, window);
 #else  // JLT_WITH_MULTI_WINDOWS
-                g_main_window = window;
+                    g_main_window = window;
 #endif // JLT_WITH_MULTI_WINDOWS
-            }
-                return 0;
-
-            case WM_MOVE: {
-                jolt::ui::Window *w = CUR_WINDOW;
-
-                w->m_location.m_x = static_cast<int>(LOWORD(lparam));
-                w->m_location.m_y = static_cast<int>(HIWORD(lparam));
-            }
-                return 0;
-
-            case WM_SIZE: {
-                jolt::ui::Window *w = CUR_WINDOW;
-
-                w->m_size.m_w = static_cast<int>(LOWORD(lparam));
-                w->m_size.m_h = static_cast<int>(HIWORD(lparam));
-            }
-                return 0;
-
-            case WM_DESTROY: {
-                jolt::ui::Window *w = CUR_WINDOW;
-
-                w->m_handle = NULL;
-#ifdef JLT_WITH_MULTI_WINDOWS
-                g_windows->remove(wnd);
-
-                if(g_windows->get_length() == 0) {
-                    PostQuitMessage(0);
                 }
-#else  // JLT_WITH_MULTI_WINDOWS
-                PostQuitMessage(0);
-#endif // JLT_WITH_MULTI_WINDOWS
-            }
-                return 0;
+                    return 0;
 
-            default: return WND_DEF();
+                case WM_MOVE: {
+                    jolt::ui::Window *w = CUR_WINDOW;
+
+                    w->m_location.m_x = static_cast<int>(LOWORD(lparam));
+                    w->m_location.m_y = static_cast<int>(HIWORD(lparam));
+                }
+                    return 0;
+
+                case WM_SIZE: {
+                    jolt::ui::Window *w = CUR_WINDOW;
+
+                    w->m_size.m_w = static_cast<int>(LOWORD(lparam));
+                    w->m_size.m_h = static_cast<int>(HIWORD(lparam));
+                }
+                    return 0;
+
+                case WM_DESTROY: {
+                    jolt::ui::Window *w = CUR_WINDOW;
+
+                    w->m_handle = NULL;
+#ifdef JLT_WITH_MULTI_WINDOWS
+                    g_windows->remove(wnd);
+
+                    if(g_windows->get_length() == 0) {
+                        PostQuitMessage(0);
+                    }
+#else  // JLT_WITH_MULTI_WINDOWS
+                    PostQuitMessage(0);
+#endif // JLT_WITH_MULTI_WINDOWS
+                }
+                    return 0;
+
+                default:
+                    return WND_DEF();
             }
 
             jltassert(false);
@@ -178,6 +179,8 @@ namespace jolt {
 
             return true;
         }
+
+        bool Window::is_minimized() const { return IsIconic(m_handle); }
 
         void initialize() {
 #ifdef JLT_WITH_MULTI_WINDOWS

@@ -73,7 +73,7 @@ namespace jolt {
                   m_renderer.get_device(), &cinfo, get_vulkan_allocator(), &m_swapchain);
             } while(result == VK_ERROR_INITIALIZATION_FAILED && cinfo.minImageCount > 1);
 
-            jltassert2(result == VK_SUCCESS, "Unable to create swapchain");
+            jltvkcheck(result, "Unable to create swapchain");
 
             // Get images
             uint32_t n_images;
@@ -155,7 +155,7 @@ namespace jolt {
               fence ? fence->get_fence() : VK_NULL_HANDLE,
               &m_active_swapchain_image);
 
-            jltassert2(result == VK_SUCCESS, "Unable to acquire next swapchain image");
+            jltvkcheck(result, "Unable to acquire next swapchain image");
         }
 
         void VulkanPresentationTarget::present_active_image(
@@ -172,7 +172,7 @@ namespace jolt {
             };
 
             VkResult result = vkQueuePresentKHR(m_renderer.get_graphics_queue(), &pinfo);
-            jltassert2(result == VK_SUCCESS, "Unable to present active swapchain image");
+            jltvkcheck(result, "Unable to present active swapchain image");
         }
     } // namespace graphics
 } // namespace jolt

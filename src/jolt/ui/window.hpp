@@ -17,7 +17,7 @@ namespace jolt {
             text::String m_name; //< The window name and title.
             HWND m_handle;       //< The window handle.
             Rect m_size;         //< Window size.
-            Point m_location;    //< Window location
+            Point m_location;    //< Window location.
 
             /**
              * Create the window.
@@ -61,6 +61,11 @@ namespace jolt {
              * Close and destroy the window.
              */
             void close();
+
+            /**
+             * Returns a boolean value stating whether the window is minimized.
+             */
+            bool is_minimized() const;
 
             static LRESULT CALLBACK WindowProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam);
 

@@ -55,6 +55,9 @@ namespace jolt {
             VulkanRenderTarget *m_render_target = nullptr;
             VulkanPresentationTarget *m_presentation_target = nullptr;
 
+            mutable bool m_lost = false;
+
+            void initialize_phase2(GraphicsEngineInitializationParams const &params);
             void initialize_instance(GraphicsEngineInitializationParams const &params);
             void select_physical_device();
             void initialize_device();
@@ -64,10 +67,7 @@ namespace jolt {
             extension_vector select_required_instance_extensions();
             extension_vector select_required_device_extensions();
 
-            /**
-             * To be called at initialization time or when the logical device is reported as lost.
-             */
-            void reset_device(GraphicsEngineInitializationParams const &params);
+            void shutdown_phase2();
 
           public:
             VulkanRenderer() = default;
@@ -135,9 +135,26 @@ namespace jolt {
 
             void wait_graphics_queue_idle() const;
             void wait_transfer_queue_idle() const;
+
+            /**
+             * Return a value stating whether the renderer is lost.
+             */
+            bool is_lost() const { return m_lost; }
+
+            /**
+             * Signal that the renderer is lost and needs to be reset.
+             */
+            void signal_lost() const;
+
+            /**
+             * To be called at initialization time or when the logical device is reported as lost.
+             */
+            void reset(GraphicsEngineInitializationParams const &params);
         };
 
         VkAllocationCallbacks JLTAPI *get_vulkan_allocator();
+        void JLTAPI check_vulkan_result(
+          VulkanRenderer const &renderer, VkResult const result, text::String const &errmsg);
     } // namespace graphics
 } // namespace jolt
 

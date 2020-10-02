@@ -83,7 +83,7 @@ namespace jolt {
 
             VkResult result =
               vkGetSemaphoreCounterValue(m_renderer.get_device(), m_semaphore, &value);
-            jltassert2(result == VK_SUCCESS, "Unable to get semaphore counter value");
+            jltvkcheck(result, "Unable to get semaphore counter value");
 
             return value;
         }
@@ -102,7 +102,7 @@ namespace jolt {
             };
 
             VkResult result = vkWaitSemaphores(m_renderer.get_device(), &winfo, timeout);
-            jltassert2(result == VK_SUCCESS, "Error waiting for semaphore");
+            jltvkcheck(result, "Error waiting for semaphore");
 
             return counter;
         }
@@ -132,7 +132,13 @@ namespace jolt {
 
             VkResult result =
               vkWaitSemaphores(semaphores->get_renderer().get_device(), &winfo, timeout);
-            jltassert2(result == VK_SUCCESS, "Error waiting for multiple semaphores");
+
+            switch(result) {
+            case VK_SUCCESS: break;
+            case VK_ERROR_SURFACE_LOST_KHR:
+            case VK_ERROR_DEVICE_LOST: semaphores->get_renderer().signal_lost(); break;
+            default: jolt ::console.err("Error waiting for multiple semaphores"); abort();
+            }
         }
 
         void VulkanSemaphore::create(VkSemaphoreType const sem_type, uint64_t const value) {

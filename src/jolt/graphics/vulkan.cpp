@@ -1,3 +1,4 @@
+#define JLT_VULKAN_CPP
 #include <cstdlib>
 #include <cstring>
 #include <jolt/version.hpp>
@@ -31,13 +32,21 @@ VkBool32 VKAPI_PTR debug_logger_clbk(
     #define log(type)                                                                              \
         jolt::console.type(s(pCallbackData->pMessageIdName) + " - " + s(pCallbackData->pMessage))
 
-    case VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT: log(info); break;
+        case VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT:
+            log(info);
+            break;
 
-    case VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT: log(info); break;
+        case VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT:
+            log(info);
+            break;
 
-    case VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT: log(info); break;
+        case VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT:
+            log(info);
+            break;
 
-    default: log(debug); break;
+        default:
+            log(debug);
+            break;
 
     #undef log
     }
@@ -66,17 +75,29 @@ static void log_phy_devs(It const &begin, It const &end) {
         sb.add(" (");
 
         switch(props.properties.deviceType) {
-        case VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU: sb.add("discrete GPU"); break;
+            case VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU:
+                sb.add("discrete GPU");
+                break;
 
-        case VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU: sb.add("integrated GPU"); break;
+            case VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU:
+                sb.add("integrated GPU");
+                break;
 
-        case VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU: sb.add("virtual GPU"); break;
+            case VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU:
+                sb.add("virtual GPU");
+                break;
 
-        case VK_PHYSICAL_DEVICE_TYPE_CPU: sb.add("CPU"); break;
+            case VK_PHYSICAL_DEVICE_TYPE_CPU:
+                sb.add("CPU");
+                break;
 
-        case VK_PHYSICAL_DEVICE_TYPE_OTHER: sb.add("other"); break;
+            case VK_PHYSICAL_DEVICE_TYPE_OTHER:
+                sb.add("other");
+                break;
 
-        default: sb.add("unknown"); break;
+            default:
+                sb.add("unknown");
+                break;
         }
 
         sb.add(")");
@@ -232,7 +253,7 @@ namespace jolt {
 
             VkResult result = vkCreateInstance(&icf, g_allocator, &m_instance);
 
-            jltassert(result == VK_SUCCESS);
+            jltassert2(result == VK_SUCCESS, "Unable to create Vulkan instance");
         }
 
         void VulkanRenderer::select_physical_device() {
@@ -322,13 +343,17 @@ namespace jolt {
             result = vkCreateDevice(m_phy_device, &cinfo, g_allocator, &m_device);
 
             switch(result) {
-            case VK_ERROR_DEVICE_LOST: console.err("Physical device lost"); abort();
+                case VK_ERROR_DEVICE_LOST:
+                    console.err("Physical device lost");
+                    abort();
 
-            case VK_ERROR_FEATURE_NOT_PRESENT:
-                console.err("Unable to create device - required feature not present");
-                abort();
+                case VK_ERROR_FEATURE_NOT_PRESENT:
+                    console.err("Unable to create device - required feature not present");
+                    abort();
 
-            default: jltassert2(result == VK_SUCCESS, "Unable to create device"); break;
+                default:
+                    jltassert2(result == VK_SUCCESS, "Unable to create device");
+                    break;
             }
 
             vkGetDeviceQueue(m_device, m_q_graphics_fam_index, m_q_graphics_index, &m_q_graphics);
@@ -468,8 +493,15 @@ namespace jolt {
             return result;
         }
 
-        void VulkanRenderer::reset_device(GraphicsEngineInitializationParams const &params) {
+        void VulkanRenderer::reset(GraphicsEngineInitializationParams const &params) {
+            shutdown_phase2();
+            initialize_phase2(params);
+        }
+
+        void VulkanRenderer::initialize_phase2(GraphicsEngineInitializationParams const &params) {
             initialize_device();
+            m_lost = false;
+
             initialize_debug_logger();
 
             m_window = jltnew(VulkanWindow, *this, *params.wnd);
@@ -484,12 +516,10 @@ namespace jolt {
 
             initialize_instance(params);
             select_physical_device();
-            reset_device(params);
+            initialize_phase2(params);
         }
 
-        void VulkanRenderer::shutdown() {
-            console.info("Shutting down Vulkan renderer");
-
+        void VulkanRenderer::shutdown_phase2() {
             wait_graphics_queue_idle();
             wait_transfer_queue_idle();
 
@@ -518,6 +548,12 @@ namespace jolt {
 
             console.debug("Destroying Vulkan device");
             vkDestroyDevice(m_device, g_allocator);
+        }
+
+        void VulkanRenderer::shutdown() {
+            console.info("Shutting down Vulkan renderer");
+
+            shutdown_phase2();
 
             console.debug("Destroying Vulkan instance");
             vkDestroyInstance(m_instance, g_allocator);
@@ -537,12 +573,47 @@ namespace jolt {
 
         void VulkanRenderer::wait_graphics_queue_idle() const {
             VkResult result = vkQueueWaitIdle(m_q_graphics);
-            jltassert2(result == VK_SUCCESS, "Error while waiting for graphics queue to be idle");
+            jltvkcheck(result, "Error while waiting for graphics queue to be idle");
         }
 
         void VulkanRenderer::wait_transfer_queue_idle() const {
             VkResult result = vkQueueWaitIdle(m_q_transfer);
-            jltassert2(result == VK_SUCCESS, "Error while waiting for transfer queue to be idle");
+            jltvkcheck(result, "Error while waiting for transfer queue to be idle");
+        }
+
+        void VulkanRenderer::signal_lost() const { m_lost = true; }
+
+        void check_vulkan_result(
+          VulkanRenderer const &renderer, VkResult const result, text::String const &errmsg) {
+            switch(result) {
+                case VK_SUCCESS:
+                    return;
+
+                case VK_SUBOPTIMAL_KHR:
+                    return;
+
+                case VK_ERROR_FULL_SCREEN_EXCLUSIVE_MODE_LOST_EXT:
+                    console.warn("Exclusive mode lost");
+                    break;
+
+                case VK_ERROR_OUT_OF_DATE_KHR:
+                    console.warn("Extent out of date");
+                    break;
+
+                case VK_ERROR_SURFACE_LOST_KHR:
+                    console.warn("Surface lost");
+                    break;
+
+                case VK_ERROR_DEVICE_LOST:
+                    console.warn("Device lost");
+                    break;
+
+                default:
+                    jolt::console.err(errmsg);
+                    abort();
+            }
+
+            renderer.signal_lost();
         }
     } // namespace graphics
 } // namespace jolt
