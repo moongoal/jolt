@@ -3,9 +3,6 @@
 
 #include "defs.hpp"
 
-#include <Windows.h>
-#include <vulkan/vulkan.h>
-#include <jolt/util.hpp>
 #include <jolt/ui/window.hpp>
 
 namespace jolt {

@@ -3,11 +3,6 @@
 
 #include "defs.hpp"
 
-#include <cstdint>
-#include <limits>
-#include <Windows.h>
-#include <vulkan/vulkan.h>
-#include <jolt/util.hpp>
 #include <jolt/ui/window.hpp>
 #include <jolt/collections/vector.hpp>
 #include <jolt/collections/array.hpp>
@@ -16,6 +11,7 @@
 #include "vulkanpresentation.hpp"
 #include "vulkancmd.hpp"
 #include "vulkansynchro.hpp"
+#include "vulkanmemory.hpp"
 
 namespace jolt {
     namespace graphics {

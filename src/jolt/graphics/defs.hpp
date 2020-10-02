@@ -3,6 +3,8 @@
 
 #ifdef _WIN32
     #define VK_USE_PLATFORM_WIN32_KHR
+
+    #include <Windows.h>
 #else
     #error OS not supported.
 #endif // _WIN32
@@ -19,7 +21,9 @@
 
 #include <cstdint>
 #include <limits>
-#include <Windows.h>
 #include <vulkan/vulkan.h>
+#include <jolt/util.hpp>
+
+#define JLT_VULKAN_INVALID32 static_cast<uint32_t>(std::numeric_limits<uint32_t>::max())
 
 #endif /* JLT_GRAPHICS_DEFS_HPP */
