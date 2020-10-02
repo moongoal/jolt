@@ -394,7 +394,7 @@ namespace jolt {
                 VkQueueFamilyProperties *const p = fam_props + i;
 
                 if(!found_graphics && p->queueCount > 0) {
-                    if(p->queueFlags &= VK_QUEUE_GRAPHICS_BIT) {
+                    if((p->queueFlags & VK_QUEUE_GRAPHICS_BIT)) {
                         --p->queueCount;
                         m_q_graphics_fam_index = i;
                         found_graphics = true;
@@ -402,7 +402,10 @@ namespace jolt {
                 }
 
                 if(!found_transfer && p->queueCount > 0) {
-                    if(p->queueFlags &= VK_QUEUE_TRANSFER_BIT) {
+                    if(
+                      (p->queueFlags & VK_QUEUE_TRANSFER_BIT)
+                      || (p->queueFlags & VK_QUEUE_GRAPHICS_BIT)
+                      || (p->queueFlags & VK_QUEUE_COMPUTE_BIT)) {
                         --p->queueCount;
                         m_q_transfer_fam_index = i;
                         found_transfer = true;
