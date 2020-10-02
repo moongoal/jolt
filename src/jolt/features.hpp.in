@@ -3,5 +3,6 @@
 
 #cmakedefine JLT_WITH_MEM_CHECKS
 #cmakedefine JLT_WITH_DEBUG_LOGGING
+#cmakedefine JLT_WITH_MULTI_WINDOWS
 
 #endif // JLT_FEATURES_HPP

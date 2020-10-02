@@ -14,7 +14,12 @@ static constexpr const char MAIN_CLASS_NAME[] = "JoltMainWindow";
 
 static HINSTANCE g_hinstance = GetModuleHandleA(NULL);
 static ATOM g_window_class = NULL;
+
+#ifdef JLT_WITH_MULTI_WINDOWS
 static window_map *g_windows = nullptr;
+#else  // JLT_WITH_MULTI_WINDOWS
+static ui::Window *g_main_window = nullptr;
+#endif // JLT_WITH_MULTI_WINDOWS
 
 static void register_window_class() {
     WNDCLASSEXA cls = {
@@ -96,16 +101,27 @@ namespace jolt {
         LRESULT CALLBACK Window::WindowProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam) {
 #define WND_DEF() DefWindowProcA(wnd, msg, wparam, lparam)
 
+#ifdef JLT_WITH_MULTI_WINDOWS
+    #define CUR_WINDOW (*g_windows->get_value(wnd))
+#else // JLT_WITH_MULTI_WINDOWS
+    #define CUR_WINDOW g_main_window
+#endif // JLT_WITH_MULTI_WINDOWS
+
             switch(msg) {
             case WM_CREATE: {
                 auto screate = reinterpret_cast<LPCREATESTRUCTA>(lparam);
+                auto window = reinterpret_cast<jolt::ui::Window *>(screate->lpCreateParams);
 
-                g_windows->add(wnd, reinterpret_cast<jolt::ui::Window *>(screate->lpCreateParams));
+#ifdef JLT_WITH_MULTI_WINDOWS
+                g_windows->add(wnd, window);
+#else  // JLT_WITH_MULTI_WINDOWS
+                g_main_window = window;
+#endif // JLT_WITH_MULTI_WINDOWS
             }
                 return 0;
 
             case WM_MOVE: {
-                jolt::ui::Window *w = *g_windows->get_value(wnd);
+                jolt::ui::Window *w = CUR_WINDOW;
 
                 w->m_location.m_x = static_cast<int>(LOWORD(lparam));
                 w->m_location.m_y = static_cast<int>(HIWORD(lparam));
@@ -113,7 +129,7 @@ namespace jolt {
                 return 0;
 
             case WM_SIZE: {
-                jolt::ui::Window *w = *g_windows->get_value(wnd);
+                jolt::ui::Window *w = CUR_WINDOW;
 
                 w->m_size.m_w = static_cast<int>(LOWORD(lparam));
                 w->m_size.m_h = static_cast<int>(HIWORD(lparam));
@@ -121,14 +137,18 @@ namespace jolt {
                 return 0;
 
             case WM_DESTROY: {
-                jolt::ui::Window *w = *g_windows->get_value(wnd);
+                jolt::ui::Window *w = CUR_WINDOW;
 
                 w->m_handle = NULL;
+#ifdef JLT_WITH_MULTI_WINDOWS
                 g_windows->remove(wnd);
 
                 if(g_windows->get_length() == 0) {
                     PostQuitMessage(0);
                 }
+#else  // JLT_WITH_MULTI_WINDOWS
+                PostQuitMessage(0);
+#endif // JLT_WITH_MULTI_WINDOWS
             }
                 return 0;
 
@@ -137,8 +157,9 @@ namespace jolt {
 
             jltassert(false);
 
+#undef CUR_WINDOW
 #undef WND_DEF
-        }
+        } // namespace ui
 
         bool Window::cycle() {
             MSG msg;
@@ -159,8 +180,10 @@ namespace jolt {
         }
 
         void initialize() {
+#ifdef JLT_WITH_MULTI_WINDOWS
             g_windows = jolt::memory::allocate<window_map>(1, jolt::memory::ALLOC_PERSIST);
             jolt::memory::construct(g_windows, 2);
+#endif // JLT_WITH_MULTI_WINDOWS
 
             register_window_class();
         }
@@ -168,7 +191,9 @@ namespace jolt {
         void shutdown() {
             unregister_window_class();
 
+#ifdef JLT_WITH_MULTI_WINDOWS
             jolt::memory::free(g_windows);
+#endif // JLT_WITH_MULTI_WINDOWS
         }
     } // namespace ui
 } // namespace jolt
