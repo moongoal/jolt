@@ -16,7 +16,6 @@ namespace jolt {
         class JLTAPI Window {
             text::String m_name; //< The window name and title.
             HWND m_handle;       //< The window handle.
-            HDC m_dc;            //< The window drawing context.
             Rect m_size;         //< Window size.
             Point m_location;    //< Window location
 
@@ -50,11 +49,6 @@ namespace jolt {
              * Return the window handle.
              */
             HWND get_handle() const { return m_handle; }
-
-            /**
-             * Return the window drawing context.
-             */
-            HDC get_dc() const { return m_dc; }
 
             /**
              * Show the window.

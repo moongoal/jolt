@@ -42,11 +42,11 @@ static void unregister_window_class() { UnregisterClassA(MAIN_CLASS_NAME, g_hins
 namespace jolt {
     namespace ui {
         HINSTANCE get_hinstance() { return g_hinstance; }
-        
+
         Window::Window(const text::String &name, const Rect &dimensions, const Point &location) :
-          m_name{name}, m_handle{NULL}, m_dc{NULL}, m_size{dimensions}, m_location{location} {
-              create();
-          }
+          m_name{name}, m_handle{NULL}, m_size{dimensions}, m_location{location} {
+            create();
+        }
 
         void Window::show(bool const visible) {
             console.info("Showing window " + m_name);
@@ -67,7 +67,6 @@ namespace jolt {
         void Window::close() {
             console.info("Destroying window \"" + m_name + "\"");
 
-            ReleaseDC(m_handle, m_dc);
             DestroyWindow(m_handle);
         }
 
@@ -90,10 +89,6 @@ namespace jolt {
               this);
 
             jltassert(m_handle);
-
-            m_dc = GetDC(m_handle);
-
-            jltassert(m_dc);
 
             console.info("Created window \"" + m_name + "\"");
         }
