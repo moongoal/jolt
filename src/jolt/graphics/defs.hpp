@@ -28,6 +28,7 @@
 
 #define JLT_VULKAN_INVALID32 static_cast<uint32_t>(std::numeric_limits<uint32_t>::max())
 #define JLT_VULKAN_INVALID64 static_cast<uint64_t>(std::numeric_limits<uint64_t>::max())
+#define JLT_VULKAN_INVALIDSZ static_cast<VkDeviceSize>(std::numeric_limits<VkDeviceSize>::max())
 
 #ifdef JLT_VULKAN_CPP
     #define jltvkcheck(result, err_msg) check_vulkan_result(*this, result, err_msg)

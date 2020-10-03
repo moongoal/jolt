@@ -273,7 +273,9 @@ namespace jolt {
             m_phy_props.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
             m_phy_props.pNext = &m_phy_props11;
             m_phy_props11.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_PROPERTIES;
-            m_phy_props11.pNext = nullptr;
+            m_phy_props11.pNext = &m_phy_maint_3_props;
+            m_phy_maint_3_props.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAINTENANCE_3_PROPERTIES;
+            m_phy_maint_3_props.pNext = nullptr;
 
             m_phy_feats.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
             m_phy_feats.pNext = &m_phy_feats11;

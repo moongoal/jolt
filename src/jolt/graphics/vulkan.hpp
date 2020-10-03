@@ -11,7 +11,6 @@
 #include "vulkanpresentation.hpp"
 #include "vulkancmd.hpp"
 #include "vulkansynchro.hpp"
-#include "vulkanmemory.hpp"
 
 namespace jolt {
     namespace graphics {
@@ -36,6 +35,7 @@ namespace jolt {
             VkDevice m_device = VK_NULL_HANDLE;
             VkPhysicalDeviceProperties2 m_phy_props{};
             VkPhysicalDeviceVulkan11Properties m_phy_props11{};
+            VkPhysicalDeviceMaintenance3Properties m_phy_maint_3_props{};
             VkPhysicalDeviceFeatures2 m_phy_feats{};
             VkPhysicalDeviceVulkan11Features m_phy_feats11{};
             VkPhysicalDeviceVulkan12Features m_phy_feats12{};
@@ -157,5 +157,7 @@ namespace jolt {
           VulkanRenderer const &renderer, VkResult const result, text::String const &errmsg);
     } // namespace graphics
 } // namespace jolt
+
+#include "vulkanmemory.hpp"
 
 #endif /* JLT_GRAPHICS_VULKAN_HPP */

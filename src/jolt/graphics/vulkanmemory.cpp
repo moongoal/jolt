@@ -1,3 +1,4 @@
+#include <jolt/util.hpp>
 #include "vulkan.hpp"
 
 namespace jolt {
@@ -42,74 +43,125 @@ namespace jolt {
             return JLT_VULKAN_INVALID32;
         }
 
-        void VulkanObjectPool::initialize(uint64_t const n_objects) {
-            uint64_t rem = n_objects / 64;
+        VkDeviceSize VulkanArena::bind_to_buffer(
+          VkBuffer const buffer, VkDeviceSize const size, VkDeviceSize const alignment) {
+            VkDeviceSize offset = allocate(size, alignment);
 
-            memset(m_bitmap, 0, m_object_size * n_objects);
+            if(offset != INVALID_ALLOC) {
+                VkResult result =
+                  vkBindBufferMemory(get_renderer().get_device(), buffer, get_base(), offset);
+                jltassert2(result == VK_SUCCESS, "Unable to bind buffer memory");
 
-            if(rem) {
-                uint64_t val = 0;
-
-                for(int i = rem; i > 0; --i) { val |= 1 << (64 - i); }
-
-                m_bitmap[m_bitmap.get_length() - 1] = val;
+                return offset;
             }
+
+            return INVALID_ALLOC;
         }
 
-        bool VulkanObjectPool::is_full() const {
-            for(auto cluster : m_bitmap) {
-                if(cluster != std::numeric_limits<bit_map::value_type>::max()) {
-                    return false;
+        VkDeviceSize VulkanArena::bind_to_image(
+          VkImage const image, VkDeviceSize const size, VkDeviceSize const alignment) {
+            VkDeviceSize offset = allocate(size, alignment);
+
+            if(offset != INVALID_ALLOC) {
+                VkResult result =
+                  vkBindImageMemory(get_renderer().get_device(), image, get_base(), offset);
+                jltassert2(result == VK_SUCCESS, "Unable to bind image memory");
+
+                return offset;
+            }
+
+            return INVALID_ALLOC;
+        }
+
+        VkDeviceSize VulkanArena::allocate(VkDeviceSize const size, VkDeviceSize const alignment) {
+            for(auto it = m_freelist.begin(), end = m_freelist.end(); it != end; ++it) {
+                FreeListNode &node = *it;
+                VkDeviceSize const alloc_ptr = node.m_base;
+                VkDeviceSize ret_ptr = reinterpret_cast<VkDeviceSize>(
+                  align_raw_ptr(reinterpret_cast<void *>(alloc_ptr), alignment));
+                VkDeviceSize padding = ret_ptr - alloc_ptr;
+                VkDeviceSize total_size = size + padding;
+
+                if(node.m_size >= total_size) {
+                    node.m_base += total_size;
+                    node.m_size -= total_size;
+
+                    m_allocs.add(ret_ptr, {total_size, padding});
+
+                    if(node.m_size == 0) {
+                        m_freelist.remove(*it.get_pointer());
+                    }
+
+                    m_total_alloc_size += total_size;
+
+                    return ret_ptr;
                 }
             }
 
-            return true;
+            return INVALID_ALLOC;
         }
 
-        VulkanObjectPool::pool_handle VulkanObjectPool::bind_to_buffer(VkBuffer const buffer) {
-            pool_handle offset = allocate_free_slot() * m_object_size;
+        void VulkanArena::free(VkDeviceSize const ptr) {
+            AllocMetadata *meta = m_allocs.get_value(ptr);
 
-            VkResult result =
-              vkBindBufferMemory(get_renderer().get_device(), buffer, get_memory(), offset);
-            jltassert2(result == VK_SUCCESS, "Unable to bind buffer memory");
+            jltassert2(meta, "Attempting to free an unallocated memory location");
 
-            return offset;
-        }
+            VkDeviceSize const size = meta->m_size;
+            VkDeviceSize const real_ptr = ptr - meta->m_padding;
+            free_list::Node *prev_closest = find_prev_closest_node(real_ptr);
+            free_list::Node *next_closest = m_freelist.get_first_node();
 
-        VulkanObjectPool::pool_handle VulkanObjectPool::bind_to_image(VkImage const image) {
-            pool_handle offset = allocate_free_slot() * m_object_size;
+            m_total_alloc_size -= size;
+            m_allocs.remove(ptr);
 
-            VkResult result =
-              vkBindImageMemory(get_renderer().get_device(), image, get_memory(), offset);
-            jltassert2(result == VK_SUCCESS, "Unable to bind image memory");
+            if(prev_closest) {
+                FreeListNode &node = prev_closest->get_value();
+                VkDeviceSize node_end = node.m_base + node.m_size;
+                next_closest = prev_closest->get_next();
 
-            return offset;
-        }
+                if(node_end == real_ptr) {
+                    node.m_size += size;
+                    node_end += size;
+                    
+                    if(next_closest) { // May need to merge
+                        FreeListNode &next = next_closest->get_value();
 
-        uint64_t VulkanObjectPool::allocate_free_slot() {
-            for(size_t i = 0; i < m_bitmap.get_length(); ++i) {
-                if(m_bitmap[i] != std::numeric_limits<bit_map::value_type>::max()) {
-                    for(size_t j = 0; j < std::numeric_limits<bit_map::value_type>::max(); ++j) {
-                        if(~m_bitmap[i] & (1 << j)) {
-                            m_bitmap[i] |= (1 << j);
-
-                            return 64 * i + j;
+                        if(node_end == next.m_base) { // Merge adjacent nodes
+                            node.m_size += next.m_size;
+                            m_freelist.remove(*next_closest);
                         }
+                    }
+                    return;
+                }
+            }
+
+            if(next_closest) {
+                FreeListNode &node = next_closest->get_value();
+
+                if(node.m_base == real_ptr + size) {
+                    node.m_base -= size;
+                    node.m_size += size;
+                    return;
+                }
+            }
+
+            m_freelist.add_after({real_ptr, size}, prev_closest);
+        }
+
+        VulkanArena::free_list::Node *VulkanArena::find_prev_closest_node(VkDeviceSize const ptr) {
+            for(auto it = m_freelist.begin(), end = m_freelist.end(); it != end; ++it) {
+                FreeListNode const &node = *it;
+
+                if(node.m_base + node.m_size <= ptr) {
+                    free_list::Node *next = it.get_pointer()->get_next();
+
+                    if(!next || next->get_value().m_base > ptr) {
+                        return it.get_pointer();
                     }
                 }
             }
 
-            return JLT_VULKAN_INVALID64;
-        }
-
-        void VulkanObjectPool::free(pool_handle const offset) {
-            uint64_t const cluster = offset / 64;
-            uint64_t const slot = offset % 64;
-            uint64_t const slot_mask = (1 << slot);
-
-            jltassert2(
-              !(m_bitmap[cluster] & slot_mask), "Attempting to free a slot that is not allocated");
-            m_bitmap[cluster] &= ~slot_mask;
+            return nullptr;
         }
     } // namespace graphics
 } // namespace jolt

@@ -150,7 +150,7 @@ namespace jolt {
 
             out[k] =
               (0xff << (num_shifts + 1))
-              | static_cast<uint8_t>((in & ((1 << (next_tot_shifts + 1)) - 1)) >> tot_shifts);
+              | static_cast<uint8_t>((in & ((1UL << (next_tot_shifts + 1)) - 1)) >> tot_shifts);
 
             return (next_state << 5) | next_tot_shifts | (m_next << 8);
         }
