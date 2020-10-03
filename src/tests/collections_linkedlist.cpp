@@ -66,6 +66,17 @@ TEST(add__add_after) {
     assert2(a.get_length() == 3, "Length");
 }
 
+TEST(add_after__issue_28) { // https://github.com/moongoal/jolt/issues/28
+    LinkedList<int> a;
+
+    a.add(1);
+    a.add(2);
+    a.add_after(3, nullptr);
+    assert2(a.get_first() == 3, "First updated value");
+    assert2(a.get_first_node()->get_next()->get_value() == 1, "First updated link");
+    assert2(a.get_length() == 3, "Length");
+}
+
 TEST(add_all) {
     LinkedList<int> a, b{{1, 2, 3, 4, 5}};
 

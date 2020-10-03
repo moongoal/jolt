@@ -143,7 +143,10 @@ namespace jolt {
                   memory::allocate<Node>(), Node(item, where ? where->m_next : nullptr));
 
                 if(!where) {
+                    Node *old_first = m_first;
+
                     m_first = new_node;
+                    new_node->m_next = old_first;
                 } else {
                     where->m_next = new_node;
                 }
