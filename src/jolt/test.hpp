@@ -45,7 +45,7 @@
     class test_function_impl_##test_func_name : public jolt::test::test_function {                 \
       public:                                                                                      \
         test_function_impl_##test_func_name(std::string_view test_name, bool ignore = false) :     \
-            test_function{test_name, ignore} {}                                                    \
+          test_function{test_name, ignore} {}                                                      \
         void test_func() override;                                                                 \
     } test_function_inst_##test_func_name{JLT_TO_STRING(test_func_name), is_ignored};              \
     void test_function_impl_##test_func_name::test_func()
@@ -151,25 +151,32 @@ namespace jolt {
                 test_result result = test.result();
 
                 switch(result) {
-                case test_result::SUCCESS: std::cerr << "PASS"; break;
+                    case test_result::SUCCESS:
+                        std::cerr << "PASS";
+                        break;
 
-                case test_result::FAILURE: {
-                    const std::string &failure_message = test.failure_message();
+                    case test_result::FAILURE: {
+                        const std::string &failure_message = test.failure_message();
 
-                    std::cerr << "FAIL";
+                        std::cerr << "FAIL";
 
-                    if(!failure_message.empty()) {
-                        std::cerr << ": " << failure_message;
+                        if(!failure_message.empty()) {
+                            std::cerr << ": " << failure_message;
+                        }
+
+                        break;
                     }
 
-                    break;
-                }
+                    case test_result::IGNORE:
+                        std::cerr << "-IGNORED-";
+                        break;
 
-                case test_result::IGNORE: std::cerr << "-IGNORED-"; break;
+                    case test_result::NOT_RUN:
+                        std::cerr << "NOT RUN";
+                        break;
 
-                case test_result::NOT_RUN: std::cerr << "NOT RUN"; break;
-
-                default: std::cerr << "INVALID TEST RESULT VALUE " << (int)result;
+                    default:
+                        std::cerr << "INVALID TEST RESULT VALUE " << (int)result;
                 }
 
                 std::cerr << std::endl;
@@ -179,7 +186,7 @@ namespace jolt {
         } test_case_instance;
 
         test_function::test_function(std::string_view test_name, bool ignore) :
-            m_name{test_name}, m_result{ignore ? test_result::IGNORE : test_result::NOT_RUN} {
+          m_name{test_name}, m_result{ignore ? test_result::IGNORE : test_result::NOT_RUN} {
             test_case_instance.register_test(*this);
         }
 

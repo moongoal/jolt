@@ -7,15 +7,15 @@
 #define APP_TITLE "Vulkan initialization"
 
 using namespace jolt;
-using namespace jolt::graphics;
+using namespace jolt::graphics::vulkan;
 
 static constexpr const uint64_t ns_to_ms = 1'000'000;
-VulkanRenderer renderer;
+Renderer renderer;
 
 void main_loop(ui::Window const &wnd);
 
 int main(int argc, char **argv) {
-    graphics::GraphicsEngineInitializationParams gparams{0};
+    GraphicsEngineInitializationParams gparams{0};
 
     initialize();
     console.set_output_stream(&io::standard_error_stream);
@@ -43,13 +43,13 @@ int main(int argc, char **argv) {
 
 void main_loop(ui::Window const &wnd) {
     // Cmd buffer
-    VulkanCommandPool cmd_pool = renderer.create_graphics_command_pool(true, false);
+    CommandPool cmd_pool = renderer.create_graphics_command_pool(true, false);
 
     // Synchro
-    VulkanSemaphore sem_acquire{renderer}, sem_present{renderer};
-    VulkanFence fence_acquire{renderer}, fence_submit{renderer};
+    Semaphore sem_acquire{renderer}, sem_present{renderer};
+    Fence fence_acquire{renderer}, fence_submit{renderer};
 
-    VulkanActionSynchro submit_synchro;
+    ActionSynchro submit_synchro;
 
     submit_synchro.wait_semaphore_count = 1;
     submit_synchro.wait_semaphores[0] = sem_acquire;
@@ -60,7 +60,7 @@ void main_loop(ui::Window const &wnd) {
 
     submit_synchro.fence = fence_submit;
 
-    VulkanWaitSemaphoreActionSynchro present_synchro;
+    WaitSemaphoreActionSynchro present_synchro;
 
     present_synchro.wait_semaphores[0] = sem_present;
     present_synchro.wait_semaphore_count = 1;
@@ -72,7 +72,7 @@ void main_loop(ui::Window const &wnd) {
             continue;
         }
 
-        VulkanCommandBuffer cmd = cmd_pool.allocate_single_command_buffer(true);
+        CommandBuffer cmd = cmd_pool.allocate_single_command_buffer(true);
         renderer.get_presentation_target()->acquire_next_image(&sem_acquire, &fence_acquire);
 
         fence_acquire.wait(500 * ns_to_ms);

@@ -14,20 +14,19 @@
 
 #define JLT_INLINE __attribute__((always_inline))
 
-
 namespace jolt {
     template<typename T>
     constexpr T choose(T const a, T const b, bool const condition) {
         const uint64_t mask = ~static_cast<uint64_t>(0) + condition;
 
-        return static_cast<T>((static_cast<uint64_t>(b) & mask) |
-                              (static_cast<uint64_t>(a) & ~mask));
+        return static_cast<T>(
+          (static_cast<uint64_t>(b) & mask) | (static_cast<uint64_t>(a) & ~mask));
     }
 
     template<typename T>
     constexpr T *choose(T *const a, T *const b, bool const condition) {
         return reinterpret_cast<T *>(
-            choose(reinterpret_cast<uintptr_t>(a), reinterpret_cast<uintptr_t>(b), condition));
+          choose(reinterpret_cast<uintptr_t>(a), reinterpret_cast<uintptr_t>(b), condition));
     }
 
     void *align_raw_ptr(void *const ptr, size_t const alignment) JLTAPI;

@@ -2,16 +2,16 @@
 #include <jolt/jolt.hpp>
 
 using namespace jolt;
-using namespace jolt::graphics;
+using namespace jolt::graphics::vulkan;
 
 constexpr size_t const Nobjs = 128; //< Object number.
 constexpr size_t const Sobjs = 128; //< Object size.
 
-using TestPool = VulkanObjectPool<Sobjs, Nobjs>;
+using TestPool = ObjectPool<Sobjs, Nobjs>;
 
 constexpr VkDeviceSize const HEAP_SIZE = 16 * 1024 * 1024;
 
-VulkanRenderer renderer;
+Renderer renderer;
 ui::Window *ui_window;
 
 GraphicsEngineInitializationParams gparams{"Jolt test", 1, 0, 0, nullptr};
@@ -53,7 +53,7 @@ TEST(allocate) {
 }
 
 TEST(allocate__invalid) {
-    VulkanObjectPool<Sobjs, 1> pool{renderer, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT};
+    ObjectPool<Sobjs, 1> pool{renderer, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT};
 
     assert2(!pool.is_full(), "Should not be full");
 
@@ -68,7 +68,7 @@ TEST(allocate__invalid) {
 }
 
 TEST(free) {
-    VulkanObjectPool<Sobjs, 1> pool{renderer, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT};
+    ObjectPool<Sobjs, 1> pool{renderer, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT};
 
     assert2(!pool.is_full(), "Should not be full");
 

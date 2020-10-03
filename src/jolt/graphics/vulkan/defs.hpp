@@ -1,5 +1,5 @@
-#ifndef JLT_GRAPHICS_DEFS_HPP
-#define JLT_GRAPHICS_DEFS_HPP
+#ifndef JLT_GRAPHICS_VULKAN_DEFS_HPP
+#define JLT_GRAPHICS_VULKAN_DEFS_HPP
 
 #ifdef _WIN32
     #define VK_USE_PLATFORM_WIN32_KHR
@@ -30,10 +30,10 @@
 #define JLT_VULKAN_INVALID64 static_cast<uint64_t>(std::numeric_limits<uint64_t>::max())
 #define JLT_VULKAN_INVALIDSZ static_cast<VkDeviceSize>(std::numeric_limits<VkDeviceSize>::max())
 
-#ifdef JLT_VULKAN_CPP
+#ifdef JLT_GRAPHICS_VULKAN_RENDERER_CPP
     #define jltvkcheck(result, err_msg) check_vulkan_result(*this, result, err_msg)
-#else // JLT_VULKAN_CPP
+#else // JLT_GRAPHICS_VULKAN_RENDERER_CPP
     #define jltvkcheck(result, err_msg) check_vulkan_result(get_renderer(), result, err_msg)
-#endif // JLT_VULKAN_CPP
+#endif // JLT_GRAPHICS_VULKAN_RENDERER_CPP
 
-#endif /* JLT_GRAPHICS_DEFS_HPP */
+#endif /* JLT_GRAPHICS_VULKAN_DEFS_HPP */

@@ -2,11 +2,11 @@
 #include <jolt/jolt.hpp>
 
 using namespace jolt;
-using namespace jolt::graphics;
+using namespace jolt::graphics::vulkan;
 
 constexpr VkDeviceSize const HEAP_SIZE = 16 * 1024 * 1024;
 
-VulkanRenderer renderer;
+Renderer renderer;
 ui::Window *ui_window;
 
 GraphicsEngineInitializationParams gparams{"Jolt test", 1, 0, 0, nullptr};
@@ -28,7 +28,7 @@ CLEANUP {
 }
 
 TEST(ctor) {
-    VulkanArena arena{renderer, HEAP_SIZE, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT};
+    Arena arena{renderer, HEAP_SIZE, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT};
 
     assert2(arena.get_allocated_size() == 0, "Allocated size not 0");
     assert2(arena.get_free_list().get_length() == 1, "Free list not length 1");
@@ -36,7 +36,7 @@ TEST(ctor) {
 }
 
 TEST(allocate) {
-    VulkanArena arena{renderer, HEAP_SIZE, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT};
+    Arena arena{renderer, HEAP_SIZE, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT};
 
     VkDeviceSize const alloc1 = arena.allocate(1024, 1);
     assert2(arena.get_allocated_size() == 1024, "Invalid allocated size 1");
@@ -60,7 +60,7 @@ TEST(allocate) {
 }
 
 TEST(allocate__invalid) {
-    VulkanArena arena{renderer, HEAP_SIZE, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT};
+    Arena arena{renderer, HEAP_SIZE, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT};
 
     VkDeviceSize const alloc1 = arena.allocate(HEAP_SIZE + 1, 1);
 
@@ -68,7 +68,7 @@ TEST(allocate__invalid) {
 }
 
 TEST(allocate__free__max) {
-    VulkanArena arena{renderer, HEAP_SIZE, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT};
+    Arena arena{renderer, HEAP_SIZE, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT};
 
     VkDeviceSize const alloc1 = arena.allocate(HEAP_SIZE, 1);
     assert2(arena.get_allocated_size() == HEAP_SIZE, "Invalid allocated size 1");
@@ -82,7 +82,7 @@ TEST(allocate__free__max) {
 }
 
 TEST(free) {
-    VulkanArena arena{renderer, HEAP_SIZE, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT};
+    Arena arena{renderer, HEAP_SIZE, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT};
     VkDeviceSize const alloc1 = arena.allocate(1024, 1);
     VkDeviceSize const alloc2 = arena.allocate(1024, 1);
 
