@@ -78,6 +78,7 @@ namespace jolt {
                 VkInstance get_instance() const { return m_instance; }
                 VkPhysicalDevice get_phy_device() const { return m_phy_device; }
                 VkDevice get_device() const { return m_device; }
+                
                 const VkPhysicalDeviceFeatures2 &get_phy_device_features() const {
                     return m_phy_feats;
                 }
@@ -102,6 +103,10 @@ namespace jolt {
                     return m_phy_mem_props;
                 }
 
+                VkDeviceSize get_max_alloc_size() const {
+                    return m_phy_maint_3_props.maxMemoryAllocationSize;
+                }
+
                 uint32_t get_graphics_queue_family_index() const { return m_q_graphics_fam_index; }
                 uint32_t get_transfer_queue_family_index() const { return m_q_transfer_fam_index; }
                 uint32_t get_graphics_queue_index() const { return m_q_graphics_index; }
@@ -114,9 +119,7 @@ namespace jolt {
                 Window const *get_window() const { return m_window; }
                 RenderTarget *get_render_target() { return m_render_target; }
                 RenderTarget const *get_render_target() const { return m_render_target; }
-                PresentationTarget *get_presentation_target() {
-                    return m_presentation_target;
-                }
+                PresentationTarget *get_presentation_target() { return m_presentation_target; }
 
                 PresentationTarget const *get_presentation_target() const {
                     return m_presentation_target;

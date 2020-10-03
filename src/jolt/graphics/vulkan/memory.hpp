@@ -45,11 +45,7 @@ namespace jolt {
                 MemoryHeap(
                   Renderer const &renderer,
                   VkDeviceSize const size,
-                  VkMemoryPropertyFlags const mem_flags) :
-                  m_renderer{renderer},
-                  m_size{size} {
-                    allocate(mem_flags);
-                }
+                  VkMemoryPropertyFlags const mem_flags);
 
                 MemoryHeap(MemoryHeap const &other) = delete;
 
@@ -124,8 +120,7 @@ namespace jolt {
                  * @param renderer The renderer.
                  * @param mem_flags The memory type requirements.
                  */
-                ObjectPool(
-                  Renderer const &renderer, VkMemoryPropertyFlags const mem_flags) :
+                ObjectPool(Renderer const &renderer, VkMemoryPropertyFlags const mem_flags) :
                   MemoryHeap{renderer, S * N, mem_flags} {
                     initialize();
                 }

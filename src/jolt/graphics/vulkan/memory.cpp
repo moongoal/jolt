@@ -4,6 +4,16 @@
 namespace jolt {
     namespace graphics {
         namespace vulkan {
+            MemoryHeap::MemoryHeap(
+              Renderer const &renderer,
+              VkDeviceSize const size,
+              VkMemoryPropertyFlags const mem_flags) :
+              m_renderer{renderer},
+              m_size{size} {
+                jltassert2(size < renderer.get_max_alloc_size(), "Allocation size too large");
+                allocate(mem_flags);
+            }
+
             void MemoryHeap::allocate(VkMemoryPropertyFlags const mem_flags) {
                 uint32_t mem_type_index = find_memory_type(mem_flags);
 
@@ -75,8 +85,7 @@ namespace jolt {
                 return JLT_VULKAN_INVALIDSZ;
             }
 
-            VkDeviceSize
-            Arena::allocate(VkDeviceSize const size, VkDeviceSize const alignment) {
+            VkDeviceSize Arena::allocate(VkDeviceSize const size, VkDeviceSize const alignment) {
                 for(auto it = m_freelist.begin(), end = m_freelist.end(); it != end; ++it) {
                     FreeListNode &node = *it;
                     VkDeviceSize const alloc_ptr = node.m_base;
@@ -151,8 +160,7 @@ namespace jolt {
                 m_freelist.add_after({real_ptr, size}, prev_closest);
             }
 
-            Arena::free_list::Node *
-            Arena::find_prev_closest_node(VkDeviceSize const ptr) {
+            Arena::free_list::Node *Arena::find_prev_closest_node(VkDeviceSize const ptr) {
                 for(auto it = m_freelist.begin(), end = m_freelist.end(); it != end; ++it) {
                     FreeListNode const &node = *it;
 
