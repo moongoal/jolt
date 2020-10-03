@@ -47,7 +47,7 @@ namespace jolt {
           VkBuffer const buffer, VkDeviceSize const size, VkDeviceSize const alignment) {
             VkDeviceSize offset = allocate(size, alignment);
 
-            if(offset != INVALID_ALLOC) {
+            if(offset != JLT_VULKAN_INVALIDSZ) {
                 VkResult result =
                   vkBindBufferMemory(get_renderer().get_device(), buffer, get_base(), offset);
                 jltassert2(result == VK_SUCCESS, "Unable to bind buffer memory");
@@ -55,14 +55,14 @@ namespace jolt {
                 return offset;
             }
 
-            return INVALID_ALLOC;
+            return JLT_VULKAN_INVALIDSZ;
         }
 
         VkDeviceSize VulkanArena::bind_to_image(
           VkImage const image, VkDeviceSize const size, VkDeviceSize const alignment) {
             VkDeviceSize offset = allocate(size, alignment);
 
-            if(offset != INVALID_ALLOC) {
+            if(offset != JLT_VULKAN_INVALIDSZ) {
                 VkResult result =
                   vkBindImageMemory(get_renderer().get_device(), image, get_base(), offset);
                 jltassert2(result == VK_SUCCESS, "Unable to bind image memory");
@@ -70,7 +70,7 @@ namespace jolt {
                 return offset;
             }
 
-            return INVALID_ALLOC;
+            return JLT_VULKAN_INVALIDSZ;
         }
 
         VkDeviceSize VulkanArena::allocate(VkDeviceSize const size, VkDeviceSize const alignment) {
@@ -98,7 +98,7 @@ namespace jolt {
                 }
             }
 
-            return INVALID_ALLOC;
+            return JLT_VULKAN_INVALIDSZ;
         }
 
         void VulkanArena::free(VkDeviceSize const ptr) {

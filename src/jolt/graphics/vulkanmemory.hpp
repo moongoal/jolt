@@ -253,9 +253,6 @@ namespace jolt {
             using alloc_list =
               collections::HashMap<VkDeviceSize, AllocMetadata, jolt::hash::Identity<VkDeviceSize>>;
 
-            static constexpr const VkDeviceSize INVALID_ALLOC =
-              std::numeric_limits<VkDeviceSize>::max();
-
           private:
             free_list m_freelist; //< List of free spots in memory.
             alloc_list m_allocs;  //< Mapping between offsets and allocation medatada structures.
@@ -287,7 +284,7 @@ namespace jolt {
              * @param size The size of the memory region to allocate.
              * @param alignment The memory alignment requirement.
              *
-             * @return value The allocation pointer or INVALID_ALLOC if the allocation fails.
+             * @return value The allocation pointer or JLT_VULKAN_INVALIDSZ if the allocation fails.
              */
             VkDeviceSize bind_to_buffer(
               VkBuffer const buffer, VkDeviceSize const size, VkDeviceSize const alignment);
@@ -299,7 +296,7 @@ namespace jolt {
              * @param size The size of the memory region to allocate.
              * @param alignment The memory alignment requirement.
              *
-             * @return value The allocation pointer or INVALID_ALLOC if the allocation fails.
+             * @return value The allocation pointer or JLT_VULKAN_INVALIDSZ if the allocation fails.
              */
             VkDeviceSize bind_to_image(
               VkImage const image, VkDeviceSize const size, VkDeviceSize const alignment);
@@ -317,7 +314,7 @@ namespace jolt {
              * @param size The size of the allocated memory region.
              * @param alignment The alignment requirement.
              *
-             * @return The offset from the heap's base address or INVALID_ALLOC if a contiguous
+             * @return The offset from the heap's base address or JLT_VULKAN_INVALIDSZ if a contiguous
              * memory region of the required size was not found.
              *
              * @see VulkanMemoryHeap::get_base().

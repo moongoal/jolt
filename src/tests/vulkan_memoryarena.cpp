@@ -64,7 +64,7 @@ TEST(allocate__invalid) {
 
     VkDeviceSize const alloc1 = arena.allocate(HEAP_SIZE + 1, 1);
 
-    assert(alloc1 == VulkanArena::INVALID_ALLOC);
+    assert(alloc1 == JLT_VULKAN_INVALIDSZ);
 }
 
 TEST(allocate__free__max) {
