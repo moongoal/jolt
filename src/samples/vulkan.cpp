@@ -23,6 +23,7 @@ int main(int argc, char **argv) {
 
     gparams.app_name = APP_TITLE;
     gparams.wnd = &wnd;
+    gparams.n_queues_graphics = 1;
 
     renderer.initialize(gparams);
     wnd.show();
@@ -42,8 +43,29 @@ int main(int argc, char **argv) {
 }
 
 void main_loop(ui::Window const &wnd) {
-    // Cmd buffer
-    CommandPool cmd_pool = renderer.create_graphics_command_pool(true, false);
+    // Queue
+    VkQueue gqueue = renderer.get_graphics_queue();
+    uint32_t gqueue_fam_idx = renderer.get_queue_family_index(gqueue);
+
+    jltassert2(gqueue != VK_NULL_HANDLE, "Null graphics queue");
+    jltassert2(gqueue_fam_idx != JLT_VULKAN_INVALID32, "Invalid graphics queue family index");
+
+    // Window & targets
+    Window *vk_window;
+    RenderTarget *rt;
+    PresentationTarget *pt;
+    vk_window = jltnew(Window, renderer, wnd, gqueue);
+    renderer.set_window(vk_window);
+
+    pt = jltnew(PresentationTarget, renderer, gqueue);
+    renderer.set_presentation_target(pt);
+
+    rt = jltnew(RenderTarget, renderer);
+    renderer.set_render_target(rt);
+
+    // Cmd pool
+    // CommandPool cmd_pool = renderer.create_graphics_command_pool(true, false);
+    CommandPool cmd_pool{renderer, true, true, gqueue_fam_idx};
 
     // Synchro
     Semaphore sem_acquire{renderer}, sem_present{renderer};
@@ -83,7 +105,7 @@ void main_loop(ui::Window const &wnd) {
 
         cmd.end_record();
 
-        cmd.submit(renderer.get_graphics_queue(), submit_synchro);
+        cmd.submit(gqueue, submit_synchro);
 
         renderer.get_presentation_target()->present_active_image(present_synchro);
         fence_submit.wait(500 * ns_to_ms);
@@ -91,5 +113,10 @@ void main_loop(ui::Window const &wnd) {
         fence_acquire.reset();
         fence_submit.reset();
         cmd_pool.free_single_command_buffer(cmd);
+        cmd_pool.reset(false);
     } while(wnd.cycle() && !renderer.is_lost());
+
+    jltfree(rt);
+    jltfree(pt);
+    jltfree(vk_window);
 }

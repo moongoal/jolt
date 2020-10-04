@@ -62,7 +62,7 @@ namespace jolt {
 
                 vkGetPhysicalDeviceSurfaceSupportKHR(
                   m_renderer.get_phy_device(),
-                  m_renderer.get_graphics_queue_family_index(),
+                  m_renderer.get_queue_family_index(m_queue),
                   m_surface,
                   &surface_support);
 

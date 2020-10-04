@@ -24,6 +24,7 @@ namespace jolt {
 
               private:
                 Renderer const &m_renderer;
+                VkQueue const m_queue;
                 VkSwapchainKHR m_swapchain = VK_NULL_HANDLE;
                 image_array *m_swapchain_images = nullptr;
                 view_array *m_swapchain_image_views = nullptr;
@@ -34,29 +35,40 @@ namespace jolt {
                 void shutdown();
 
               public:
-                PresentationTarget(Renderer const &renderer) : m_renderer{renderer} {
+                /**
+                 * Create a new presentation target.
+                 *
+                 * @param renderer The renderer.
+                 * @param queue A handle to a graphics queue obtained from `renderer`.
+                 */
+                PresentationTarget(Renderer const &renderer, VkQueue const queue) :
+                  m_renderer{renderer}, m_queue{queue} {
                     initialize();
                 }
+
+                PresentationTarget(PresentationTarget const &other) = delete;
 
                 ~PresentationTarget() { shutdown(); }
 
                 Renderer const &get_renderer() const { return m_renderer; }
-
+                VkQueue get_queue() const { return m_queue; }
                 VkSwapchainKHR get_swapchain() const { return m_swapchain; }
 
                 image_array const &get_swapchain_images() const { return *m_swapchain_images; }
+
                 view_array const &get_swapchain_image_views() const {
                     return *m_swapchain_image_views;
                 }
+
                 uint64_t get_acquire_timeout() const { return m_acquire_timeout; }
-                void set_acquire_timeout(uint64_t timeout) { m_acquire_timeout = timeout; }
+                void set_acquire_timeout(uint64_t const timeout) { m_acquire_timeout = timeout; }
+
                 uint32_t get_active_swapchain_image_index() const {
                     return m_active_swapchain_image;
                 }
 
                 void acquire_next_image(
-                  Semaphore const *const semaphore = nullptr,
-                  Fence const *const fence = nullptr);
+                  Semaphore const *const semaphore = nullptr, Fence const *const fence = nullptr);
                 void present_active_image(WaitSemaphoreActionSynchro const &synchro);
             };
         } // namespace vulkan

@@ -6,6 +6,7 @@
 #include <jolt/memory/allocator.hpp>
 #include <jolt/text/stringbuilder.hpp>
 #include <jolt/graphics/vulkan.hpp>
+#include <jolt/collections/hashmap.hpp>
 
 #ifdef _WIN32
     #define OS_SPECIFIC_SURFACE_EXTENSION VK_KHR_WIN32_SURFACE_EXTENSION_NAME
@@ -225,8 +226,7 @@ namespace jolt {
                 return extensions;
             }
 
-            void
-            Renderer::initialize_instance(GraphicsEngineInitializationParams const &params) {
+            void Renderer::initialize_instance(GraphicsEngineInitializationParams const &params) {
                 console.debug("Initializing Vulkan instance");
 
                 VkApplicationInfo app_info{
@@ -313,10 +313,16 @@ namespace jolt {
                 vkGetPhysicalDeviceMemoryProperties(m_phy_device, &m_phy_mem_props);
             }
 
-            void Renderer::initialize_device() {
+            void Renderer::initialize_device(GraphicsEngineInitializationParams const &params) {
                 console.debug("Creating device");
 
                 VkResult result;
+
+                uint32_t n_families;
+
+                vkGetPhysicalDeviceQueueFamilyProperties(m_phy_device, &n_families, nullptr);
+                queue_fam_prop_array q_fam_props{n_families};
+                vkGetPhysicalDeviceQueueFamilyProperties(m_phy_device, &n_families, q_fam_props);
 
                 VkPhysicalDeviceVulkan12Features features12 = {};
                 features12.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES;
@@ -333,9 +339,29 @@ namespace jolt {
 
                 features12.separateDepthStencilLayouts = VK_TRUE;
 
-                queue_ci_vector q_cinfo = select_device_queues();
+                queue_ci_vector q_cinfo = select_device_queues(
+                  q_fam_props,
+                  params.n_queues_graphics,
+                  params.n_queues_transfer,
+                  params.n_queues_compute);
+
                 extension_vector exts = select_required_device_extensions();
 
+                // Fill-in the priority values
+                uint32_t max_queues = 0;
+
+                for(auto &info : q_cinfo) {
+                    if(info.queueCount > max_queues) {
+                        max_queues = info.queueCount;
+                    }
+                }
+
+                collections::Array<float> q_priorities{max_queues};
+                q_priorities.fill(1.0f);
+
+                for(auto &info : q_cinfo) { info.pQueuePriorities = q_priorities; }
+
+                // Create the device & queues
                 VkDeviceCreateInfo cinfo{
                   VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO, // sType
                   &features,                            // pNext
@@ -365,10 +391,39 @@ namespace jolt {
                         break;
                 }
 
-                vkGetDeviceQueue(
-                  m_device, m_q_graphics_fam_index, m_q_graphics_index, &m_q_graphics);
-                vkGetDeviceQueue(
-                  m_device, m_q_transfer_fam_index, m_q_transfer_index, &m_q_transfer);
+                // Get the created queues
+                uint32_t n_total_queues = 0;
+                uint32_t q = 0;
+
+                for(auto &info : q_cinfo) { n_total_queues += info.queueCount; }
+
+                m_queues = jltnew(queue_info_array, n_total_queues);
+
+                for(auto &q : *m_queues) { jltconstruct(&q.lock, 0); }
+
+                for(auto &info : q_cinfo) {
+                    for(uint32_t i = 0; i < info.queueCount; ++i) {
+                        VkQueue queue;
+
+                        vkGetDeviceQueue(m_device, info.queueFamilyIndex, i, &queue);
+
+                        (*m_queues)[q].value = {
+                          queue,                                         // queue
+                          q_fam_props[info.queueFamilyIndex].queueFlags, // flags
+                          info.queueFamilyIndex                          // queue_family_index
+                        };
+                    }
+                }
+            }
+
+            uint32_t Renderer::get_queue_family_index(VkQueue const queue) const {
+                for(auto const &qinfo : *m_queues) {
+                    if(qinfo.value.queue == queue) {
+                        return qinfo.value.queue_family_index;
+                    }
+                }
+
+                return JLT_VULKAN_INVALID32;
             }
 
             void Renderer::initialize_debug_logger() {
@@ -417,89 +472,101 @@ namespace jolt {
 #endif // _DEBUG
             }
 
-            Renderer::queue_ci_vector Renderer::select_device_queues() {
-                queue_ci_vector result;
-                uint32_t n_families;
-
-                vkGetPhysicalDeviceQueueFamilyProperties(m_phy_device, &n_families, nullptr);
-                collections::Array<VkQueueFamilyProperties> fam_props{n_families};
-                vkGetPhysicalDeviceQueueFamilyProperties(m_phy_device, &n_families, fam_props);
-
-                bool found_graphics = false, found_transfer = false;
-
-                for(uint32_t i = 0; i < n_families; ++i) {
+            int Renderer::select_single_queue(
+              Renderer::queue_fam_prop_array &fam_props,
+              VkQueueFlags const requirements,
+              bool const exact) {
+                for(int i = 0; i < fam_props.get_length(); ++i) {
                     VkQueueFamilyProperties *const p = fam_props + i;
 
-                    if(!found_graphics && p->queueCount > 0) {
-                        if((p->queueFlags & VK_QUEUE_GRAPHICS_BIT)) {
+                    if(p->queueCount > 0) {
+                        if(
+                          (exact && (p->queueFlags == requirements))
+                          || (!exact && (p->queueFlags & requirements))) {
                             --p->queueCount;
-                            m_q_graphics_fam_index = i;
-                            found_graphics = true;
-                        }
-                    }
-
-                    if(!found_transfer && p->queueCount > 0) {
-                        if(p->queueFlags & VK_QUEUE_TRANSFER_BIT) {
-                            --p->queueCount;
-                            m_q_transfer_fam_index = i;
-                            found_transfer = true;
+                            return i;
                         }
                     }
                 }
 
-                if(!found_transfer) {
-                    console.debug(
-                      "No transfer-specific queue family found. Looking for anything able "
-                      "to transfer data");
+                return -1;
+            }
 
-                    for(uint32_t i = 0; i < n_families; ++i) {
-                        VkQueueFamilyProperties *const p = fam_props + i;
+            Renderer::queue_ci_vector Renderer::select_device_queues(
+              queue_fam_prop_array &fam_props,
+              uint32_t const n_graph,
+              uint32_t const n_trans,
+              uint32_t const n_compute) {
+                queue_ci_vector result;
 
-                        if(!found_transfer && p->queueCount > 0) {
-                            if(
-                              (p->queueFlags & VK_QUEUE_TRANSFER_BIT)
-                              || (p->queueFlags & VK_QUEUE_GRAPHICS_BIT)
-                              || (p->queueFlags & VK_QUEUE_COMPUTE_BIT)) {
-                                --p->queueCount; // Currently not needed but a compute queue will
-                                                 // need to be added :)
-                                m_q_transfer_fam_index = i;
-                                found_transfer = true;
-                                break;
-                            }
-                        }
-                    }
+                using fam_count_map =
+                  collections::HashMap<uint32_t, uint32_t, hash::Identity<uint32_t>>;
+
+                fam_count_map fam_counts;
+                uint32_t n_graph2 = n_graph;
+                uint32_t n_trans2 = n_trans;
+                uint32_t n_compute2 = n_compute;
+
+#define selqueue(n, req, exact)                                                                    \
+    do {                                                                                           \
+        int fam_idx = 0;                                                                           \
+        do {                                                                                       \
+            fam_idx = select_single_queue(fam_props, req, exact);                                  \
+            if(fam_idx != -1) {                                                                    \
+                fam_counts.set_value(                                                              \
+                  static_cast<uint32_t>(fam_idx),                                                  \
+                  fam_counts.get_value_with_default(static_cast<uint32_t>(fam_idx), 0) + 1);       \
+                n--;                                                                               \
+            }                                                                                      \
+        } while(n > 0 && fam_idx != -1);                                                           \
+    } while(false)
+
+                jltassert2(n_graph, "At least one graphics queue is required");
+
+                // Try selecting queues from families that have the exact requirements.
+                selqueue(n_graph2, VK_QUEUE_GRAPHICS_BIT, true);
+
+                if(n_trans) {
+                    selqueue(n_trans2, VK_QUEUE_TRANSFER_BIT, true);
                 }
+
+                if(n_compute) {
+                    selqueue(n_compute2, VK_QUEUE_COMPUTE_BIT, true);
+                }
+
+                // If any one of such families exist or if not enough queues were provided by those,
+                // accept queues from any family satisfying the requirements.
+                //
+                // Ordering here is different. In the first scenario ordering doesn't matter, while
+                // here we need to prioritise requirements. Transfer queues can be last as any
+                // graphics or compute queue can transfer data, while compute queues need to be
+                // first as their availability may be more limited than that of graphics queue.
+                if(n_compute2) {
+                    selqueue(n_compute2, VK_QUEUE_COMPUTE_BIT, false);
+                }
+
+                if(n_graph2) {
+                    selqueue(n_graph2, VK_QUEUE_GRAPHICS_BIT, false);
+                }
+
+                if(n_trans2) {
+                    selqueue(n_trans2, VK_QUEUE_TRANSFER_BIT, false);
+                }
+#undef selqueue
+
+                bool const found_graphics = n_graph != n_graph2;
 
                 jltassert2(found_graphics, "Unable to find a suitable graphics queue");
 
-                m_q_graphics_index = 0;
-
-                if(found_transfer) {
-                    m_q_transfer_index = m_q_graphics_fam_index == m_q_transfer_fam_index ? 1 : 0;
-                } else { // Only one queue in the system
-                    m_q_transfer_index = m_q_graphics_index;
-                }
-
-                result.push({
-                  // Graphics queue
-                  VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO, // sType
-                  nullptr,                                    // pNext
-                  0,                                          // flags
-                  m_q_graphics_fam_index,                     // queueFamilyIndex
-                  static_cast<uint32_t>(
-                    m_q_graphics_fam_index == m_q_transfer_fam_index ? 2 : 1), // queueCount
-                  s_q_priorities                                               // pQueuePriorities
-                });
-
-                if(m_q_graphics_fam_index != m_q_transfer_fam_index) {
+                for(auto const &[fam_index, queue_count] : fam_counts) {
                     result.push({
-                      // Transfer queue
+                      // Graphics queue
                       VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO, // sType
                       nullptr,                                    // pNext
                       0,                                          // flags
-                      m_q_transfer_fam_index,                     // queueFamilyIndex
-                      1,                                          // queueCount
-                      s_q_priorities + 1                          // pQueuePriorities
+                      fam_index,                                  // queueFamilyIndex
+                      queue_count,                                // queueCount
+                      nullptr                                     // pQueuePriorities
                     });
                 }
 
@@ -511,16 +578,11 @@ namespace jolt {
                 initialize_phase2(params);
             }
 
-            void
-            Renderer::initialize_phase2(GraphicsEngineInitializationParams const &params) {
-                initialize_device();
+            void Renderer::initialize_phase2(GraphicsEngineInitializationParams const &params) {
+                initialize_device(params);
                 m_lost = false;
 
                 initialize_debug_logger();
-
-                m_window = jltnew(Window, *this, *params.wnd);
-                m_presentation_target = jltnew(PresentationTarget, *this);
-                m_render_target = jltnew(RenderTarget, *this);
             }
 
             void Renderer::initialize(GraphicsEngineInitializationParams const &params) {
@@ -534,22 +596,15 @@ namespace jolt {
             }
 
             void Renderer::shutdown_phase2() {
-                wait_graphics_queue_idle();
-                wait_transfer_queue_idle();
+                wait_queues_idle();
 
-                if(m_render_target) {
-                    jltfree(m_render_target);
-                    m_render_target = nullptr;
-                }
+                m_presentation_target = nullptr;
+                m_render_target = nullptr;
+                m_window = nullptr;
 
-                if(m_presentation_target) {
-                    jltfree(m_presentation_target);
-                    m_presentation_target = nullptr;
-                }
-
-                if(m_window) {
-                    jltfree(m_window);
-                    m_window = nullptr;
+                if(m_queues) {
+                    jltfreearray(m_queues, m_queues->get_length());
+                    m_queues = nullptr;
                 }
 
 #ifdef _DEBUG
@@ -575,25 +630,50 @@ namespace jolt {
 
             VkAllocationCallbacks JLTAPI *get_vulkan_allocator() { return g_allocator; }
 
-            CommandPool Renderer::create_graphics_command_pool(
-              bool const transient, bool const allow_reset) {
-                return CommandPool{*this, transient, allow_reset, m_q_graphics_fam_index};
+            void Renderer::wait_queues_idle() const {
+                VkResult result;
+
+                for(auto &qinfo : *m_queues) {
+                    qinfo.lock.acquire();
+                    result = vkQueueWaitIdle(qinfo.value.queue);
+
+                    jltvkcheck(result, "Error while waiting for graphics queue to be idle");
+
+                    qinfo.lock.release();
+                }
             }
 
-            CommandPool Renderer::create_transfer_command_pool(
-              bool const transient, bool const allow_reset) {
-                return CommandPool{*this, transient, allow_reset, m_q_transfer_fam_index};
+            VkQueue Renderer::get_queue(VkQueueFlags flags) const {
+                for(auto &qinfo : *m_queues) {
+                    if(qinfo.value.flags & flags) {
+                        if(qinfo.lock.try_acquire()) {
+                            return qinfo.value.queue;
+                        }
+                    }
+                }
+
+                return VK_NULL_HANDLE;
             }
 
-            void Renderer::wait_graphics_queue_idle() const {
-                VkResult result = vkQueueWaitIdle(m_q_graphics);
-                jltvkcheck(result, "Error while waiting for graphics queue to be idle");
+            VkQueue Renderer::get_graphics_queue() const {
+                return get_queue(VK_QUEUE_GRAPHICS_BIT);
             }
 
-            void Renderer::wait_transfer_queue_idle() const {
-                VkResult result = vkQueueWaitIdle(m_q_transfer);
-                jltvkcheck(result, "Error while waiting for transfer queue to be idle");
+            VkQueue Renderer::get_transfer_queue() const {
+                VkQueue queue = get_queue(VK_QUEUE_TRANSFER_BIT);
+
+                if(queue == VK_NULL_HANDLE) {
+                    queue = get_graphics_queue();
+                }
+
+                if(queue == VK_NULL_HANDLE) {
+                    queue = get_compute_queue();
+                }
+
+                return queue;
             }
+
+            VkQueue Renderer::get_compute_queue() const { return get_queue(VK_QUEUE_COMPUTE_BIT); }
 
             void Renderer::signal_lost() const { m_lost = true; }
 

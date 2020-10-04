@@ -247,6 +247,11 @@ namespace jolt {
             }
 
             void RenderTarget::initialize() {
+                jltassert2(
+                  m_renderer.get_presentation_target(),
+                  "Renderer must have a presentation target for a renderer target to be "
+                  "initialized");
+
                 initialize_depth_stencil_buffer();
                 initialize_render_pass();
                 initialize_framebuffer(

@@ -11,8 +11,8 @@ namespace jolt {
                 }
             }
 
-            void CommandPool::initialize(
-              bool transient, bool allow_reset, uint32_t queue_fam_index) {
+            void
+            CommandPool::initialize(bool transient, bool allow_reset, uint32_t queue_fam_index) {
                 VkResult result;
                 VkCommandPoolCreateFlags flags = 0;
 
@@ -37,9 +37,7 @@ namespace jolt {
                 jltassert2(result == VK_SUCCESS, "Unable to create command pool");
             }
 
-            void CommandPool::trim() {
-                vkTrimCommandPool(m_renderer.get_device(), m_pool, 0);
-            }
+            void CommandPool::trim() { vkTrimCommandPool(m_renderer.get_device(), m_pool, 0); }
 
             void CommandPool::reset(bool release_resources) {
                 VkResult result = vkResetCommandPool(
@@ -72,8 +70,7 @@ namespace jolt {
                 jltassert2(result == VK_SUCCESS, "Unable to allocate command buffers");
             }
 
-            CommandBuffer
-            CommandPool::allocate_single_command_buffer(bool const primary) {
+            CommandBuffer CommandPool::allocate_single_command_buffer(bool const primary) {
                 VkCommandBufferAllocateInfo ainfo{
                   VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO, // sType
                   nullptr,                                        // pNext
@@ -92,8 +89,7 @@ namespace jolt {
                 return CommandBuffer{m_renderer, raw_cmd_buffer, primary};
             }
 
-            void CommandPool::free_command_buffers(
-              CommandBuffer *buffers, uint32_t const n) {
+            void CommandPool::free_command_buffers(CommandBuffer *buffers, uint32_t const n) {
                 collections::Array<VkCommandBuffer> raw_buffers{n};
 
                 for(size_t i = 0; i < n; ++i) { raw_buffers[i] = buffers[i].get_buffer(); }
@@ -151,6 +147,7 @@ namespace jolt {
                 RenderTarget const &tgt = *m_renderer.get_render_target();
                 VkExtent2D const &win_extent =
                   m_renderer.get_window()->get_surface_capabilities().currentExtent;
+
                 VkClearValue clear_values[2] = {0};
 
                 clear_values[0].color.float32[0] = 0.0f;
@@ -183,8 +180,7 @@ namespace jolt {
 
             void CommandBuffer::cmd_end_render_pass() { vkCmdEndRenderPass(m_buffer); }
 
-            void
-            CommandBuffer::submit(VkQueue const queue, ActionSynchro const &synchro) {
+            void CommandBuffer::submit(VkQueue const queue, ActionSynchro const &synchro) {
                 VkSubmitInfo sinfo{
                   VK_STRUCTURE_TYPE_SUBMIT_INFO,  // sType
                   nullptr,                        // pNext

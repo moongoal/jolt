@@ -60,6 +60,15 @@ namespace jolt {
 
             constexpr const_iterator cbegin() const { return const_iterator{m_ptr}; }
             constexpr const_iterator cend() const { return const_iterator{m_ptr + m_length}; }
+
+            /**
+             * Fill all the items with the given value.
+             *
+             * @param value The filler value.
+             */
+            void fill(const_reference value) {
+                for(auto &v : *this) { v = value; }
+            }
         };
 
         template<typename T, size_t N>

@@ -13,6 +13,7 @@ namespace jolt {
             class JLTAPI Window {
                 Renderer const &m_renderer;
                 ui::Window const &m_window;
+                VkQueue const m_queue;
                 VkSurfaceKHR m_surface = VK_NULL_HANDLE;
                 VkSurfaceCapabilitiesKHR m_surface_caps{};
                 VkImageFormatProperties m_phy_dev_image_fmt_props{};
@@ -26,14 +27,16 @@ namespace jolt {
                 void shutdown();
 
               public:
-                Window(Renderer const &renderer, ui::Window const &window) :
-                  m_renderer{renderer}, m_window{window} {
+                Window(Renderer const &renderer, ui::Window const &window, VkQueue const queue) :
+                  m_renderer{renderer}, m_window{window}, m_queue{queue} {
                     initialize();
                 }
 
                 ~Window() { shutdown(); }
 
                 Renderer const &get_renderer() const { return m_renderer; }
+
+                VkQueue get_queue() const { return m_queue; }
 
                 ui::Window const &get_ui_window() const { return m_window; }
 

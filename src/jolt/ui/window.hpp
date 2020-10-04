@@ -50,6 +50,8 @@ namespace jolt {
              */
             HWND get_handle() const { return m_handle; }
 
+            Rect const &get_size() const { return m_size; }
+
             /**
              * Show the window.
              *

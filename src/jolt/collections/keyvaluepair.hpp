@@ -11,6 +11,7 @@ namespace jolt {
          */
         template<typename K, typename V>
         class KeyValuePair {
+          public:
             using key_type = K;
             using value_type = V;
             using key_reference = K &;
@@ -21,7 +22,6 @@ namespace jolt {
             key_type m_key;
             value_type m_value;
 
-          public:
             constexpr KeyValuePair(const_key_reference key, const_value_reference value) :
               m_key{key}, m_value{value} {}
 

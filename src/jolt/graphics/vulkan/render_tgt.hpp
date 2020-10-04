@@ -35,6 +35,12 @@ namespace jolt {
                 void shutdown();
 
               public:
+                /**
+                 * Create a new render target.
+                 *
+                 * @remarks In order for the render target to be properly initialised, the renderer
+                 * must have a valide presentation target set.
+                 */
                 RenderTarget(Renderer const &renderer) : m_renderer{renderer} {
                     initialize();
                 }

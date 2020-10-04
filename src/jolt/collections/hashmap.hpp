@@ -37,16 +37,23 @@ namespace jolt {
             typename table_entry::iterator m_cur_entry_it, m_cur_entry_end;
 
             bool next_entry() {
-                ++m_current_table_entry;
+                bool not_table_end = false;
 
-                if(m_current_table_entry >= m_table_length) {
-                    return false;
-                }
+                do {
+                    ++m_current_table_entry;
+                    not_table_end = m_current_table_entry < m_table_length;
 
-                m_cur_entry_it = m_table[m_current_table_entry].begin();
-                m_cur_entry_end = m_table[m_current_table_entry].end();
+                    if(not_table_end) {
+                        m_cur_entry_it = m_table[m_current_table_entry].begin();
+                        m_cur_entry_end = m_table[m_current_table_entry].end();
 
-                return true;
+                        if(m_cur_entry_it != m_cur_entry_end) {
+                            break;
+                        }
+                    }
+                } while(not_table_end);
+
+                return not_table_end;
             }
 
           public:
@@ -55,7 +62,11 @@ namespace jolt {
               m_table{table},
               m_table_length{table_length}, m_current_table_entry{end ? table_length : 0},
               m_cur_entry_it{end ? m_table[m_table_length - 1].end() : m_table[0].begin()},
-              m_cur_entry_end{end ? m_table[m_table_length - 1].end() : m_table[0].end()} {}
+              m_cur_entry_end{end ? m_table[m_table_length - 1].end() : m_table[0].end()} {
+                if(!end && m_cur_entry_it == m_cur_entry_end) {
+                    next_entry();
+                }
+            }
 
             HashMapIterator(const HashMapIterator &other) = default;
             HashMapIterator(HashMapIterator &&other) = default;
@@ -129,10 +140,14 @@ namespace jolt {
             using iterator = base_iterator<T>;
             using const_iterator = const base_iterator<T>;
 
+            using pair_type = KeyValuePair<K, T>;
+            using pair_pointer = KeyValuePair<K, T> *;
+            using const_pair_pointer = const KeyValuePair<K, T> *;
+
             constexpr static size_t DEFAULT_CAPACITY = 16;
 
           private:
-            using table_entry = ValueSet<KeyValuePair<K, T>>;
+            using table_entry = ValueSet<pair_type>;
 
             table_entry *m_table;
             size_t const m_capacity;
@@ -238,8 +253,7 @@ namespace jolt {
             }
 
           private:
-            const KeyValuePair<K, T> *
-            get_pair_for_index(const key_type &key, size_t const index) const {
+            const_pair_pointer get_pair_for_index(const key_type &key, size_t const index) const {
                 for(const auto &pair : m_table[index]) {
                     if(pair.get_key() == key) {
                         return &pair;
@@ -249,10 +263,10 @@ namespace jolt {
                 return nullptr;
             }
 
-            KeyValuePair<K, T> *get_pair_for_index(const key_type &key, size_t const index) {
+            pair_pointer get_pair_for_index(const key_type &key, size_t const index) {
                 const HashMap *const self = this;
 
-                return const_cast<KeyValuePair<K, T> *>(self->get_pair_for_index(key, index));
+                return const_cast<pair_pointer>(self->get_pair_for_index(key, index));
             }
 
           public:
@@ -263,7 +277,7 @@ namespace jolt {
              *
              * @return The ke/value pair for the given key or `nullptr` if the key is not present.
              */
-            const KeyValuePair<K, T> *get_pair(const key_type &key) const {
+            const_pair_pointer get_pair(const key_type &key) const {
                 size_t const index = compute_index(key);
 
                 return get_pair_for_index(key, index);
@@ -276,10 +290,10 @@ namespace jolt {
              *
              * @return The key/value pair for the given key or `nullptr` if the key is not present.
              */
-            KeyValuePair<K, T> *get_pair(const key_type &key) {
+            pair_pointer get_pair(const key_type &key) {
                 const HashMap *const self = this;
 
-                return const_cast<KeyValuePair<K, T> *>(self->get_pair(key));
+                return const_cast<pair_pointer>(self->get_pair(key));
             }
 
             /**
@@ -290,7 +304,7 @@ namespace jolt {
              * @return The value for the given key or `nullptr` if the key is not present.
              */
             const_pointer get_value(const key_type &key) const {
-                const KeyValuePair<K, T> *const pair = get_pair(key);
+                const_pair_pointer const pair = get_pair(key);
 
                 return pair ? &pair->get_value() : nullptr;
             }
@@ -308,6 +322,20 @@ namespace jolt {
             }
 
             /**
+             * Return a value for the given key or a default value.
+             *
+             * @param key The key.
+             *
+             * @return The value for the given key or `default_value` if the key is not present.
+             */
+            const_reference
+            get_value_with_default(const key_type &key, const_reference default_value) const {
+                const_pair_pointer const pair = get_pair(key);
+
+                return pair ? pair->get_value() : default_value;
+            }
+
+            /**
              * Set a key/value pair.
              *
              * @param key The key.
@@ -315,7 +343,7 @@ namespace jolt {
              */
             void set_value(const key_type &key, const value_type &value) {
                 size_t const index = compute_index(key);
-                KeyValuePair<K, T> *pair = get_pair_for_index(key, index);
+                pair_pointer pair = get_pair_for_index(key, index);
 
                 if(pair) {
                     pair->set_value(value);

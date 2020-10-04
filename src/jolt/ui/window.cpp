@@ -83,7 +83,7 @@ namespace jolt {
               MAIN_CLASS_NAME,
               reinterpret_cast<const char *>(
                 m_name.get_raw()), // TODO: Allow non-ASCII characters in the title
-              WS_OVERLAPPED | WS_SYSMENU | WS_MINIMIZEBOX,
+              WS_OVERLAPPED | WS_SYSMENU | WS_MINIMIZEBOX | WS_THICKFRAME,
               m_location.m_x,
               m_location.m_y,
               static_cast<int>(m_size.m_w),
