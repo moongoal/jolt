@@ -148,7 +148,7 @@ namespace jolt {
                         break;
                     case VK_ERROR_SURFACE_LOST_KHR:
                     case VK_ERROR_DEVICE_LOST:
-                        semaphores->get_renderer().signal_lost();
+                        semaphores->get_renderer().signal_lost(RENDERER_LOST_DEVICE);
                         break;
                     default:
                         jolt ::console.err("Error waiting for multiple semaphores");

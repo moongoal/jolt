@@ -580,7 +580,7 @@ namespace jolt {
 
             void Renderer::initialize_phase2(GraphicsEngineInitializationParams const &params) {
                 initialize_device(params);
-                m_lost = false;
+                reset_lost_state();
 
                 initialize_debug_logger();
             }
@@ -675,16 +675,24 @@ namespace jolt {
 
             VkQueue Renderer::get_compute_queue() const { return get_queue(VK_QUEUE_COMPUTE_BIT); }
 
-            void Renderer::signal_lost() const { m_lost = true; }
+            void Renderer::signal_lost(RendererLostState const state) const {
+                if(state > m_lost) {
+                    m_lost = state;
+                }
+            }
+
+            void Renderer::reset_lost_state() { m_lost = RENDERER_NOT_LOST; }
 
             void check_vulkan_result(
               Renderer const &renderer, VkResult const result, text::String const &errmsg) {
+                RendererLostState state = RENDERER_NOT_LOST;
+
                 switch(result) {
                     case VK_SUCCESS:
                         return;
 
                     case VK_SUBOPTIMAL_KHR:
-                        return;
+                        state = RENDERER_LOST_PRESENT;
 
                     case VK_ERROR_FULL_SCREEN_EXCLUSIVE_MODE_LOST_EXT:
                         console.warn("Exclusive mode lost");
@@ -692,14 +700,17 @@ namespace jolt {
 
                     case VK_ERROR_OUT_OF_DATE_KHR:
                         console.warn("Extent out of date");
+                        state = RENDERER_LOST_PRESENT;
                         break;
 
                     case VK_ERROR_SURFACE_LOST_KHR:
                         console.warn("Surface lost");
+                        state = RENDERER_LOST_PRESENT;
                         break;
 
                     case VK_ERROR_DEVICE_LOST:
                         console.warn("Device lost");
+                        state = RENDERER_LOST_DEVICE;
                         break;
 
                     default:
@@ -707,7 +718,7 @@ namespace jolt {
                         abort();
                 }
 
-                renderer.signal_lost();
+                renderer.signal_lost(state);
             }
         } // namespace vulkan
     }     // namespace graphics

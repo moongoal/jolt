@@ -28,13 +28,28 @@ int main(int argc, char **argv) {
     renderer.initialize(gparams);
     wnd.show();
 
-    while(true) {
+    bool exit_loop = false;
+
+    while(!exit_loop) {
         main_loop(wnd);
 
-        if(renderer.is_lost()) {
-            renderer.reset(gparams);
-        } else {
-            break;
+        switch(renderer.get_lost_state()) {
+            case jolt::graphics::vulkan::RENDERER_LOST_DEVICE:
+                renderer.reset(gparams);
+                break;
+
+            case jolt::graphics::vulkan::RENDERER_LOST_PRESENT:
+                renderer.reset_lost_state();
+                break; // Restarting the main loop will reset the render/presentation chain
+
+            case jolt::graphics::vulkan::RENDERER_NOT_LOST:
+                exit_loop = true;
+                break;
+
+            default:
+                console.err("Renderer lost state not handled. Resetting the renderer");
+                renderer.reset(gparams);
+                break;
         }
     }
 

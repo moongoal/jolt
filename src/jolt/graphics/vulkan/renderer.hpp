@@ -24,6 +24,16 @@ namespace jolt {
                 uint32_t n_queues_compute;  //< Preferred number of compute queues to request.
             };
 
+            /**
+             * Represents the lost state of a Vulkan renderer.
+             */
+            enum RendererLostState {
+                RENDERER_NOT_LOST,     //< The renderer is not lost.
+                RENDERER_LOST_PRESENT, /*< The presentation target is lost. Both the render and
+                                         presentation targets need to be reset. */
+                RENDERER_LOST_DEVICE   //< The device is lost, the renderer has to be reset.
+            };
+
             class JLTAPI Renderer {
                 using layer_vector = collections::Vector<const char *>;
                 using extension_vector = layer_vector;
@@ -55,7 +65,7 @@ namespace jolt {
                 RenderTarget *m_render_target = nullptr;
                 PresentationTarget *m_presentation_target = nullptr;
 
-                mutable bool m_lost = false;
+                mutable RendererLostState m_lost = RENDERER_NOT_LOST;
 
                 void initialize_phase2(GraphicsEngineInitializationParams const &params);
                 void initialize_instance(GraphicsEngineInitializationParams const &params);
@@ -191,12 +201,30 @@ namespace jolt {
                 /**
                  * Return a value stating whether the renderer is lost.
                  */
-                bool is_lost() const { return m_lost; }
+                bool is_lost() const { return m_lost != RENDERER_NOT_LOST; }
+
+                /**
+                 * Return the lost state of the renderer.
+                 */
+                RendererLostState get_lost_state() const { return m_lost; }
 
                 /**
                  * Signal that the renderer is lost and needs to be reset.
+                 *
+                 * @param state The new lost state to set.
+                 *
+                 * @remarks This function only changes the lost state if the new state represents a
+                 * worse lost state (i.e. more will need to reset). To reset the lost state to
+                 * RENDERER_NOT_LOST, use `reset_lost_state()`.
+                 *
+                 * @see reset_lost_state().
                  */
-                void signal_lost() const;
+                void signal_lost(RendererLostState const state) const;
+
+                /**
+                 * Reset the lost state to RENDERER_NOT_LOST.
+                 */
+                void reset_lost_state();
 
                 /**
                  * To be called at initialization time or when the logical device is reported as
