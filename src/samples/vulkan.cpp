@@ -79,7 +79,6 @@ void main_loop(ui::Window const &wnd) {
     renderer.set_render_target(rt);
 
     // Cmd pool
-    // CommandPool cmd_pool = renderer.create_graphics_command_pool(true, false);
     CommandPool cmd_pool{renderer, true, true, gqueue_fam_idx};
 
     // Synchro
