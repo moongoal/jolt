@@ -9,5 +9,6 @@
 #include <jolt/graphics/vulkan/synchro.hpp>
 #include <jolt/graphics/vulkan/renderer.hpp>
 #include <jolt/graphics/vulkan/memory.hpp>
+#include <jolt/graphics/vulkan/transfer.hpp>
 
 #endif /* JLT_GRAPHICS_VULKAN_HPP */

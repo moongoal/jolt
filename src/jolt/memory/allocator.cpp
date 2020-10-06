@@ -30,15 +30,15 @@ namespace jolt {
             AllocatorSlot &slot = get_allocator_slot();
             LockGuard lock{slot.m_lock};
 
-            if(flags & ALLOC_SCRATCH) {
+            if((flags & ALLOC_SCRATCH) == ALLOC_SCRATCH) {
                 return slot.m_scratch.allocate(size, flags, alignment);
             }
 
-            if(flags & ALLOC_PERSIST) {
+            if((flags & ALLOC_PERSIST) == ALLOC_PERSIST) {
                 return slot.m_persist.allocate(size, flags, alignment);
             }
 
-            if(flags & ALLOC_BIG) {
+            if((flags & ALLOC_BIG) == ALLOC_BIG) {
                 return slot.m_bg_alloc.allocate(size, flags, alignment);
             }
 
@@ -48,15 +48,15 @@ namespace jolt {
         static inline bool is_allocation_from_slot(void *const ptr, AllocatorSlot &slot) {
             AllocHeader *const hdr_ptr = get_alloc_header(ptr);
 
-            if(hdr_ptr->m_flags & ALLOC_SCRATCH) {
+            if((hdr_ptr->m_flags & ALLOC_SCRATCH) == ALLOC_SCRATCH) {
                 return slot.m_scratch.owns_ptr(ptr);
             }
 
-            if(hdr_ptr->m_flags & ALLOC_PERSIST) {
+            if((hdr_ptr->m_flags & ALLOC_PERSIST) == ALLOC_PERSIST) {
                 return slot.m_persist.owns_ptr(ptr);
             }
 
-            if(hdr_ptr->m_flags & ALLOC_BIG) {
+            if((hdr_ptr->m_flags & ALLOC_BIG) == ALLOC_BIG) {
                 return slot.m_bg_alloc.owns_ptr(ptr);
             }
 
@@ -95,15 +95,15 @@ namespace jolt {
             flags_t flags = get_alloc_flags(ptr);
             LockGuard lock{slot.m_lock};
 
-            if(flags & ALLOC_SCRATCH) {
+            if((flags & ALLOC_SCRATCH) == ALLOC_SCRATCH) {
                 return slot.m_scratch.free(ptr);
             }
 
-            if(flags & ALLOC_PERSIST) {
+            if((flags & ALLOC_PERSIST) == ALLOC_PERSIST) {
                 return slot.m_persist.free(ptr);
             }
 
-            if(flags & ALLOC_BIG) {
+            if((flags & ALLOC_BIG) == ALLOC_BIG) {
                 return slot.m_bg_alloc.free(ptr);
             }
 
@@ -129,15 +129,15 @@ namespace jolt {
             AllocatorSlot &slot = get_allocator_slot();
             AllocHeader *const hdr_ptr = get_alloc_header(ptr);
 
-            if(hdr_ptr->m_flags & ALLOC_SCRATCH) {
+            if((hdr_ptr->m_flags & ALLOC_SCRATCH) == ALLOC_SCRATCH) {
                 return slot.m_scratch.reallocate(ptr, new_size);
             }
 
-            if(hdr_ptr->m_flags & ALLOC_PERSIST) {
+            if((hdr_ptr->m_flags & ALLOC_PERSIST) == ALLOC_PERSIST) {
                 return slot.m_persist.reallocate(ptr, new_size);
             }
 
-            if(hdr_ptr->m_flags & ALLOC_BIG) {
+            if((hdr_ptr->m_flags & ALLOC_BIG) == ALLOC_BIG) {
                 return slot.m_bg_alloc.reallocate(ptr, new_size, hdr_ptr->m_alignment);
             }
 
@@ -148,15 +148,15 @@ namespace jolt {
             AllocatorSlot &slot = get_allocator_slot();
             AllocHeader *const hdr_ptr = get_alloc_header(ptr);
 
-            if(hdr_ptr->m_flags & ALLOC_SCRATCH) {
+            if((hdr_ptr->m_flags & ALLOC_SCRATCH) == ALLOC_SCRATCH) {
                 return slot.m_scratch.will_relocate(ptr, new_size);
             }
 
-            if(hdr_ptr->m_flags & ALLOC_PERSIST) {
+            if((hdr_ptr->m_flags & ALLOC_PERSIST) == ALLOC_PERSIST) {
                 return slot.m_persist.will_relocate(ptr, new_size);
             }
 
-            if(hdr_ptr->m_flags & ALLOC_BIG) {
+            if((hdr_ptr->m_flags & ALLOC_BIG) == ALLOC_BIG) {
                 return slot.m_bg_alloc.will_relocate(ptr, new_size);
             }
 

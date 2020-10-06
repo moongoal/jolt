@@ -231,6 +231,28 @@ namespace jolt {
                  * lost.
                  */
                 void reset(GraphicsEngineInitializationParams const &params);
+
+                /**
+                 * Get the memory type index for the given requirements.
+                 *
+                 * @param requirements A bitmask of device memory requirements.
+                 * @param exact A boolean value stating whether to check for exact requirements.
+                 *
+                 * @return The memory type index for the requirements or JLT_VULKAN_INVALID32 if no
+                 * available memory type meets the requirements.
+                 */
+                uint32_t get_memory_type_index(VkMemoryPropertyFlags const requirements, bool const exact = false) const;
+
+                /**
+                 * Get the memory type index for the given requirements.
+                 *
+                 * @param requirements A bitmask of device memory requirements.
+                 * @param exclusions Requirements to exclude. Any returned result will not have these flags included.
+                 *
+                 * @return The memory type index for the requirements or JLT_VULKAN_INVALID32 if no
+                 * available memory type meets the requirements.
+                 */
+                uint32_t get_memory_type_index(VkMemoryPropertyFlags const requirements, VkMemoryPropertyFlags const exclusions) const;
             };
 
             VkAllocationCallbacks JLTAPI *get_vulkan_allocator();

@@ -47,7 +47,7 @@ namespace jolt {
                 for(uint32_t i = 0; i < mem_props.memoryTypeCount; ++i) {
                     VkMemoryType const &mem_type = mem_props.memoryTypes[i];
 
-                    if(mem_type.propertyFlags & mem_flags) {
+                    if((mem_type.propertyFlags & mem_flags) == mem_flags) {
                         return i;
                     }
                 }

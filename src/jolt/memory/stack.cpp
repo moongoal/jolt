@@ -49,7 +49,7 @@ namespace jolt {
                 top_alloc = get_top_allocation()) {
                 AllocHeader *hdr = get_header(top_alloc);
 
-                if(hdr->m_flags & ALLOC_FINALIZED) {
+                if((hdr->m_flags & ALLOC_FINALIZED) == ALLOC_FINALIZED) {
                     free_single_alloc(top_alloc);
                 } else {
                     return; // Finished stream of finalized allocations
@@ -78,7 +78,7 @@ namespace jolt {
 
                 free_top_finalized();
             } else {
-                jltassert(!(ptr_hdr->m_flags & ALLOC_FINALIZED));
+                jltassert((ptr_hdr->m_flags & ALLOC_FINALIZED) != ALLOC_FINALIZED);
 
                 ptr_hdr->m_flags |= ALLOC_FINALIZED;
             }

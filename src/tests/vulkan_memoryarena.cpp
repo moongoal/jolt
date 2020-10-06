@@ -9,7 +9,7 @@ constexpr VkDeviceSize const HEAP_SIZE = 16 * 1024 * 1024;
 Renderer renderer;
 ui::Window *ui_window;
 
-GraphicsEngineInitializationParams gparams{"Jolt test", 1, 0, 0, nullptr};
+GraphicsEngineInitializationParams gparams{"Jolt test", 1, 0, 0, nullptr, 1, 0, 0};
 
 SETUP {
     initialize();

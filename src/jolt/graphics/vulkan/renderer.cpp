@@ -482,7 +482,7 @@ namespace jolt {
                     if(p->queueCount > 0) {
                         if(
                           (exact && (p->queueFlags == requirements))
-                          || (!exact && (p->queueFlags & requirements))) {
+                          || (!exact && (p->queueFlags & requirements)) == requirements) {
                             --p->queueCount;
                             return i;
                         }
@@ -645,7 +645,7 @@ namespace jolt {
 
             VkQueue Renderer::get_queue(VkQueueFlags flags) const {
                 for(auto &qinfo : *m_queues) {
-                    if(qinfo.value.flags & flags) {
+                    if((qinfo.value.flags & flags) == flags) {
                         if(qinfo.lock.try_acquire()) {
                             return qinfo.value.queue;
                         }
@@ -719,6 +719,39 @@ namespace jolt {
                 }
 
                 renderer.signal_lost(state);
+            }
+
+            uint32_t Renderer::get_memory_type_index(
+              VkMemoryPropertyFlags const requirements, bool const exact) const {
+                for(uint32_t mem_type_idx = 0; mem_type_idx < m_phy_mem_props.memoryTypeCount;
+                    ++mem_type_idx) {
+                    VkMemoryType const &mem_type = m_phy_mem_props.memoryTypes[mem_type_idx];
+
+                    if(
+                      (!exact && (mem_type.propertyFlags & requirements) == requirements)
+                      || (exact && (mem_type.propertyFlags == requirements))) {
+                        return mem_type_idx;
+                    }
+                }
+
+                return JLT_VULKAN_INVALID32;
+            }
+
+            uint32_t Renderer::get_memory_type_index(
+              VkMemoryPropertyFlags const requirements,
+              VkMemoryPropertyFlags const exclusions) const {
+                for(uint32_t mem_type_idx = 0; mem_type_idx < m_phy_mem_props.memoryTypeCount;
+                    ++mem_type_idx) {
+                    VkMemoryType const &mem_type = m_phy_mem_props.memoryTypes[mem_type_idx];
+
+                    if(
+                      (mem_type.propertyFlags & requirements) == requirements
+                      && (mem_type.propertyFlags & exclusions) == 0) {
+                        return mem_type_idx;
+                    }
+                }
+
+                return JLT_VULKAN_INVALID32;
             }
         } // namespace vulkan
     }     // namespace graphics
