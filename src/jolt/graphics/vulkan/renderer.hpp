@@ -191,10 +191,9 @@ namespace jolt {
                 /**
                  * Wait for all the queues to be idle.
                  *
-                 * This function will in turn acquire the lock of each queue and release it as soon
-                 * as the queue is reported to be idle. If the lock is not available, it will wait
-                 * indefinitely. Usage of this function is intended for shutdown purposes only and
-                 * only in a single-threaded situation.
+                 * Before calling this function, all the queues must be released. Usage of this
+                 * function is intended for shutdown purposes only and only in a single-threaded
+                 * situation.
                  */
                 void wait_queues_idle() const;
 
@@ -236,23 +235,25 @@ namespace jolt {
                  * Get the memory type index for the given requirements.
                  *
                  * @param requirements A bitmask of device memory requirements.
-                 * @param exact A boolean value stating whether to check for exact requirements.
                  *
-                 * @return The memory type index for the requirements or JLT_VULKAN_INVALID32 if no
-                 * available memory type meets the requirements.
+                 * @return The memory type index that only has the exact provided requirements or
+                 * JLT_VULKAN_INVALID32 if no such memory type is available.
                  */
-                uint32_t get_memory_type_index(VkMemoryPropertyFlags const requirements, bool const exact = false) const;
+                uint32_t get_memory_type_index(VkMemoryPropertyFlags const requirements) const;
 
                 /**
                  * Get the memory type index for the given requirements.
                  *
                  * @param requirements A bitmask of device memory requirements.
-                 * @param exclusions Requirements to exclude. Any returned result will not have these flags included.
+                 * @param exclusions Requirements to exclude. Any returned result will not have
+                 * these flags included.
                  *
                  * @return The memory type index for the requirements or JLT_VULKAN_INVALID32 if no
                  * available memory type meets the requirements.
                  */
-                uint32_t get_memory_type_index(VkMemoryPropertyFlags const requirements, VkMemoryPropertyFlags const exclusions) const;
+                uint32_t get_memory_type_index(
+                  VkMemoryPropertyFlags const requirements,
+                  VkMemoryPropertyFlags const exclusions) const;
             };
 
             VkAllocationCallbacks JLTAPI *get_vulkan_allocator();

@@ -55,7 +55,8 @@ namespace jolt {
                     initialize(transient, allow_reset, queue_fam_index);
                 }
 
-                CommandPool(CommandPool const &other) = delete;
+                CommandPool(CommandPool const &) = delete;
+                CommandPool(CommandPool &&) = default;
 
                 ~CommandPool() { dispose(); }
 
@@ -131,12 +132,11 @@ namespace jolt {
                  * `CommandPool::allocate_command_buffers()` instead of calling this
                  * constructor manually.
                  */
-                CommandBuffer(
-                  Renderer const &renderer, VkCommandBuffer buffer, bool primary) :
-                  m_renderer{renderer},
-                  m_buffer{buffer}, m_primary{primary} {}
+                CommandBuffer(Renderer const &renderer, VkCommandBuffer buffer, bool primary) :
+                  m_renderer{renderer}, m_buffer{buffer}, m_primary{primary} {}
 
                 CommandBuffer(CommandBuffer const &other) = delete;
+                CommandBuffer(CommandBuffer &&) = default;
 
                 Renderer const &get_renderer() const { return m_renderer; }
                 VkCommandBuffer get_buffer() const { return m_buffer; }
@@ -159,6 +159,8 @@ namespace jolt {
                 void cmd_end_render_pass();
 
                 void submit(VkQueue const queue, ActionSynchro const &synchro);
+
+                operator VkCommandBuffer() const { return m_buffer; }
             };
         } // namespace vulkan
     }     // namespace graphics

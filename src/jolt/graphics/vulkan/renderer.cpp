@@ -631,16 +631,8 @@ namespace jolt {
             VkAllocationCallbacks JLTAPI *get_vulkan_allocator() { return g_allocator; }
 
             void Renderer::wait_queues_idle() const {
-                VkResult result;
-
-                for(auto &qinfo : *m_queues) {
-                    qinfo.lock.acquire();
-                    result = vkQueueWaitIdle(qinfo.value.queue);
-
-                    jltvkcheck(result, "Error while waiting for graphics queue to be idle");
-
-                    qinfo.lock.release();
-                }
+                VkResult result = vkDeviceWaitIdle(m_device);
+                jltvkcheck(result, "Error while waiting for the device to be idle");
             }
 
             VkQueue Renderer::get_queue(VkQueueFlags flags) const {
@@ -721,15 +713,13 @@ namespace jolt {
                 renderer.signal_lost(state);
             }
 
-            uint32_t Renderer::get_memory_type_index(
-              VkMemoryPropertyFlags const requirements, bool const exact) const {
+            uint32_t
+            Renderer::get_memory_type_index(VkMemoryPropertyFlags const requirements) const {
                 for(uint32_t mem_type_idx = 0; mem_type_idx < m_phy_mem_props.memoryTypeCount;
                     ++mem_type_idx) {
                     VkMemoryType const &mem_type = m_phy_mem_props.memoryTypes[mem_type_idx];
 
-                    if(
-                      (!exact && (mem_type.propertyFlags & requirements) == requirements)
-                      || (exact && (mem_type.propertyFlags == requirements))) {
+                    if(mem_type.propertyFlags == requirements) {
                         return mem_type_idx;
                     }
                 }

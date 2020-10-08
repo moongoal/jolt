@@ -29,11 +29,6 @@ namespace jolt {
                  */
                 void allocate(VkMemoryPropertyFlags const mem_flags);
 
-                /**
-                 * Find the memory type index for a specific set of requirements.
-                 */
-                uint32_t find_memory_type(VkMemoryPropertyFlags const mem_flags);
-
               public:
                 /**
                  * Create a new device memory heap.

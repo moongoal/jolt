@@ -15,7 +15,7 @@ namespace jolt {
             }
 
             void MemoryHeap::allocate(VkMemoryPropertyFlags const mem_flags) {
-                uint32_t mem_type_index = find_memory_type(mem_flags);
+                uint32_t mem_type_index = m_renderer.get_memory_type_index(mem_flags, 0);
 
                 jltassert2(
                   mem_type_index != JLT_VULKAN_INVALID32,
@@ -38,21 +38,6 @@ namespace jolt {
                     vkFreeMemory(m_renderer.get_device(), m_memory, get_vulkan_allocator());
                     m_memory = VK_NULL_HANDLE;
                 }
-            }
-
-            uint32_t MemoryHeap::find_memory_type(VkMemoryPropertyFlags const mem_flags) {
-                VkPhysicalDeviceMemoryProperties const &mem_props =
-                  m_renderer.get_phy_device_memory_properties();
-
-                for(uint32_t i = 0; i < mem_props.memoryTypeCount; ++i) {
-                    VkMemoryType const &mem_type = mem_props.memoryTypes[i];
-
-                    if((mem_type.propertyFlags & mem_flags) == mem_flags) {
-                        return i;
-                    }
-                }
-
-                return JLT_VULKAN_INVALID32;
             }
 
             VkDeviceSize Arena::bind_to_buffer(
