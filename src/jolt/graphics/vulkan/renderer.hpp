@@ -144,11 +144,18 @@ namespace jolt {
                  * @return A queue handle or VK_NULL_HANDLE if no queue is available for the given
                  * set of requirements.
                  */
-                VkQueue get_queue(VkQueueFlags flags) const;
+                VkQueue acquire_queue(VkQueueFlags const flags) const;
 
-                VkQueue get_graphics_queue() const;
-                VkQueue get_transfer_queue() const;
-                VkQueue get_compute_queue() const;
+                /**
+                 * Release an acquired queue.
+                 *
+                 * @param queue A queue handle returned by `acquire_queue()`.
+                 */
+                void release_queue(VkQueue const queue) const;
+
+                VkQueue acquire_graphics_queue() const;
+                VkQueue acquire_transfer_queue() const;
+                VkQueue acquire_compute_queue() const;
 
                 Window *get_window() { return m_window; }
                 Window const *get_window() const { return m_window; }

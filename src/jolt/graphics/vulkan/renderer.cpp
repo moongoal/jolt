@@ -635,7 +635,7 @@ namespace jolt {
                 jltvkcheck(result, "Error while waiting for the device to be idle");
             }
 
-            VkQueue Renderer::get_queue(VkQueueFlags flags) const {
+            VkQueue Renderer::acquire_queue(VkQueueFlags const flags) const {
                 for(auto &qinfo : *m_queues) {
                     if((qinfo.value.flags & flags) == flags) {
                         if(qinfo.lock.try_acquire()) {
@@ -647,25 +647,36 @@ namespace jolt {
                 return VK_NULL_HANDLE;
             }
 
-            VkQueue Renderer::get_graphics_queue() const {
-                return get_queue(VK_QUEUE_GRAPHICS_BIT);
+            void Renderer::release_queue(VkQueue const queue) const {
+                for(auto &qinfo : *m_queues) {
+                    if(qinfo.value.queue == queue) {
+                        qinfo.lock.release();
+                        break;
+                    }
+                }
             }
 
-            VkQueue Renderer::get_transfer_queue() const {
-                VkQueue queue = get_queue(VK_QUEUE_TRANSFER_BIT);
+            VkQueue Renderer::acquire_graphics_queue() const {
+                return acquire_queue(VK_QUEUE_GRAPHICS_BIT);
+            }
+
+            VkQueue Renderer::acquire_transfer_queue() const {
+                VkQueue queue = acquire_queue(VK_QUEUE_TRANSFER_BIT);
 
                 if(queue == VK_NULL_HANDLE) {
-                    queue = get_graphics_queue();
+                    queue = acquire_graphics_queue();
                 }
 
                 if(queue == VK_NULL_HANDLE) {
-                    queue = get_compute_queue();
+                    queue = acquire_compute_queue();
                 }
 
                 return queue;
             }
 
-            VkQueue Renderer::get_compute_queue() const { return get_queue(VK_QUEUE_COMPUTE_BIT); }
+            VkQueue Renderer::acquire_compute_queue() const {
+                return acquire_queue(VK_QUEUE_COMPUTE_BIT);
+            }
 
             void Renderer::signal_lost(RendererLostState const state) const {
                 if(state > m_lost) {

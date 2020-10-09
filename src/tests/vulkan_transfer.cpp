@@ -43,7 +43,7 @@ TEST(transfer_to_buffer__single_chunk) {
     char const data[] = "TEST STRING";
     size_t const data_sz = sizeof(data);
 
-    VkQueue const queue = renderer.get_graphics_queue();
+    VkQueue const queue = renderer.acquire_graphics_queue();
 
     VkDeviceSize const buffer_dev_ptr = arena->allocate(STAGING_BUFFER_SIZE, 1);
     StagingBuffer transfer{renderer, queue, STAGING_BUFFER_SIZE};

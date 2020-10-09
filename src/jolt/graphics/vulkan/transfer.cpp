@@ -163,7 +163,7 @@ namespace jolt {
                 if(!m_finished) {
                     if(m_transfer.get_fence().wait(10)) {
                         uint32_t q_fam_idx =
-                          m_transfer.get_renderer().get_queue_family_index(m_transfer.get_queue());
+                          m_transfer.get_renderer().get_queue_family_index(m_transfer.acquire_queue());
                         ActionSynchro synchro;
                         Fence &fence = m_transfer.get_fence();
                         VkDeviceSize bufsz = host_begin_next_transfer();
@@ -210,7 +210,7 @@ namespace jolt {
 
                         m_offset += bufsz;
 
-                        m_cmdbuf.submit(m_transfer.get_queue(), synchro);
+                        m_cmdbuf.submit(m_transfer.acquire_queue(), synchro);
                     }
 
                     m_finished = m_offset >= m_total_size;

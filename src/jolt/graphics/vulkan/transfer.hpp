@@ -73,7 +73,7 @@ namespace jolt {
                 VkDeviceMemory const get_memory() const { return m_memory; }
                 CommandPool &get_command_pool() { return m_cmdpool; }
                 VkBuffer get_buffer() const { return m_buffer; }
-                VkQueue get_queue() const { return m_queue; }
+                VkQueue acquire_queue() const { return m_queue; }
                 Fence &get_fence() { return m_fence; }
             };
 

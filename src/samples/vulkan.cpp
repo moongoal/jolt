@@ -59,7 +59,7 @@ int main(int argc, char **argv) {
 
 void main_loop(ui::Window const &wnd) {
     // Queue
-    VkQueue gqueue = renderer.get_graphics_queue();
+    VkQueue gqueue = renderer.acquire_graphics_queue();
     uint32_t gqueue_fam_idx = renderer.get_queue_family_index(gqueue);
 
     jltassert2(gqueue != VK_NULL_HANDLE, "Null graphics queue");

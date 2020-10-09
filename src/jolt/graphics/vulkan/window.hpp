@@ -36,7 +36,7 @@ namespace jolt {
 
                 Renderer const &get_renderer() const { return m_renderer; }
 
-                VkQueue get_queue() const { return m_queue; }
+                VkQueue acquire_queue() const { return m_queue; }
 
                 ui::Window const &get_ui_window() const { return m_window; }
 
