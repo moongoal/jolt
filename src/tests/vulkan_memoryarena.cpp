@@ -28,7 +28,7 @@ CLEANUP {
 }
 
 TEST(ctor) {
-    Arena arena{renderer, HEAP_SIZE, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT};
+    Arena arena{renderer, HEAP_SIZE, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 0};
 
     assert2(arena.get_allocated_size() == 0, "Allocated size not 0");
     assert2(arena.get_free_list().get_length() == 1, "Free list not length 1");
@@ -36,7 +36,7 @@ TEST(ctor) {
 }
 
 TEST(allocate) {
-    Arena arena{renderer, HEAP_SIZE, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT};
+    Arena arena{renderer, HEAP_SIZE, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 0};
 
     VkDeviceSize const alloc1 = arena.allocate(1024, 1);
     assert2(arena.get_allocated_size() == 1024, "Invalid allocated size 1");
@@ -60,15 +60,15 @@ TEST(allocate) {
 }
 
 TEST(allocate__invalid) {
-    Arena arena{renderer, HEAP_SIZE, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT};
+    Arena arena{renderer, HEAP_SIZE, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 0};
 
     VkDeviceSize const alloc1 = arena.allocate(HEAP_SIZE + 1, 1);
 
-    assert(alloc1 == JLT_VULKAN_INVALIDSZ);
+    assert(alloc1 == InvalidBufferDeviceAlloc);
 }
 
 TEST(allocate__free__max) {
-    Arena arena{renderer, HEAP_SIZE, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT};
+    Arena arena{renderer, HEAP_SIZE, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 0};
 
     VkDeviceSize const alloc1 = arena.allocate(HEAP_SIZE, 1);
     assert2(arena.get_allocated_size() == HEAP_SIZE, "Invalid allocated size 1");
@@ -82,7 +82,8 @@ TEST(allocate__free__max) {
 }
 
 TEST(free) {
-    Arena arena{renderer, HEAP_SIZE, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT};
+    Arena arena{
+      renderer, HEAP_SIZE, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT};
     VkDeviceSize const alloc1 = arena.allocate(1024, 1);
     VkDeviceSize const alloc2 = arena.allocate(1024, 1);
 

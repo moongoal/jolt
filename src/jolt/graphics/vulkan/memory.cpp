@@ -4,6 +4,12 @@
 namespace jolt {
     namespace graphics {
         namespace vulkan {
+            template class DeviceAlloc<VkBuffer>;
+            template class DeviceAlloc<VkImage>;
+
+            BufferDeviceAlloc const InvalidBufferDeviceAlloc{VK_NULL_HANDLE, 0, 0};
+            ImageDeviceAlloc const InvalidImageDeviceAlloc{VK_NULL_HANDLE, 0, 0};
+
             MemoryHeap::MemoryHeap(
               Renderer const &renderer,
               VkDeviceSize const size,
@@ -40,37 +46,8 @@ namespace jolt {
                 }
             }
 
-            VkDeviceSize Arena::bind_to_buffer(
-              VkBuffer const buffer, VkDeviceSize const size, VkDeviceSize const alignment) {
-                VkDeviceSize offset = allocate(size, alignment);
-
-                if(offset != JLT_VULKAN_INVALIDSZ) {
-                    VkResult result =
-                      vkBindBufferMemory(get_renderer().get_device(), buffer, get_base(), offset);
-                    jltassert2(result == VK_SUCCESS, "Unable to bind buffer memory");
-
-                    return offset;
-                }
-
-                return JLT_VULKAN_INVALIDSZ;
-            }
-
-            VkDeviceSize Arena::bind_to_image(
-              VkImage const image, VkDeviceSize const size, VkDeviceSize const alignment) {
-                VkDeviceSize offset = allocate(size, alignment);
-
-                if(offset != JLT_VULKAN_INVALIDSZ) {
-                    VkResult result =
-                      vkBindImageMemory(get_renderer().get_device(), image, get_base(), offset);
-                    jltassert2(result == VK_SUCCESS, "Unable to bind image memory");
-
-                    return offset;
-                }
-
-                return JLT_VULKAN_INVALIDSZ;
-            }
-
-            VkDeviceSize Arena::allocate(VkDeviceSize const size, VkDeviceSize const alignment) {
+            BufferDeviceAlloc
+            Arena::allocate(VkDeviceSize const size, VkDeviceSize const alignment) {
                 for(auto it = m_freelist.begin(), end = m_freelist.end(); it != end; ++it) {
                     FreeListNode &node = *it;
                     VkDeviceSize const alloc_ptr = node.m_base;
@@ -91,11 +68,38 @@ namespace jolt {
 
                         m_total_alloc_size += total_size;
 
-                        return ret_ptr;
+                        return BufferDeviceAlloc(m_buffer, ret_ptr, size);
                     }
                 }
 
-                return JLT_VULKAN_INVALIDSZ;
+                return InvalidBufferDeviceAlloc;
+            }
+
+            Arena::~Arena() {
+                if(is_bound()) {
+                    vkDestroyBuffer(get_renderer().get_device(), m_buffer, get_vulkan_allocator());
+                }
+            }
+
+            void Arena::initialize(VkBufferUsageFlags const usage) {
+                if(usage != 0) {
+                    VkBufferCreateInfo cinfo{
+                      VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO, // sType
+                      nullptr,                              // pNext
+                      0,                                    // flags
+                      get_size(),                           // size
+                      usage,                                // usage
+                      VK_SHARING_MODE_EXCLUSIVE,            // sharingMode
+                      0,                                    // queueFamilyIndexCount
+                      nullptr                               // pQueueFamilyIndices
+                    };
+
+                    VkResult result = vkCreateBuffer(
+                      get_renderer().get_device(), &cinfo, get_vulkan_allocator(), &m_buffer);
+                    jltassert2(result == VK_SUCCESS, "Unable to create arena buffer");
+                } else {
+                    m_buffer = VK_NULL_HANDLE;
+                }
             }
 
             void Arena::free(VkDeviceSize const ptr) {

@@ -12,6 +12,43 @@ namespace jolt {
         namespace vulkan {
             class Renderer;
 
+            template<typename Handle, typename Size = VkDeviceSize>
+            class DeviceAlloc {
+              public:
+                using handle_type = Handle;
+                using size_type = Size;
+
+              private:
+                handle_type const m_handle;
+                size_type const m_offset;
+                size_type const m_size;
+
+              public:
+                DeviceAlloc(
+                  handle_type const handle, size_type const offset, size_type const size) :
+                  m_handle{handle},
+                  m_offset{offset}, m_size{size} {}
+
+                operator handle_type() const { return m_handle; }
+                operator size_type() const { return m_offset; }
+
+                handle_type get_handle() const { return m_handle; }
+                size_type get_size() const { return m_size; }
+                size_type get_offset() const { return m_offset; }
+                bool is_valid() const { return m_handle != VK_NULL_HANDLE; }
+            };
+
+#ifdef JLT_INTERNAL
+            extern template class DeviceAlloc<VkBuffer>;
+            extern template class DeviceAlloc<VkImage>;
+#endif // JLT_INTERNAL
+
+            using BufferDeviceAlloc = DeviceAlloc<VkBuffer>;
+            using ImageDeviceAlloc = DeviceAlloc<VkImage>;
+
+            extern JLTAPI BufferDeviceAlloc const InvalidBufferDeviceAlloc;
+            extern JLTAPI ImageDeviceAlloc const InvalidImageDeviceAlloc;
+
             /**
              * A generic device memory heap.
              *
@@ -168,19 +205,21 @@ namespace jolt {
                  *
                  * @param buffer The buffer to allocate the slot to.
                  *
-                 * @return value The allocation offset or JLT_VULKAN_INVALIDSZ if no slots are
+                 * @return value The allocation or InvalidBufferDeviceAlloc if no slots are
                  * available.
                  */
-                VkDeviceSize bind_to_buffer(VkBuffer const buffer) {
+                BufferDeviceAlloc bind_to_buffer(VkBuffer const buffer) {
                     VkDeviceSize offset = allocate();
 
                     if(offset != JLT_VULKAN_INVALIDSZ) {
                         VkResult result = vkBindBufferMemory(
                           get_renderer().get_device(), buffer, get_base(), offset);
                         jltassert2(result == VK_SUCCESS, "Unable to bind buffer memory");
-                    }
 
-                    return offset;
+                        return BufferDeviceAlloc{buffer, offset, S};
+                    } else {
+                        return InvalidBufferDeviceAlloc;
+                    }
                 }
 
                 /**
@@ -188,19 +227,21 @@ namespace jolt {
                  *
                  * @param image The image to allocate the slot to.
                  *
-                 * @return value The allocation offset or JLT_VULKAN_INVALIDSZ if no slots are
+                 * @return value The allocation or InvalidImageDeviceAlloc if no slots are
                  * available.
                  */
-                VkDeviceSize bind_to_image(VkImage const image) {
+                ImageDeviceAlloc bind_to_image(VkImage const image) {
                     VkDeviceSize offset = allocate();
 
                     if(offset != JLT_VULKAN_INVALIDSZ) {
                         VkResult result =
                           vkBindImageMemory(get_renderer().get_device(), image, get_base(), offset);
                         jltassert2(result == VK_SUCCESS, "Unable to bind image memory");
-                    }
 
-                    return offset;
+                        return ImageDeviceAlloc{image, offset, S};
+                    } else {
+                        return InvalidImageDeviceAlloc;
+                    }
                 }
 
                 /**
@@ -211,6 +252,8 @@ namespace jolt {
                     uint64_t const cluster = object_n / s_slot_n_bits;
                     uint64_t const slot = offset % s_slot_n_bits;
                     uint64_t const slot_mask = (1ULL << slot);
+
+                    // TODO: Add check to see if allocation is within boundaries
 
                     jltassert2(
                       m_bitmap[cluster] & slot_mask,
@@ -250,8 +293,11 @@ namespace jolt {
                 free_list m_freelist; //< List of free spots in memory.
                 alloc_list m_allocs; //< Mapping between offsets and allocation medatada structures.
                 VkDeviceSize m_total_alloc_size; //< Amount of total allocated memory.
+                VkBuffer m_buffer; //< The internal buffer associated with the memory chunk.
 
                 free_list::Node *find_prev_closest_node(VkDeviceSize const ptr);
+
+                void initialize(VkBufferUsageFlags const usage);
 
               public:
                 /**
@@ -260,41 +306,23 @@ namespace jolt {
                  * @param renderer The renderer.
                  * @param size The size of the memory regoin to allocate.
                  * @param mem_flags Memory type requirements.
+                 * @param usage Usage flags for the internal buffer. Set to 0 not to bind the memory
+                 * to any buffer.
                  */
                 Arena(
                   Renderer const &renderer,
                   VkDeviceSize const size,
-                  VkMemoryPropertyFlags const mem_flags) :
+                  VkMemoryPropertyFlags const mem_flags,
+                  VkBufferUsageFlags const usage) :
                   MemoryHeap(renderer, size, mem_flags),
                   m_total_alloc_size{0} {
                     m_freelist.add({0, size});
+                    initialize(usage);
                 }
 
-                /**
-                 * Allocate some memory and bind it to a Vulkan buffer.
-                 *
-                 * @param buffer The buffer to allocate the memory to.
-                 * @param size The size of the memory region to allocate.
-                 * @param alignment The memory alignment requirement.
-                 *
-                 * @return value The allocation pointer or JLT_VULKAN_INVALIDSZ if the allocation
-                 * fails.
-                 */
-                VkDeviceSize bind_to_buffer(
-                  VkBuffer const buffer, VkDeviceSize const size, VkDeviceSize const alignment);
+                Arena(Arena const &) = delete;
 
-                /**
-                 * Allocate some memory and bind it to a Vulkan image.
-                 *
-                 * @param image The image to allocate the memory to.
-                 * @param size The size of the memory region to allocate.
-                 * @param alignment The memory alignment requirement.
-                 *
-                 * @return value The allocation pointer or JLT_VULKAN_INVALIDSZ if the allocation
-                 * fails.
-                 */
-                VkDeviceSize bind_to_image(
-                  VkImage const image, VkDeviceSize const size, VkDeviceSize const alignment);
+                virtual ~Arena();
 
                 /**
                  * Free a previous allocation made through this arena.
@@ -309,12 +337,12 @@ namespace jolt {
                  * @param size The size of the allocated memory region.
                  * @param alignment The alignment requirement.
                  *
-                 * @return The offset from the heap's base address or JLT_VULKAN_INVALIDSZ if a
+                 * @return A device allocation object or `InvalidBufferDeviceAlloc` if a
                  * contiguous memory region of the required size was not found.
                  *
                  * @see MemoryHeap::get_base().
                  */
-                VkDeviceSize allocate(VkDeviceSize const size, VkDeviceSize const alignment);
+                BufferDeviceAlloc allocate(VkDeviceSize const size, VkDeviceSize const alignment);
 
                 /**
                  * Return the total allocated memory size (in bytes).
@@ -323,6 +351,24 @@ namespace jolt {
 
                 free_list const &get_free_list() const { return m_freelist; }
                 alloc_list const &get_alloc_list() const { return m_allocs; }
+
+                /**
+                 * Return a value stating whether the whole arena is already bound to an internal
+                 * buffer.
+                 *
+                 * @return True if the arena is bound to a buffer, otherwise false.
+                 *
+                 * @remarks If the arena is bound, the `bind_to_buffer()` and `bind_to_image()`
+                 * functions must not be used.
+                 */
+                bool is_bound() const { return m_buffer != VK_NULL_HANDLE; }
+
+                /**
+                 * Return the internal buffer.
+                 *
+                 * @return The internal buffer handle or VK_NULL_HANDLE if the arena is not bound.
+                 */
+                VkBuffer get_buffer() const { return m_buffer; }
             };
         } // namespace vulkan
     }     // namespace graphics
