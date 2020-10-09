@@ -8,7 +8,7 @@
 namespace jolt {
     namespace graphics {
         namespace vulkan {
-            Transfer::Transfer(
+            StagingBuffer::StagingBuffer(
               Renderer const &renderer, VkQueue const queue, VkDeviceSize const size) :
               m_renderer{renderer},
               m_queue{queue}, m_buffer_size{size}, m_fence{renderer, true},
@@ -16,7 +16,7 @@ namespace jolt {
                 initialize();
             }
 
-            void Transfer::initialize() {
+            void StagingBuffer::initialize() {
                 uint32_t q_fam_idx = m_renderer.get_queue_family_index(m_queue);
 
                 VkBufferCreateInfo cinfo{
@@ -56,7 +56,7 @@ namespace jolt {
                 jltassert2(result == VK_SUCCESS, "Unable to bind staging buffer memory");
             }
 
-            uint32_t Transfer::choose_memory_type() const {
+            uint32_t StagingBuffer::choose_memory_type() const {
                 uint32_t mt = m_renderer.get_memory_type_index(
                   VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_CACHED_BIT);
 
@@ -80,7 +80,7 @@ namespace jolt {
                        | COHERENT_BIT;
             }
 
-            void Transfer::dispose() {
+            void StagingBuffer::dispose() {
                 if(m_map_ptr) {
                     vkUnmapMemory(m_renderer.get_device(), m_memory);
                     m_map_ptr = nullptr;
@@ -97,18 +97,18 @@ namespace jolt {
                 }
             }
 
-            BufferTransferOp Transfer::transfer_to_buffer(
+            BufferUploadOp StagingBuffer::transfer_to_buffer(
               const void *const data,
               VkDeviceSize const size,
               VkBuffer const buffer,
               VkDeviceSize const offset,
               VkQueue const queue,
               VkPipelineStageFlags const dst_stage_mask) {
-                return BufferTransferOp{*this, data, size, queue, buffer, dst_stage_mask};
+                return BufferUploadOp{*this, data, size, queue, buffer, dst_stage_mask};
             }
 
-            TransferOp::TransferOp(
-              Transfer &transfer,
+            UploadOp::UploadOp(
+              StagingBuffer &transfer,
               void const *const ptr,
               VkDeviceSize const size,
               VkQueue const tgt_queue,
@@ -119,7 +119,7 @@ namespace jolt {
               m_cmdbuf{transfer.get_command_pool().allocate_single_command_buffer(true)},
               m_finished{false}, m_offset{0}, m_dst_stage_mask{dst_stage_mask} {}
 
-            TransferOp::TransferOp(TransferOp &&other) :
+            UploadOp::UploadOp(UploadOp &&other) :
               m_transfer{other.m_transfer}, m_ptr{other.m_ptr}, m_total_size{other.m_total_size},
               m_tgt_q_fam_idx{other.m_tgt_q_fam_idx}, m_cmdbuf{std::move(other.m_cmdbuf)},
               m_finished{other.m_finished}, m_offset{other.m_offset}, m_dst_stage_mask{
@@ -127,13 +127,13 @@ namespace jolt {
                 other.m_ptr = nullptr;
             }
 
-            TransferOp::~TransferOp() {
+            UploadOp::~UploadOp() {
                 if(m_ptr) { // Not moved
                     m_transfer.get_command_pool().free_single_command_buffer(m_cmdbuf);
                 }
             }
 
-            VkDeviceSize TransferOp::host_begin_next_transfer() {
+            VkDeviceSize UploadOp::host_begin_next_transfer() {
                 VkDeviceSize const bufsz =
                   min(m_transfer.get_buffer_size(), m_total_size - m_offset);
                 VkResult result;
@@ -157,7 +157,7 @@ namespace jolt {
                 return bufsz;
             }
 
-            bool TransferOp::transfer_single_block() {
+            bool UploadOp::transfer_single_block() {
                 jltassert(m_ptr != nullptr);
 
                 if(!m_finished) {
@@ -219,20 +219,20 @@ namespace jolt {
                 return m_finished;
             }
 
-            BufferTransferOp::BufferTransferOp(
-              Transfer &transfer,
+            BufferUploadOp::BufferUploadOp(
+              StagingBuffer &transfer,
               void const *const ptr,
               VkDeviceSize const size,
               VkQueue const tgt_queue,
               VkBuffer const tgt_buffer,
               VkPipelineStageFlags const dst_stage_mask) :
-              TransferOp{transfer, ptr, size, tgt_queue, dst_stage_mask},
+              UploadOp{transfer, ptr, size, tgt_queue, dst_stage_mask},
               m_tgt_buffer{tgt_buffer} {}
 
-            BufferTransferOp::BufferTransferOp(BufferTransferOp &&other) :
-              TransferOp{std::move(other)}, m_tgt_buffer{other.m_tgt_buffer} {}
+            BufferUploadOp::BufferUploadOp(BufferUploadOp &&other) :
+              UploadOp{std::move(other)}, m_tgt_buffer{other.m_tgt_buffer} {}
 
-            void BufferTransferOp::device_copy_to_destination(
+            void BufferUploadOp::device_copy_to_destination(
               bool const last_chunk, uint32_t const q_fam_idx, VkDeviceSize const bufsz) {
                 VkBufferCopy copy{
                   0,        // srcOffset

@@ -9,13 +9,13 @@ namespace jolt {
     namespace graphics {
         namespace vulkan {
             class Renderer;
-            class TransferOp;
-            class BufferTransferOp;
+            class UploadOp;
+            class BufferUploadOp;
 
             /**
              * A data transfer facility that leverages a staging buffer.
              */
-            class JLTAPI Transfer {
+            class JLTAPI StagingBuffer {
                 static constexpr const uint32_t COHERENT_BIT = 0x00010000;
                 Renderer const &m_renderer;
                 VkQueue const m_queue;
@@ -45,12 +45,13 @@ namespace jolt {
                  * @param queue The queue that will be used to transfer the data.
                  * @param size The size of the staging buffer.
                  */
-                Transfer(Renderer const &renderer, VkQueue const queue, VkDeviceSize const size);
-                Transfer(Transfer const &) = delete;
+                StagingBuffer(
+                  Renderer const &renderer, VkQueue const queue, VkDeviceSize const size);
+                StagingBuffer(StagingBuffer const &) = delete;
 
-                ~Transfer() { dispose(); }
+                ~StagingBuffer() { dispose(); }
 
-                BufferTransferOp transfer_to_buffer(
+                BufferUploadOp transfer_to_buffer(
                   const void *const data,
                   VkDeviceSize const size,
                   VkBuffer const buffer,
@@ -76,14 +77,14 @@ namespace jolt {
                 Fence &get_fence() { return m_fence; }
             };
 
-            class JLTAPI TransferOp {
+            class JLTAPI UploadOp {
                 uint8_t const *m_ptr; //< The pointer to the host source memory to transfer.
                 bool m_finished;      //< True if the transfer is complete, false if it is ongoing.
 
               protected:
                 VkDeviceSize const m_total_size; //< The total size of the transfer operation.
-                Transfer &m_transfer;     //< The transfer objet owner of this transfer operation.
-                CommandBuffer m_cmdbuf;   //< The command buffer used to transfer the data.
+                StagingBuffer &m_transfer; //< The transfer objet owner of this transfer operation.
+                CommandBuffer m_cmdbuf;    //< The command buffer used to transfer the data.
                 uint32_t m_tgt_q_fam_idx; /*< Family index for the queue that will take ownership of
                                              the target buffer after the transfer. */
                 VkDeviceSize m_offset; //< The current offset from `m_ptr` for the next chunk copy.
@@ -105,16 +106,16 @@ namespace jolt {
                  * @param tgt_queue Target queue for ownership transfer.
                  * @param dst_stage_mask Desination stage mask for the last execution barrier.
                  */
-                TransferOp(
-                  Transfer &transfer,
+                UploadOp(
+                  StagingBuffer &transfer,
                   void const *const ptr,
                   VkDeviceSize const size,
                   VkQueue const tgt_queue,
                   VkPipelineStageFlags const dst_stage_mask = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT);
-                TransferOp(TransferOp const &) = delete;
-                TransferOp(TransferOp &&);
+                UploadOp(UploadOp const &) = delete;
+                UploadOp(UploadOp &&);
 
-                ~TransferOp();
+                ~UploadOp();
 
                 void transfer() {
                     while(!transfer_single_block()) {}
@@ -123,7 +124,7 @@ namespace jolt {
                 bool transfer_single_block();
             };
 
-            class JLTAPI BufferTransferOp : public TransferOp {
+            class JLTAPI BufferUploadOp : public UploadOp {
                 VkBuffer m_tgt_buffer; //< The destination buffer.
 
               protected:
@@ -141,15 +142,15 @@ namespace jolt {
                  * @param tgt_buffer The target buffer where to send the transferred data.
                  * @param dst_stage_mask Desination stage mask for the last execution barrier.
                  */
-                BufferTransferOp(
-                  Transfer &transfer,
+                BufferUploadOp(
+                  StagingBuffer &transfer,
                   void const *const ptr,
                   VkDeviceSize const size,
                   VkQueue const tgt_queue,
                   VkBuffer const tgt_buffer,
                   VkPipelineStageFlags const dst_stage_mask = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT);
-                BufferTransferOp(BufferTransferOp const &) = delete;
-                BufferTransferOp(BufferTransferOp &&other);
+                BufferUploadOp(BufferUploadOp const &) = delete;
+                BufferUploadOp(BufferUploadOp &&other);
             };
         } // namespace vulkan
     }     // namespace graphics

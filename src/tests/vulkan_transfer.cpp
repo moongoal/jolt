@@ -46,8 +46,8 @@ TEST(transfer_to_buffer__single_chunk) {
     VkQueue const queue = renderer.get_graphics_queue();
 
     VkDeviceSize const buffer_dev_ptr = arena->allocate(STAGING_BUFFER_SIZE, 1);
-    Transfer transfer{renderer, queue, STAGING_BUFFER_SIZE};
-    BufferTransferOp op{
+    StagingBuffer transfer{renderer, queue, STAGING_BUFFER_SIZE};
+    BufferUploadOp op{
       transfer.transfer_to_buffer(data, data_sz, arena->get_buffer(), buffer_dev_ptr, queue)};
 
     op.transfer();
