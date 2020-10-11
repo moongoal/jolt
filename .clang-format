@@ -17,7 +17,7 @@ BreakBeforeTernaryOperators: true
 BreakConstructorInitializers: AfterColon
 BreakInheritanceList: AfterColon
 BreakStringLiterals: true
-ColumnLimit: 100
+ColumnLimit: 110
 CompactNamespaces: false
 ConstructorInitializerAllOnOneLineOrOnePerLine: false
 ExperimentalAutoDetectBinPacking: false

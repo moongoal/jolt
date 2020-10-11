@@ -14,6 +14,8 @@ GraphicsEngineInitializationParams gparams{"Jolt test", 1, 0, 0, nullptr, 1, 0, 
 SETUP {
     initialize();
 
+    console.set_output_stream(&io::standard_error_stream);
+
     ui_window = jltnew(ui::Window, "Test window - don't close");
 
     gparams.wnd = ui_window;
@@ -82,8 +84,7 @@ TEST(allocate__free__max) {
 }
 
 TEST(free) {
-    Arena arena{
-      renderer, HEAP_SIZE, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT};
+    Arena arena{renderer, HEAP_SIZE, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT};
     VkDeviceSize const alloc1 = arena.allocate(1024, 1);
     VkDeviceSize const alloc2 = arena.allocate(1024, 1);
 

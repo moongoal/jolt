@@ -19,6 +19,8 @@ GraphicsEngineInitializationParams gparams{"Jolt test", 1, 0, 0, nullptr, 1, 0, 
 SETUP {
     initialize();
 
+    console.set_output_stream(&io::standard_error_stream);
+
     ui_window = jltnew(ui::Window, "Test window - don't close");
 
     gparams.wnd = ui_window;
