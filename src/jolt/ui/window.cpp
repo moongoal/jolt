@@ -81,8 +81,7 @@ namespace jolt {
             m_handle = CreateWindowExA(
               WS_EX_APPWINDOW,
               MAIN_CLASS_NAME,
-              reinterpret_cast<const char *>(
-                m_name.get_raw()), // TODO: Allow non-ASCII characters in the title
+              reinterpret_cast<const char *>(m_name.get_raw()),
               WS_OVERLAPPED | WS_SYSMENU | WS_MINIMIZEBOX | WS_THICKFRAME,
               m_location.m_x,
               m_location.m_y,

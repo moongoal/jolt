@@ -44,14 +44,6 @@ namespace jolt {
 
             m_os_id.store(GetThreadId(thandle), std::memory_order_release);
 
-            /*
-             * TODO: This information is not immediately available to other threads.
-             * A condition variable to be enforced to ensure all the data is written prior to user
-             * code to start.
-             *
-             * NOTE: An alternative might be to make m_win_handle atomic and wait for m_state to be
-             * "running"
-             */
             m_win_handle = thandle;
             m_state.store(ThreadState::Running, std::memory_order_release);
         }

@@ -18,8 +18,8 @@ namespace jolt {
         }
 
         UTF8String::UTF8String(char const *const s, size_t const s_size, noclone_t noclone) :
-          m_str{const_cast<utf8c *>(reinterpret_cast<utf8c const *>(s))}, m_str_len{s_size},
-          m_str_size{s_size} {}
+          m_str{const_cast<utf8c *>(reinterpret_cast<utf8c const *>(s))}, m_str_len{s_size}, m_str_size{
+                                                                                               s_size} {}
 
         UTF8String::UTF8String(char const *const s, size_t const s_size) :
           m_str{allocate<utf8c>(s_size)}, m_str_len{s_size}, m_str_size{s_size} {
@@ -37,8 +37,7 @@ namespace jolt {
         }
 
         UTF8String::UTF8String(UTF8String &&other) :
-          m_str{other.m_str}, m_str_len{other.m_str_len},
-          m_str_size{other.m_str_size}, m_own{other.m_own} {
+          m_str{other.m_str}, m_str_len{other.m_str_len}, m_str_size{other.m_str_size}, m_own{other.m_own} {
             other.m_own = false;
         }
 
@@ -52,7 +51,6 @@ namespace jolt {
         }
 
         bool UTF8String::operator==(const UTF8String &other) const {
-            // TODO: Add Unicode normalization support
             if(other.m_str_len != m_str_len) {
                 return false;
             } else {

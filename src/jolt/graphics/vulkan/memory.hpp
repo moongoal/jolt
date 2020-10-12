@@ -253,8 +253,6 @@ namespace jolt {
                     uint64_t const slot = offset % s_slot_n_bits;
                     uint64_t const slot_mask = (1ULL << slot);
 
-                    // TODO: Add check to see if allocation is within boundaries
-
                     jltassert2(
                       m_bitmap[cluster] & slot_mask,
                       "Attempting to free a slot that is not allocated");
