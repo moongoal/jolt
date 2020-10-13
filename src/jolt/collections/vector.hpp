@@ -246,7 +246,7 @@ namespace jolt {
                 if(new_capacity > m_capacity) {
                     m_capacity = new_capacity;
 
-                    memory::reallocate(m_data, m_capacity);
+                    m_data = memory::reallocate(m_data, m_capacity);
                 }
             }
 
