@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.18)
+cmake_minimum_required(VERSION 3.19)
 
 # vcpkg integration
 if(DEFINED ENV{VCPKG_ROOT} AND NOT DEFINED CMAKE_TOOLCHAIN_FILE)
@@ -19,10 +19,10 @@ include(CTest)
 include(features.cmake)
 
 find_path(PATH_SRC_JOLT version.hpp.in REQUIRED DOC "Main source directory" HINTS src/jolt)
-get_filename_component(PATH_SRC ${PATH_SRC_JOLT} DIRECTORY)
-
+cmake_path(GET PATH_SRC_JOLT PARENT_PATH PATH_SRC)
 set(PATH_TESTS ${PATH_SRC}/tests)
 set(PATH_SAMPLES ${PATH_SRC}/samples)
+set(PATH_SHADERS ${PATH_SRC}/shaders)
 
 configure_file(${PATH_SRC_JOLT}/version.hpp.in ${PATH_SRC_JOLT}/version.hpp NEWLINE_STYLE UNIX)
 configure_file(${PATH_SRC_JOLT}/features.hpp.in ${PATH_SRC_JOLT}/features.hpp NEWLINE_STYLE UNIX)
@@ -70,6 +70,7 @@ target_link_libraries(libjolt PRIVATE ${XXHASH_LIBRARY} PUBLIC Vulkan::Vulkan gl
 
 add_subdirectory(${PATH_TESTS})
 add_subdirectory(${PATH_SAMPLES})
+add_subdirectory(${PATH_SHADERS})
 
 add_custom_command(
     TARGET libjolt POST_BUILD

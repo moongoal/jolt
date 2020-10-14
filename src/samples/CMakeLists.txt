@@ -2,7 +2,7 @@ include_guard(GLOBAL)
 file(GLOB SAMPLE_SOURCES LIST_DIRECTORIES false ${CMAKE_CURRENT_LIST_DIR}/*.cpp)
 
 foreach(SRC ${SAMPLE_SOURCES})
-    get_filename_component(NAME ${SRC} NAME_WE ABSOLUTE)
+    cmake_path(GET SRC STEM NAME)
     add_executable(${NAME} ${SRC})
     target_link_libraries(${NAME} libjolt)
     add_custom_command(
