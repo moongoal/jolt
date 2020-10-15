@@ -15,8 +15,8 @@ namespace jolt {
          * will be executed by the game engine and to output text to any output stream.
          */
         class JLTAPI Console {
-            io::InputStream *m_source; //< The console input stream.
-            io::OutputStream *m_sink;  //< The console output stream.
+            io::FileStream *m_source; //< The console input stream.
+            io::FileStream *m_sink;   //< The console output stream.
             LogLevel m_loglevel;
 
             void print_with_prefix(const text::String &prefix, const text::String &message, bool newline);
@@ -29,8 +29,8 @@ namespace jolt {
              * @param sink The console output or `nullptr` to disable console output.
              */
             explicit Console(
-              io::InputStream *const source = nullptr,
-              io::OutputStream *const sink = nullptr,
+              io::FileStream *const source = nullptr,
+              io::FileStream *const sink = nullptr,
               LogLevel loglevel = LogLevel::Warning) :
               m_source{source},
               m_sink{sink},
@@ -66,12 +66,12 @@ namespace jolt {
 
             void make_default();
 
-            io::InputStream *get_input_stream() { return m_source; }
-            io::OutputStream *get_output_straem() { return m_sink; }
+            io::FileStream *get_input_stream() { return m_source; }
+            io::FileStream *get_output_straem() { return m_sink; }
             LogLevel get_log_level() const { return m_loglevel; }
 
-            void set_input_stream(io::InputStream *const source) { m_source = source; }
-            void set_output_stream(io::OutputStream *const sink) { m_sink = sink; }
+            void set_input_stream(io::FileStream *const source) { m_source = source; }
+            void set_output_stream(io::FileStream *const sink) { m_sink = sink; }
 
             void set_log_level(LogLevel loglevel) {
 #ifndef JLT_WITH_DEBUG_LOGGING

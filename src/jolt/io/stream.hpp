@@ -1,5 +1,6 @@
 #ifndef JLT_IO_STREAM_HPP
 #define JLT_IO_STREAM_HPP
+
 #include <cstdio>
 #include <cstdint>
 #include <jolt/api.hpp>
@@ -7,86 +8,74 @@
 
 namespace jolt {
     namespace io {
-        enum class FileMode { Read, Write };
+        using ModeFlags = uint32_t;
 
-        struct Stream {
-            Stream() = default;
+        enum Mode : ModeFlags { MODE_READ = 1, MODE_WRITE };
+
+        class Stream {
+          private:
+            ModeFlags m_mode;
+            bool const m_closeable;
+
+            virtual size_t read_impl(uint8_t *const buf, size_t const buf_sz) = 0;
+            virtual size_t write_impl(const uint8_t *const buf, size_t const buf_sz) { return 0; }
+            virtual void close_impl() {}
+
+          public:
+            Stream(ModeFlags const mode, bool const closeable) : m_mode{mode}, m_closeable{closeable} {}
             Stream(const Stream &) = delete;
             Stream(Stream &&) = default;
+
+            virtual ~Stream();
+
+            size_t read(uint8_t *const buf, size_t const buf_sz) { return read_impl(buf, buf_sz); }
+            size_t write(const uint8_t *const buf, size_t const buf_sz);
+            void close();
         };
 
-        struct InputStream : public Stream {
-            InputStream() = default;
-            InputStream(InputStream &&) = default;
+        class JLTAPI FileStream : public Stream {
+          private:
+            virtual size_t read_impl(uint8_t *const buf, size_t const buf_sz);
+            virtual size_t write_impl(const uint8_t *const buf, size_t const buf_sz);
+            virtual bool eof_impl() const { return m_eof; }
+            virtual void close_impl();
 
-            virtual size_t read(uint8_t *const buf, size_t const buf_sz) = 0;
-        };
-
-        struct OutputStream : public Stream {
-            OutputStream() = default;
-            OutputStream(OutputStream &&) = default;
-
-            virtual size_t write(const uint8_t *const buf, size_t const buf_sz) = 0;
-        };
-
-        struct Closeable {
-            virtual void close() = 0;
-        };
-
-        class JLTAPI FileStream : public Stream, public Closeable {
           protected:
             FILE *m_file;
-            FileMode const m_mode;
             bool m_eof;
 
-            explicit FileStream(const text::String &path, FileMode const mode);
+            FileStream(FILE *const file, ModeFlags const mode);
 
           public:
-            FileStream(FILE *const file, FileMode const mode);
+            FileStream(const text::String &path, ModeFlags const mode);
             FileStream(FileStream &&) = default;
-            ~FileStream();
+            virtual ~FileStream();
 
-            virtual bool eof() const { return m_eof; }
-            virtual void close();
+            bool eof() const { return eof_impl(); }
         };
 
-        class JLTAPI FileInputStream : public FileStream, public InputStream {
-          public:
-            explicit FileInputStream(const text::String &path) : FileStream{path, FileMode::Read} {}
-            FileInputStream(FileInputStream &&) = default;
-            FileInputStream(FILE *const file) : FileStream{file, FileMode::Read} {}
+        class StandardErrorStream : public FileStream {
+          private:
+            virtual void close_impl() {}
 
-            virtual size_t read(uint8_t *const buf, size_t const buf_sz);
+          public:
+            StandardErrorStream() : FileStream{stderr, MODE_WRITE} {}
         };
 
-        class JLTAPI FileOutputStream : public FileStream, public OutputStream {
-          public:
-            explicit FileOutputStream(const text::String &path) : FileStream{path, FileMode::Write} {}
-            FileOutputStream(FileOutputStream &&) = default;
-            FileOutputStream(FILE *const file) : FileStream{file, FileMode::Write} {}
+        class StandardOutputStream : public FileStream {
+          private:
+            virtual void close_impl() {}
 
-            virtual size_t write(const uint8_t *const buf, size_t const buf_sz);
+          public:
+            StandardOutputStream() : FileStream{stdout, MODE_WRITE} {}
         };
 
-        class StandardErrorStream : public FileOutputStream {
+        class StandardInputStream : public FileStream {
+          private:
+            virtual void close_impl() {}
+
           public:
-            StandardErrorStream() : FileOutputStream{stderr} {}
-
-            virtual void close() {}
-        };
-
-        class StandardOutputStream : public FileOutputStream {
-          public:
-            StandardOutputStream() : FileOutputStream{stderr} {}
-
-            virtual void close() {}
-        };
-
-        class StandardInputStream : public FileInputStream {
-          public:
-            StandardInputStream() : FileInputStream{stderr} {}
-
-            virtual void close() {}
+            StandardInputStream() : FileStream{stdin, MODE_READ} {}
         };
 
         extern JLTAPI StandardOutputStream standard_output_stream;

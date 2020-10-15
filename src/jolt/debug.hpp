@@ -1,8 +1,6 @@
 #ifndef JLT_ASSERT_H
 #define JLT_ASSERT_H
 
-#include <jolt/debug/console.hpp>
-
 #ifdef NDEBUG
     #define jltassert(x) ((void)0)
     #define jltassert2(x) ((void)0)
