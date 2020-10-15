@@ -4,8 +4,7 @@
 
 namespace {
     extern "C" DWORD WINAPI start_new_thread(LPVOID thread_ptr) {
-        jolt::threading::Thread::start_new_thread(
-          *reinterpret_cast<jolt::threading::Thread *>(thread_ptr));
+        jolt::threading::Thread::start_new_thread(*reinterpret_cast<jolt::threading::Thread *>(thread_ptr));
 
         return (DWORD)0;
     }
@@ -16,7 +15,7 @@ namespace jolt {
         const char *const UNNAMED_THREAD_NAME = "Unnamed thread";
 
         static Thread g_main_thread(::GetCurrentThreadId(), ThreadState::Running, "Main");
-        static thread_local Thread *t_current_thread;
+        static thread_local Thread *t_current_thread = &g_main_thread;
         volatile std::atomic<thread_id> Thread::s_next_id = 0;
 
         Thread::Thread(thread_id os_id, ThreadState const state, const char *const thread_name) :
@@ -98,7 +97,7 @@ namespace jolt {
             jltassert(old_affinity_mask);
         }
 
-        void initialize() { t_current_thread = &g_main_thread; }
+        void initialize() {}
 
         void sleep(size_t duration_ms) {
             jltassert(duration_ms <= std::numeric_limits<os_thread_id>::max());
