@@ -24,14 +24,15 @@ namespace jolt {
             using const_pointer = const T *;
             using reference = T &;
             using const_reference = const T &;
-            using noclone_t = int;
+
+            struct noclone_t {};
 
             template<typename E>
             using base_iterator = Iterator<E, ArrayIteratorImpl<E>>;
             using iterator = base_iterator<T>;
             using const_iterator = base_iterator<const T>;
 
-            static constexpr noclone_t noclone = 0;
+            static constexpr noclone_t noclone{};
 
           private:
             pointer m_data;                //< Pointer to the data.
@@ -74,8 +75,7 @@ namespace jolt {
              *
              * @param lst The initializer list of items containing the initial state.
              */
-            Vector(const std::initializer_list<value_type> &lst) :
-              Vector(lst.begin(), lst.size()) {}
+            Vector(const std::initializer_list<value_type> &lst) : Vector(lst.begin(), lst.size()) {}
 
             /**
              * Create a new empty instance of this class.
@@ -95,16 +95,13 @@ namespace jolt {
              */
             Vector(const_pointer const data, unsigned int const length) :
               m_data{memory::allocate<value_type>(max(length, DEFAULT_CAPACITY))}, m_length{length},
-              m_capacity{max(length, DEFAULT_CAPACITY)}, m_alloc_flags{
-                                                           memory::get_current_force_flags()} {
+              m_capacity{max(length, DEFAULT_CAPACITY)}, m_alloc_flags{memory::get_current_force_flags()} {
                 jltassert(data);
 
                 if constexpr(std::is_trivial<value_type>::value) {
                     memcpy(m_data, data, length * sizeof(value_type));
                 } else {
-                    for(unsigned int i = 0; i < length; ++i) {
-                        memory::construct(m_data + i, *(data + i));
-                    }
+                    for(unsigned int i = 0; i < length; ++i) { memory::construct(m_data + i, *(data + i)); }
                 }
             }
 
@@ -136,9 +133,7 @@ namespace jolt {
                     if(length < m_length) {
                         const_iterator end = cend();
 
-                        for(iterator it = begin() + m_length; it != end; ++it) {
-                            (*it).~value_type();
-                        }
+                        for(iterator it = begin() + m_length; it != end; ++it) { (*it).~value_type(); }
                     }
                 }
 
@@ -269,9 +264,7 @@ namespace jolt {
              * @param item The item to add.
              * @param position The index at which to add the new item.
              */
-            void add(const_reference item, unsigned int const position) {
-                add_all(&item, 1, position);
-            }
+            void add(const_reference item, unsigned int const position) { add_all(&item, 1, position); }
 
             /**
              * Add many items.
@@ -292,8 +285,7 @@ namespace jolt {
              * @param length The number of items to add.
              * @param position The index at which to add the items.
              */
-            void add_all(
-              const_pointer const items, unsigned int const length, unsigned int const position) {
+            void add_all(const_pointer const items, unsigned int const length, unsigned int const position) {
                 ensure_capacity(length);
 
                 if constexpr(std::is_trivial<value_type>::value) {
