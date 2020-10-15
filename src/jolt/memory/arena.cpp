@@ -1,4 +1,5 @@
 #include <cstring>
+#include <jolt/util.hpp>
 #include "checks.hpp"
 #include "arena.hpp"
 

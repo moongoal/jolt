@@ -2,20 +2,30 @@
 #define JLT_IO_STREAM_HPP
 #include <cstdio>
 #include <cstdint>
-#include <jolt/util.hpp>
+#include <jolt/api.hpp>
 #include <jolt/text/string.hpp>
 
 namespace jolt {
     namespace io {
         enum class FileMode { Read, Write };
 
-        struct Stream {};
+        struct Stream {
+            Stream() = default;
+            Stream(const Stream &) = delete;
+            Stream(Stream &&) = default;
+        };
 
         struct InputStream : public Stream {
+            InputStream() = default;
+            InputStream(InputStream &&) = default;
+
             virtual size_t read(uint8_t *const buf, size_t const buf_sz) = 0;
         };
 
         struct OutputStream : public Stream {
+            OutputStream() = default;
+            OutputStream(OutputStream &&) = default;
+
             virtual size_t write(const uint8_t *const buf, size_t const buf_sz) = 0;
         };
 
@@ -33,6 +43,7 @@ namespace jolt {
 
           public:
             FileStream(FILE *const file, FileMode const mode);
+            FileStream(FileStream &&) = default;
             ~FileStream();
 
             virtual bool eof() const { return m_eof; }
@@ -42,6 +53,7 @@ namespace jolt {
         class JLTAPI FileInputStream : public FileStream, public InputStream {
           public:
             explicit FileInputStream(const text::String &path) : FileStream{path, FileMode::Read} {}
+            FileInputStream(FileInputStream &&) = default;
             FileInputStream(FILE *const file) : FileStream{file, FileMode::Read} {}
 
             virtual size_t read(uint8_t *const buf, size_t const buf_sz);
@@ -49,9 +61,8 @@ namespace jolt {
 
         class JLTAPI FileOutputStream : public FileStream, public OutputStream {
           public:
-            explicit FileOutputStream(const text::String &path) :
-              FileStream{path, FileMode::Write} {}
-
+            explicit FileOutputStream(const text::String &path) : FileStream{path, FileMode::Write} {}
+            FileOutputStream(FileOutputStream &&) = default;
             FileOutputStream(FILE *const file) : FileStream{file, FileMode::Write} {}
 
             virtual size_t write(const uint8_t *const buf, size_t const buf_sz);

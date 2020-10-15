@@ -7,6 +7,7 @@
     #error Unsupported OS.
 #endif // _WIN32
 
+#include <jolt/api.hpp>
 #include <jolt/text/string.hpp>
 #include "point.hpp"
 #include "rect.hpp"

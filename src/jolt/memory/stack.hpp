@@ -2,7 +2,7 @@
 #define JLT_MEMORY_STACK_HPP
 
 #include <cstdint>
-#include <jolt/util.hpp>
+#include <jolt/api.hpp>
 #include "heap.hpp"
 #include "checks.hpp"
 #include "defs.hpp"
@@ -30,10 +30,8 @@ namespace jolt {
              */
             void free_single_alloc(void *const ptr);
 
-            void
-            realloc_shrink_top(void *const ptr, size_t const new_size, AllocHeader *const ptr_hdr);
-            void
-            realloc_grow_top(void *const ptr, size_t const new_size, AllocHeader *const ptr_hdr);
+            void realloc_shrink_top(void *const ptr, size_t const new_size, AllocHeader *const ptr_hdr);
+            void realloc_grow_top(void *const ptr, size_t const new_size, AllocHeader *const ptr_hdr);
 
           public:
             explicit Stack(size_t const memory_size) : Heap(memory_size) {
@@ -60,9 +58,7 @@ namespace jolt {
             /**
              * Get the amount of memory that is currently allocated.
              */
-            size_t get_allocated_size() const {
-                return m_ptr_top - reinterpret_cast<uint8_t *>(get_base());
-            }
+            size_t get_allocated_size() const { return m_ptr_top - reinterpret_cast<uint8_t *>(get_base()); }
 
             /**
              * Get a pointer to the top of the stack.
@@ -72,9 +68,7 @@ namespace jolt {
             /**
              * Get the size of free committed memory.
              */
-            size_t get_free_committed_size() const {
-                return get_committed_size() - get_allocated_size();
-            }
+            size_t get_free_committed_size() const { return get_committed_size() - get_allocated_size(); }
 
             /**
              * Ensure the free memory is consistent. If not, abort.
@@ -144,8 +138,7 @@ namespace jolt {
              * doesn't.
              */
             static size_t get_total_allocation_size(size_t const size, size_t const padding) {
-                return size + padding + sizeof(AllocHeader) + JLT_MEM_CANARY_VALUE_SIZE
-                       + sizeof(void *);
+                return size + padding + sizeof(AllocHeader) + JLT_MEM_CANARY_VALUE_SIZE + sizeof(void *);
             }
 
             bool will_relocate(void *const ptr, size_t new_size) const {

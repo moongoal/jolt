@@ -1,7 +1,7 @@
 #ifndef JLT_TEXT_STRINGBUILDER_HPP
 #define JLT_TEXT_STRINGBUILDER_HPP
 
-#include <jolt/util.hpp>
+#include <jolt/api.hpp>
 #include "string.hpp"
 #include <jolt/collections/vector.hpp>
 
@@ -19,8 +19,7 @@ namespace jolt {
              * @param initial_value The value used to initialize the string builder.
              * @param capacity The initial capacity of the underlying data structure.
              */
-            StringBuilder(
-              const String &initial_value, unsigned int const capacity = DEFAULT_CAPACITY);
+            StringBuilder(const String &initial_value, unsigned int const capacity = DEFAULT_CAPACITY);
 
             /**
              * Create a new string builder.

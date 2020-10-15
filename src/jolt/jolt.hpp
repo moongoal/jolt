@@ -1,6 +1,7 @@
 #ifndef JLT_JOLT_HPP
 #define JLT_JOLT_HPP
 
+#include <jolt/api.hpp>
 #include <jolt/util.hpp>
 #include <jolt/debug/console.hpp>
 #include <jolt/memory/allocator.hpp>

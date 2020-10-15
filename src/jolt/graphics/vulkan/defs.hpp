@@ -23,7 +23,7 @@
 #include <cstdint>
 #include <limits>
 #include <vulkan/vulkan.h>
-#include <jolt/util.hpp>
+#include <jolt/api.hpp>
 #include <jolt/debug/console.hpp>
 
 #define JLT_VULKAN_INVALID32 static_cast<uint32_t>(std::numeric_limits<uint32_t>::max())

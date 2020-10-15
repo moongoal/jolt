@@ -9,7 +9,7 @@
     #include <Windows.h>
 #endif // _WIN32
 
-#include <jolt/util.hpp>
+#include <jolt/api.hpp>
 
 namespace jolt {
     namespace threading {
@@ -53,7 +53,7 @@ namespace jolt {
             volatile const char *m_name;                /**< The current thread name */
             volatile void *m_param;                     /**< Current param */
             volatile std::atomic<ThreadState> m_state;  /**< State of the thread object */
-            volatile thread_handler_ptr m_handler; /**< Pointer to the thread starting function */
+            volatile thread_handler_ptr m_handler;      /**< Pointer to the thread starting function */
 
 #ifdef _WIN32
             volatile HANDLE m_win_handle; /**< Windows handle to the thread */
@@ -68,16 +68,12 @@ namespace jolt {
              * @param thread_name A string containing the thread's name.
              */
             Thread(
-              thread_id os_id,
-              ThreadState const state,
-              const char *const thread_name = UNNAMED_THREAD_NAME);
+              thread_id os_id, ThreadState const state, const char *const thread_name = UNNAMED_THREAD_NAME);
 
             Thread(Thread &&other) :
               m_id{other.m_id.load(std::memory_order_acquire)},
-              m_os_id{other.m_os_id.load(std::memory_order_acquire)}, m_handler{std::move(
-                                                                        other.m_handler)},
-              m_state{other.m_state.load(std::memory_order_acquire)}, m_param{std::move(
-                                                                        other.m_param)},
+              m_os_id{other.m_os_id.load(std::memory_order_acquire)}, m_handler{std::move(other.m_handler)},
+              m_state{other.m_state.load(std::memory_order_acquire)}, m_param{std::move(other.m_param)},
               m_win_handle{std::move(other.m_win_handle)}, m_name{std::move(other.m_name)} {
                 other.m_id.store(INVALID_THREAD_ID, std::memory_order_release);
                 other.m_state.store(ThreadState::Invalid, std::memory_order_release);
@@ -89,8 +85,8 @@ namespace jolt {
              * @param handler The thread handler
              */
             explicit Thread(
-              thread_handler_ptr const handler,
-              const char *const thread_name = UNNAMED_THREAD_NAME) noexcept :
+              thread_handler_ptr const handler, const char *const thread_name = UNNAMED_THREAD_NAME) noexcept
+              :
               m_id{s_next_id++},
               m_os_id{INVALID_OS_THREAD_ID}, m_handler{handler}, m_state{ThreadState::Created},
               m_param{nullptr}, m_win_handle{NULL}, m_name{thread_name} {}

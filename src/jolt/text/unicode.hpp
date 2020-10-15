@@ -2,7 +2,7 @@
 #define JLT_TEXT_UTF8_HPP
 
 #include <cstdint>
-#include <jolt/util.hpp>
+#include <jolt/api.hpp>
 
 /**
  * Decode the amount of characters to move forward in a UTF-8 string from the state word as modified
@@ -68,9 +68,7 @@ namespace jolt {
         constexpr bool utf_is_high_surrogate(utf32c c) { return c >= 0xD800 && c <= 0xDBFF; }
         constexpr bool utf_is_low_surrogate(utf32c c) { return c >= 0xDC00 && c <= 0xDFFF; }
 
-        constexpr bool utf_is_scalar(utf32c c) {
-            return c <= 0xD7FF || (c >= 0xE000 && c <= 0x10FFFF);
-        }
+        constexpr bool utf_is_scalar(utf32c c) { return c <= 0xD7FF || (c >= 0xE000 && c <= 0x10FFFF); }
 
         /**
          * Decode a single UTF-8 code point.
@@ -152,8 +150,7 @@ namespace jolt {
          *
          * @remark This function *does not* return a NUL-terminated sequence.
          */
-        void JLTAPI
-        utf8_decode(const utf8c *sin, size_t const sin_len, utf32c *sout, size_t const sout_len);
+        void JLTAPI utf8_decode(const utf8c *sin, size_t const sin_len, utf32c *sout, size_t const sout_len);
 
         /**
          * Find the beginning of the next code point.

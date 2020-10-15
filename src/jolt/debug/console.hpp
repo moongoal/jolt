@@ -2,7 +2,7 @@
 #define JLT_DEBUG_CONSOLE_HPP
 
 #include <jolt/features.hpp>
-#include <jolt/util.hpp>
+#include <jolt/api.hpp>
 #include <jolt/text/string.hpp>
 #include <jolt/io/stream.hpp>
 
@@ -19,8 +19,7 @@ namespace jolt {
             io::OutputStream *m_sink;  //< The console output stream.
             LogLevel m_loglevel;
 
-            void print_with_prefix(
-              const text::String &prefix, const text::String &message, bool newline);
+            void print_with_prefix(const text::String &prefix, const text::String &message, bool newline);
 
           public:
             /**

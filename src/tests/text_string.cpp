@@ -89,12 +89,22 @@ TEST(op_plus) {
     for(size_t i = 0; i < s3.get_length(); ++i) { assert(s5[i + s2.get_length()] == s3[i]); }
 }
 
+TEST(merge) {
+    String s1{u8"String 1"};
+    String s2{u8"String 2"};
+    String s3{u8"String 3"};
+    String s4 = String::merge(s1, s2, s3);
+    String expected_out = u8"String 1String 2String 3";
+
+    assert(s4 == expected_out);
+}
+
 TEST(join) {
     String s1{u8"String 1"};
     String s2{u8"String 2"};
     String s3{u8"String 3"};
-    String s4 = String::join(s1, s2, s3);
-    String expected_out = u8"String 1String 2String 3";
+    String s4 = String::join(", ", s1, s2, s3);
+    String expected_out = u8"String 1, String 2, String 3";
 
     assert(s4 == expected_out);
 }

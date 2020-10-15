@@ -1,7 +1,7 @@
 #ifndef JLT_MEMORY_HEAP_H
 #define JLT_MEMORY_HEAP_H
 #include <jolt/debug.hpp>
-#include <jolt/util.hpp>
+#include <jolt/api.hpp>
 
 namespace jolt {
     namespace memory {

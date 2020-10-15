@@ -6,7 +6,7 @@
 #include <utility>
 #include <jolt/threading/lock.hpp>
 #include <jolt/threading/lockguard.hpp>
-#include <jolt/util.hpp>
+#include <jolt/api.hpp>
 #include "defs.hpp"
 #include "arena.hpp"
 #include "stack.hpp"
@@ -52,12 +52,12 @@
 namespace jolt {
     namespace memory {
         constexpr size_t BIG_OBJECT_MIN_SIZE = 2 * 1024 * 1024; // 2 MiB
-        constexpr size_t ALLOCATOR_SLOTS = 4; // Number of slots available to the engine
+        constexpr size_t ALLOCATOR_SLOTS = 4;                   // Number of slots available to the engine
         constexpr size_t SMALL_HEAP_MEMORY_SIZE = 4LL * 1024 * 1024 * 1024; // 4 GiB
         constexpr size_t BIG_HEAP_MEMORY_SIZE = 4LL * 1024 * 1024 * 1024;   // 4 GiB
         constexpr size_t PERSISTENT_MEMORY_SIZE = 4LL * 1024 * 1024 * 1024; // 4 GiB
         constexpr size_t SCRATCH_MEMORY_SIZE = 256LL * 1024 * 1024;         // 256 MiB
-        constexpr size_t JLT_ALLOC_FLAGS_STACK_LEN = 256; // Length of force-flags stack
+        constexpr size_t JLT_ALLOC_FLAGS_STACK_LEN = 256;                   // Length of force-flags stack
 
         /**
          * Allocator slot. Each thread will share its slot with its siblings based
@@ -146,14 +146,11 @@ namespace jolt {
          * @param alignment The alignment requirements for the allocated memory.
          */
         template<typename T>
-        T *allocate(
-          size_t const n = 1, flags_t flags = ALLOC_NONE, size_t const alignment = alignof(T)) {
+        T *allocate(size_t const n = 1, flags_t flags = ALLOC_NONE, size_t const alignment = alignof(T)) {
             flags |= get_current_force_flags();
 
             return reinterpret_cast<T *>(_allocate(
-              n * sizeof(T),
-              choose(flags, flags | ALLOC_BIG, sizeof(T) < BIG_OBJECT_MIN_SIZE),
-              alignment));
+              n * sizeof(T), choose(flags, flags | ALLOC_BIG, sizeof(T) < BIG_OBJECT_MIN_SIZE), alignment));
         }
 
         /**

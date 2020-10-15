@@ -2,6 +2,8 @@
 #define JLT_TEXT_STRING_HPP
 
 #include <utility>
+#include <jolt/api.hpp>
+#include <jolt/hash.hpp>
 #include "unicode.hpp"
 
 namespace jolt {
@@ -66,8 +68,7 @@ namespace jolt {
              */
             template<size_t N>
             constexpr UTF8String(const utf8c (&s)[N]) :
-              m_str{const_cast<utf8c *>(s)}, m_str_len{utf8_len(s, N - 1)},
-              m_str_size{N - 1}, m_own{false} {}
+              m_str{const_cast<utf8c *>(s)}, m_str_len{utf8_len(s, N - 1)}, m_str_size{N - 1}, m_own{false} {}
 
             /**
              * Initialize a new instance of this class.
@@ -146,7 +147,7 @@ namespace jolt {
             UTF8String operator+(const UTF8String &other) const;
 
             /**
-             * Join multiple strings.
+             * Merge multiple strings into one.
              *
              * @param left The left string.
              * @param right The right string.
@@ -155,16 +156,41 @@ namespace jolt {
              * @return A new string containing the concatenated values of the inputs.
              */
             template<typename... S>
-            static UTF8String join(const UTF8String &left, const UTF8String &right, S... other) {
+            static UTF8String merge(const UTF8String &left, const UTF8String &right, S... other) {
                 if constexpr(sizeof...(other) == 0) {
                     return left + right;
                 } else {
-                    return left + join(right, other...);
+                    return left + merge(right, other...);
+                }
+            }
+
+            /**
+             * Join multiple strings using a separator.
+             *
+             * @param glue The separator to use when joining the strings.
+             * @param left The left string.
+             * @param right The right string.
+             * @param other The remaining strings to join.
+             *
+             * @return A new string containing the concatenated values of the inputs.
+             */
+            template<typename... S>
+            static UTF8String
+            join(const UTF8String &glue, const UTF8String &left, const UTF8String &right, S... other) {
+                if constexpr(sizeof...(other) == 0) {
+                    return left + glue + right;
+                } else {
+                    return left + glue + join(glue, right, other...);
                 }
             }
 
             operator const utf8c *() const { return get_raw(); }
             const utf8c &operator[](size_t const i) const { return m_str[i]; }
+
+            template<typename H>
+            hash::hash_t hash() const {
+                return H::hash(m_str, m_str_size);
+            }
         };
 
         /**
@@ -177,8 +203,7 @@ namespace jolt {
         template<typename C>
         static UTF8String s(const C *raw) {
             static_assert(
-              std::is_same<C, char>::value || std::is_same<C, utf8c>::value,
-              "Invalid string literal");
+              std::is_same<C, char>::value || std::is_same<C, utf8c>::value, "Invalid string literal");
 
             size_t len;
 
@@ -197,8 +222,7 @@ namespace jolt {
         template<typename C, size_t N>
         UTF8String operator+(const C (&left)[N], const UTF8String &right) {
             static_assert(
-              std::is_same<C, char>::value || std::is_same<C, utf8c>::value,
-              "Invalid string literal");
+              std::is_same<C, char>::value || std::is_same<C, utf8c>::value, "Invalid string literal");
 
             return UTF8String{left} + right;
         }
@@ -209,8 +233,7 @@ namespace jolt {
         template<typename C, size_t N>
         UTF8String operator+(const UTF8String &left, const C (&right)[N]) {
             static_assert(
-              std::is_same<C, char>::value || std::is_same<C, utf8c>::value,
-              "Invalid string literal");
+              std::is_same<C, char>::value || std::is_same<C, utf8c>::value, "Invalid string literal");
 
             return left + UTF8String{right};
         }

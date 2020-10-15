@@ -25,6 +25,10 @@ namespace jolt {
             constexpr KeyValuePair(const_key_reference key, const_value_reference value) :
               m_key{key}, m_value{value} {}
 
+            KeyValuePair(const KeyValuePair &) = default;
+
+            KeyValuePair &operator =(const KeyValuePair &) = default;
+
             const_key_reference get_key() const { return m_key; }
             value_reference get_value() { return m_value; }
             const_value_reference get_value() const { return m_value; }

@@ -3,7 +3,7 @@
 
 #include <cstring>
 #include <jolt/features.hpp>
-#include <jolt/util.hpp>
+#include <jolt/api.hpp>
 #include <jolt/debug.hpp>
 
 /**
@@ -51,10 +51,10 @@
      * @param ptr Pointer to the beginning of the memory allocation.
      * @param size Size of the memory allocation.
      */
-    #define JLT_FILL_OVERFLOW(ptr, size)                                                           \
-        do {                                                                                       \
-            *reinterpret_cast<JLT_MEM_CANARY_VALUE_TYPE *>(reinterpret_cast<uint8_t *>(ptr) +      \
-                                                           size) = JLT_MEM_CANARY_VALUE;           \
+    #define JLT_FILL_OVERFLOW(ptr, size)                                                                     \
+        do {                                                                                                 \
+            *reinterpret_cast<JLT_MEM_CANARY_VALUE_TYPE *>(reinterpret_cast<uint8_t *>(ptr) + size) =        \
+              JLT_MEM_CANARY_VALUE;                                                                          \
         } while(false)
 
     /**
@@ -64,9 +64,10 @@
      * @param ptr Pointer to the beginning of the memory allocation.
      * @param size Size of the memory allocation.
      */
-    #define JLT_CHECK_OVERFLOW(ptr, size)                                                          \
-        jltassert(*reinterpret_cast<JLT_MEM_CANARY_VALUE_TYPE *>(                                  \
-                      reinterpret_cast<uint8_t *>(ptr) + size) == JLT_MEM_CANARY_VALUE)
+    #define JLT_CHECK_OVERFLOW(ptr, size)                                                                    \
+        jltassert(                                                                                           \
+          *reinterpret_cast<JLT_MEM_CANARY_VALUE_TYPE *>(reinterpret_cast<uint8_t *>(ptr) + size)            \
+          == JLT_MEM_CANARY_VALUE)
 #else // JLT_WITH_MEM_CHECKS
     #define JLT_MEM_CANARY_VALUE_SIZE 0
     #define JLT_CHECK_MEM_USE_AFTER_FREE(ptr, size)
