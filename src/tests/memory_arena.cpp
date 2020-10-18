@@ -1,3 +1,6 @@
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-result"
+
 #include <cstring>
 #include <jolt/test.hpp>
 #include <jolt/memory/arena.hpp>

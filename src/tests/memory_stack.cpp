@@ -1,3 +1,6 @@
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-result"
+
 #include <jolt/test.hpp>
 #include <jolt/memory/stack.hpp>
 #include <jolt/memory/heap.hpp>

@@ -18,7 +18,7 @@ namespace jolt {
          *
          * @result The normalized path.
          */
-        Path JLTAPI normalize(Path const &path);
+        JLT_NODISCARD Path JLTAPI normalize(Path const &path);
 
         /**
          * Return a value stating whether a path is absolute or relative.
@@ -27,7 +27,7 @@ namespace jolt {
          *
          * @return True if the path is absolute, false if it's relative.
          */
-        bool JLTAPI is_absolute(Path const &path);
+        JLT_NODISCARD bool JLTAPI is_absolute(Path const &path);
     } // namespace path
 } // namespace jolt
 

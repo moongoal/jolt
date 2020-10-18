@@ -27,7 +27,7 @@ namespace jolt {
              *
              * @return A pointer to an ArenaFreeListNode or nullptr if no candidate is suitable.
              */
-            ArenaFreeListNode *find_free_list_node(size_t size) const;
+            JLT_NODISCARD ArenaFreeListNode *find_free_list_node(size_t size) const;
 
             /**
              * Find the left-closest free list node available for a given pointer.
@@ -36,7 +36,7 @@ namespace jolt {
              * @remark "left-closest" assumes a left-to-right ordering of memory addresses where an
              * address A at the left of an address B has a lower memory address.
              */
-            ArenaFreeListNode *find_left_closest_node(void *const ptr) const;
+            JLT_NODISCARD ArenaFreeListNode *find_left_closest_node(void *const ptr) const;
 
             /**
              * Find the left-closest free list node available for a given pointer and size.
@@ -45,15 +45,17 @@ namespace jolt {
              * @remark "right-closest" assumes a left-to-right ordering of memory addresses where an
              * address A at the left of an address B has a lower memory address.
              */
-            ArenaFreeListNode *find_right_closest_node(void *const ptr, size_t const size) const;
+            JLT_NODISCARD ArenaFreeListNode *
+            find_right_closest_node(void *const ptr, size_t const size) const;
 
-            void *reallocate_shrink(void *const ptr, uint32_t const new_size, AllocHeader *const ptr_hdr);
+            JLT_NODISCARD void *
+            reallocate_shrink(void *const ptr, uint32_t const new_size, AllocHeader *const ptr_hdr);
 
-            void *reallocate_grow(
+            JLT_NODISCARD void *reallocate_grow(
               void *const ptr, uint32_t const new_size, uint32_t const alignment, AllocHeader *const ptr_hdr);
 
           public:
-            explicit Arena(size_t const memory_size);
+            JLT_NODISCARD explicit Arena(size_t const memory_size);
 
             /**
              * Allocation function.
@@ -62,7 +64,7 @@ namespace jolt {
              * @param flags Allocation flags.
              * @param alignment The alignment requirements for the allocated memory.
              */
-            void *allocate(uint32_t const size, flags_t const flags, uint32_t const alignment);
+            JLT_NODISCARD void *allocate(uint32_t const size, flags_t const flags, uint32_t const alignment);
 
             /**
              * Free a location in memory given its pointer. Only the latest allocation on the stack
@@ -75,13 +77,13 @@ namespace jolt {
             /**
              * Get the amount of memory that is currently allocated.
              */
-            size_t get_allocated_size() const { return m_allocated_size; }
+            JLT_NODISCARD size_t get_allocated_size() const { return m_allocated_size; }
 
             /**
              * Return a node in the free list.
              * @note The returned node is not necessarily the first in the list.
              */
-            ArenaFreeListNode *get_free_list() const { return m_free_list; }
+            JLT_NODISCARD ArenaFreeListNode *get_free_list() const { return m_free_list; }
 
             /**
              * Ensure that a block of unallocated memory has not been written to.
@@ -102,7 +104,8 @@ namespace jolt {
              *
              * @return A pointer to the new allocation.
              */
-            void *reallocate(void *const ptr, uint32_t const new_size, uint32_t const alignment);
+            JLT_NODISCARD void *
+            reallocate(void *const ptr, uint32_t const new_size, uint32_t const alignment);
 
             /**
              * Return a value stating whether reallocating a pointer will result in the memory
@@ -114,7 +117,7 @@ namespace jolt {
              * @return True if reallocating `ptr` will result in a different pointer being returned
              * by `reallocate()`. False otherwise.
              */
-            bool will_relocate(void *const ptr, uint32_t const new_size) const;
+            JLT_NODISCARD bool will_relocate(void *const ptr, uint32_t const new_size) const;
 
             /**
              * Return the allocation header for a given pointer.
@@ -125,7 +128,7 @@ namespace jolt {
              * the base of the allocation or not and will return garbage if it
              * doesn't.
              */
-            static AllocHeader *get_header(void *const ptr) {
+            JLT_NODISCARD static AllocHeader *get_header(void *const ptr) {
                 return reinterpret_cast<AllocHeader *>(ptr) - 1;
             }
 
@@ -139,7 +142,7 @@ namespace jolt {
              * the base of the allocation or not and will return garbage if it
              * doesn't.
              */
-            static uint32_t get_total_allocation_size(void *const ptr) {
+            JLT_NODISCARD static uint32_t get_total_allocation_size(void *const ptr) {
                 AllocHeader *const ptr_hdr = get_header(ptr);
 
                 return get_total_allocation_size(ptr_hdr->m_alloc_sz, ptr_hdr->m_alloc_offset);
@@ -156,7 +159,8 @@ namespace jolt {
              * the base of the allocation or not and will return garbage if it
              * doesn't.
              */
-            static uint32_t get_total_allocation_size(uint32_t const size, uint32_t const padding) {
+            JLT_NODISCARD static uint32_t
+            get_total_allocation_size(uint32_t const size, uint32_t const padding) {
                 return size + padding + sizeof(AllocHeader) + JLT_MEM_CANARY_VALUE_SIZE;
             }
         };

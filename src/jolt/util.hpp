@@ -10,27 +10,27 @@
 
 namespace jolt {
     template<typename T>
-    constexpr T choose(T const a, T const b, bool const condition) {
+    JLT_NODISCARD constexpr T choose(T const a, T const b, bool const condition) {
         const uint64_t mask = ~static_cast<uint64_t>(0) + condition;
 
         return static_cast<T>((static_cast<uint64_t>(b) & mask) | (static_cast<uint64_t>(a) & ~mask));
     }
 
     template<typename T>
-    constexpr T *choose(T *const a, T *const b, bool const condition) {
+    JLT_NODISCARD constexpr T *choose(T *const a, T *const b, bool const condition) {
         return reinterpret_cast<T *>(
           choose(reinterpret_cast<uintptr_t>(a), reinterpret_cast<uintptr_t>(b), condition));
     }
 
-    void *align_raw_ptr(void *const ptr, size_t const alignment) JLTAPI;
+    JLT_NODISCARD void *align_raw_ptr(void *const ptr, size_t const alignment) JLTAPI;
 
     template<typename T>
-    constexpr T max(T const a, T const b) {
+    JLT_NODISCARD constexpr T max(T const a, T const b) {
         return choose(a, b, a > b);
     }
 
     template<typename T>
-    constexpr T min(T const a, T const b) {
+    JLT_NODISCARD constexpr T min(T const a, T const b) {
         return choose(a, b, a < b);
     }
 
@@ -46,16 +46,16 @@ namespace jolt {
         value_type m_value;
 
       public:
-        Assignable(reference value) : m_value{value} {}
-        Assignable(const_reference value) : m_value{value} {}
-        Assignable(rvalue_reference value) : m_value{std::forward(value)} {}
+        JLT_NODISCARD Assignable(reference value) : m_value{value} {}
+        JLT_NODISCARD Assignable(const_reference value) : m_value{value} {}
+        JLT_NODISCARD Assignable(rvalue_reference value) : m_value{std::forward(value)} {}
 
-        reference get() { return m_value; }
-        const_reference get() const { return m_value; }
+        JLT_NODISCARD reference get() { return m_value; }
+        JLT_NODISCARD const_reference get() const { return m_value; }
 
-        operator reference() { return m_value; }
-        operator rvalue_reference() { return std::move(m_value); }
-        operator const_reference() const { return m_value; }
+        JLT_NODISCARD operator reference() { return m_value; }
+        JLT_NODISCARD operator rvalue_reference() { return std::move(m_value); }
+        JLT_NODISCARD operator const_reference() const { return m_value; }
 
         Assignable &operator=(const_reference value) {
             m_value.~value_type();
@@ -75,9 +75,9 @@ namespace jolt {
             return *this;
         }
 
-        bool operator==(const_reference other) const { return m_value == other; }
+        JLT_NODISCARD bool operator==(const_reference other) const { return m_value == other; }
 
-        bool operator==(const Assignable &other) const { return m_value == other.get(); }
+        JLT_NODISCARD bool operator==(const Assignable &other) const { return m_value == other.get(); }
     };
 } // namespace jolt
 

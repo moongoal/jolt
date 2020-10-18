@@ -21,27 +21,27 @@ namespace jolt {
             Vector<value_type> m_values; //< Values
 
           public:
-            explicit ValueSet() = default;
+            JLT_NODISCARD explicit ValueSet() = default;
 
-            ValueSet(const std::initializer_list<T> &lst) : ValueSet(lst.begin(), lst.end()) {}
+            JLT_NODISCARD ValueSet(const std::initializer_list<T> &lst) : ValueSet(lst.begin(), lst.end()) {}
 
             template<typename It>
-            ValueSet(It const begin, It const end) : ValueSet{} {
+            JLT_NODISCARD ValueSet(It const begin, It const end) : ValueSet{} {
                 add_all(begin, end);
             }
 
-            ValueSet(ValueSet const &other) : ValueSet{other.cbegin(), other.cend()} {}
-            ValueSet(ValueSet &&other) = default;
+            JLT_NODISCARD ValueSet(ValueSet const &other) : ValueSet{other.cbegin(), other.cend()} {}
+            JLT_NODISCARD ValueSet(ValueSet &&other) = default;
 
             /**
              * Get the number of items in the set.
              */
-            unsigned int get_length() const { return m_values.get_length(); }
+            JLT_NODISCARD unsigned int get_length() const { return m_values.get_length(); }
 
             /**
              * Get the current capacity of the set.
              */
-            unsigned int get_capacity() const { return m_values.get_capacity(); }
+            JLT_NODISCARD unsigned int get_capacity() const { return m_values.get_capacity(); }
 
             /**
              * Reserve some capacity.
@@ -87,7 +87,7 @@ namespace jolt {
              *
              * @return True if the item is present in the set, false if not.
              */
-            bool contains(const_reference value) const { return m_values.contains(value); }
+            JLT_NODISCARD bool contains(const_reference value) const { return m_values.contains(value); }
 
             /**
              * Remove an item.
@@ -95,7 +95,7 @@ namespace jolt {
              * @param value The value of the item to remove.
              */
             bool remove(const_reference value) {
-                int i = m_values.find(value);
+                int const i = m_values.find(value);
 
                 if(i < 0) {
                     return false;
@@ -111,10 +111,17 @@ namespace jolt {
              */
             void clear() { m_values.clear(); }
 
-            typename Vector<value_type>::const_iterator begin() const { return m_values.cbegin(); }
-            typename Vector<value_type>::const_iterator end() const { return m_values.cend(); }
-            typename Vector<value_type>::const_iterator cbegin() const { return m_values.cbegin(); }
-            typename Vector<value_type>::const_iterator cend() const { return m_values.cend(); }
+            JLT_NODISCARD typename Vector<value_type>::const_iterator begin() const {
+                return m_values.cbegin();
+            }
+
+            JLT_NODISCARD typename Vector<value_type>::const_iterator end() const { return m_values.cend(); }
+
+            JLT_NODISCARD typename Vector<value_type>::const_iterator cbegin() const {
+                return m_values.cbegin();
+            }
+
+            JLT_NODISCARD typename Vector<value_type>::const_iterator cend() const { return m_values.cend(); }
         };
     } // namespace collections
 } // namespace jolt

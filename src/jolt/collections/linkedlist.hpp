@@ -2,6 +2,7 @@
 #define JLT_COLLECTIONS_LINKEDLIST_HPP
 
 #include <initializer_list>
+#include <jolt/api.hpp>
 #include <jolt/memory/allocator.hpp>
 #include "iterator.hpp"
 
@@ -19,12 +20,12 @@ namespace jolt {
                 return result;
             }
 
-            static constexpr int compare(const Node *const left, const Node *const right) {
+            JLT_NODISCARD static constexpr int compare(const Node *const left, const Node *const right) {
                 return left != right;
             }
 
             template<typename NodeT>
-            static constexpr auto &resolve(NodeT *const node) {
+            JLT_NODISCARD static constexpr auto &resolve(NodeT *const node) {
                 return node->get_value();
             }
         };
@@ -54,11 +55,11 @@ namespace jolt {
                 Node *m_next;
 
               public:
-                Node(const_reference value, Node *next) : m_value{value}, m_next{next} {}
+                JLT_NODISCARD Node(const_reference value, Node *next) : m_value{value}, m_next{next} {}
 
-                Node *get_next() const { return const_cast<Node *>(m_next); }
-                reference get_value() { return m_value; }
-                const_reference get_value() const { return m_value; }
+                JLT_NODISCARD Node *get_next() const { return const_cast<Node *>(m_next); }
+                JLT_NODISCARD reference get_value() { return m_value; }
+                JLT_NODISCARD const_reference get_value() const { return m_value; }
                 void set_value(const_reference value) { m_value = value; }
             };
 
@@ -77,7 +78,7 @@ namespace jolt {
             /**
              * Create a new empty list.
              */
-            LinkedList() :
+            JLT_NODISCARD LinkedList() :
               m_first{nullptr}, m_last{nullptr}, m_length{0}, m_alloc_flags{
                                                                 memory::get_current_force_flags()} {}
 
@@ -86,7 +87,8 @@ namespace jolt {
              *
              * @param lst The initializer list.
              */
-            LinkedList(const std::initializer_list<value_type> &lst) : LinkedList(lst.begin(), lst.end()) {}
+            JLT_NODISCARD LinkedList(const std::initializer_list<value_type> &lst) :
+              LinkedList(lst.begin(), lst.end()) {}
 
             /**
              * Create a new instance of this class.
@@ -95,7 +97,7 @@ namespace jolt {
              * @param end The iterator pointing right after the last element to add.
              */
             template<typename It>
-            LinkedList(It const &begin, It const &end) : LinkedList() {
+            JLT_NODISCARD LinkedList(It const &begin, It const &end) : LinkedList() {
                 add_all(begin, end);
             }
 
@@ -104,7 +106,7 @@ namespace jolt {
              *
              * @param other The other list.
              */
-            LinkedList(const LinkedList &other) : LinkedList(other.cbegin(), other.cend()) {}
+            JLT_NODISCARD LinkedList(const LinkedList &other) : LinkedList(other.cbegin(), other.cend()) {}
 
             /**
              * Create a new list, taking ownership of the data of another.
@@ -113,7 +115,7 @@ namespace jolt {
              *
              * @remarks After this constructor returns, the other list will be empty.
              */
-            LinkedList(LinkedList &&other) :
+            JLT_NODISCARD LinkedList(LinkedList &&other) :
               m_first{other.m_first}, m_last{other.m_last}, m_length{other.m_length}, m_alloc_flags{
                                                                                         other.m_alloc_flags} {
                 other.m_first = other.m_last = nullptr;
@@ -197,7 +199,7 @@ namespace jolt {
              *
              * @remarks Comparison is checked via the equality operator.
              */
-            Node *find(const_reference item) const {
+            JLT_NODISCARD Node *find(const_reference item) const {
                 const_iterator end = cend();
 
                 for(const_iterator it = cbegin(); it != end; ++it) {
@@ -258,20 +260,20 @@ namespace jolt {
                 m_length = 0;
             }
 
-            size_t get_length() const { return m_length; }
-            reference get_first() { return m_first->m_value; }
-            reference get_last() { return m_last->m_value; }
-            const_reference get_first() const { return m_first->m_value; }
-            const_reference get_last() const { return m_last->m_value; }
-            Node *get_first_node() const { return const_cast<Node *>(m_first); }
-            Node *get_last_node() const { return const_cast<Node *>(m_last); }
+            JLT_NODISCARD size_t get_length() const { return m_length; }
+            JLT_NODISCARD reference get_first() { return m_first->m_value; }
+            JLT_NODISCARD reference get_last() { return m_last->m_value; }
+            JLT_NODISCARD const_reference get_first() const { return m_first->m_value; }
+            JLT_NODISCARD const_reference get_last() const { return m_last->m_value; }
+            JLT_NODISCARD Node *get_first_node() const { return const_cast<Node *>(m_first); }
+            JLT_NODISCARD Node *get_last_node() const { return const_cast<Node *>(m_last); }
 
-            constexpr iterator begin() { return iterator{m_first}; }
-            constexpr iterator end() { return iterator{nullptr}; }
-            constexpr const_iterator begin() const { return const_iterator{m_first}; }
-            constexpr const_iterator end() const { return const_iterator{nullptr}; }
-            constexpr const_iterator cbegin() const { return const_iterator{m_first}; }
-            constexpr const_iterator cend() const { return const_iterator{nullptr}; }
+            JLT_NODISCARD constexpr iterator begin() { return iterator{m_first}; }
+            JLT_NODISCARD constexpr iterator end() { return iterator{nullptr}; }
+            JLT_NODISCARD constexpr const_iterator begin() const { return const_iterator{m_first}; }
+            JLT_NODISCARD constexpr const_iterator end() const { return const_iterator{nullptr}; }
+            JLT_NODISCARD constexpr const_iterator cbegin() const { return const_iterator{m_first}; }
+            JLT_NODISCARD constexpr const_iterator cend() const { return const_iterator{nullptr}; }
         };
     } // namespace collections
 } // namespace jolt

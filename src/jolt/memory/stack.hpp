@@ -23,7 +23,7 @@ namespace jolt {
              * @return A pointer to the last allocation on the stack or `nullptr` if the stack is
              * empty.
              */
-            void *get_top_allocation();
+            JLT_NODISCARD void *get_top_allocation();
 
             /**
              * Free a single allocated region.
@@ -34,7 +34,7 @@ namespace jolt {
             void realloc_grow_top(size_t const new_size, AllocHeader *const ptr_hdr);
 
           public:
-            explicit Stack(size_t const memory_size) : Heap(memory_size) {
+            JLT_NODISCARD explicit Stack(size_t const memory_size) : Heap(memory_size) {
                 m_ptr_top = reinterpret_cast<uint8_t *>(get_base());
             }
 
@@ -45,7 +45,7 @@ namespace jolt {
              * @param flags Allocation flags.
              * @param alignment The alignment requirements for the allocated memory.
              */
-            void *allocate(uint32_t const size, flags_t const flags, uint32_t const alignment);
+            JLT_NODISCARD void *allocate(uint32_t const size, flags_t const flags, uint32_t const alignment);
 
             /**
              * Free a location in memory given its pointer. Only the latest allocation on the stack
@@ -58,17 +58,21 @@ namespace jolt {
             /**
              * Get the amount of memory that is currently allocated.
              */
-            size_t get_allocated_size() const { return m_ptr_top - reinterpret_cast<uint8_t *>(get_base()); }
+            JLT_NODISCARD size_t get_allocated_size() const {
+                return m_ptr_top - reinterpret_cast<uint8_t *>(get_base());
+            }
 
             /**
              * Get a pointer to the top of the stack.
              */
-            void *get_top() const { return m_ptr_top; }
+            JLT_NODISCARD void *get_top() const { return m_ptr_top; }
 
             /**
              * Get the size of free committed memory.
              */
-            size_t get_free_committed_size() const { return get_committed_size() - get_allocated_size(); }
+            JLT_NODISCARD size_t get_free_committed_size() const {
+                return get_committed_size() - get_allocated_size();
+            }
 
             /**
              * Ensure the free memory is consistent. If not, abort.
@@ -86,7 +90,7 @@ namespace jolt {
              * @param ptr Pointer to the memory to reallocate.
              * @param new_size Size of the new allocation.
              */
-            void *reallocate(void *const ptr, size_t const new_size);
+            JLT_NODISCARD void *reallocate(void *const ptr, size_t const new_size);
 
             /**
              * Check whether a given memory location is at the top of the stack.
@@ -95,7 +99,7 @@ namespace jolt {
              *
              * @return True if the memory location is at the top of the stack, false otherwise.
              */
-            bool is_top(void *const ptr) const;
+            JLT_NODISCARD bool is_top(void *const ptr) const;
 
             /**
              * Return the allocation header for a given pointer.
@@ -106,7 +110,7 @@ namespace jolt {
              * the base of the allocation or not and will return garbage if it
              * doesn't.
              */
-            static AllocHeader *get_header(void *const ptr) {
+            JLT_NODISCARD static AllocHeader *get_header(void *const ptr) {
                 return reinterpret_cast<AllocHeader *>(ptr) - 1;
             }
 
@@ -120,7 +124,7 @@ namespace jolt {
              * the base of the allocation or not and will return garbage if it
              * doesn't.
              */
-            static size_t get_total_allocation_size(void *const ptr) {
+            JLT_NODISCARD static size_t get_total_allocation_size(void *const ptr) {
                 AllocHeader *const ptr_hdr = get_header(ptr);
 
                 return get_total_allocation_size(ptr_hdr->m_alloc_sz, ptr_hdr->m_alloc_offset);
@@ -137,11 +141,11 @@ namespace jolt {
              * the base of the allocation or not and will return garbage if it
              * doesn't.
              */
-            static size_t get_total_allocation_size(size_t const size, size_t const padding) {
+            JLT_NODISCARD static size_t get_total_allocation_size(size_t const size, size_t const padding) {
                 return size + padding + sizeof(AllocHeader) + JLT_MEM_CANARY_VALUE_SIZE + sizeof(void *);
             }
 
-            bool will_relocate(void *const ptr, size_t new_size) const {
+            JLT_NODISCARD bool will_relocate(void *const ptr, size_t new_size) const {
                 AllocHeader *hdr_ptr = get_header(ptr);
 
                 return is_top(ptr) && (new_size > hdr_ptr->m_alloc_sz);

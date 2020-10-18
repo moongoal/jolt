@@ -27,27 +27,27 @@ namespace jolt {
             Vector<value_type> m_values;   //< Value data.
 
           public:
-            explicit HashSet() = default;
+            JLT_NODISCARD explicit HashSet() = default;
 
-            HashSet(const std::initializer_list<T> &lst) : HashSet(lst.begin(), lst.end()) {}
+            JLT_NODISCARD HashSet(const std::initializer_list<T> &lst) : HashSet(lst.begin(), lst.end()) {}
 
             template<typename It>
-            HashSet(It const begin, It const end) : HashSet{} {
+            JLT_NODISCARD HashSet(It const begin, It const end) : HashSet{} {
                 add_all(begin, end);
             }
 
-            HashSet(HashSet const &other) : HashSet{other.cbegin(), other.cend()} {}
-            HashSet(HashSet &&other) = default;
+            JLT_NODISCARD HashSet(HashSet const &other) : HashSet{other.cbegin(), other.cend()} {}
+            JLT_NODISCARD HashSet(HashSet &&other) = default;
 
             /**
              * Get the number of items in the set.
              */
-            unsigned int get_length() const { return m_values.get_length(); }
+            JLT_NODISCARD unsigned int get_length() const { return m_values.get_length(); }
 
             /**
              * Get the current capacity of the set.
              */
-            unsigned int get_capacity() const { return m_values.get_capacity(); }
+            JLT_NODISCARD unsigned int get_capacity() const { return m_values.get_capacity(); }
 
             /**
              * Reserve some capacity.
@@ -106,7 +106,9 @@ namespace jolt {
              *
              * @return True if an item with this hash is present in the set, false if not.
              */
-            bool contains_hash(hash::hash_t const hash) const { return m_hashes.contains(hash); }
+            JLT_NODISCARD bool contains_hash(hash::hash_t const hash) const {
+                return m_hashes.contains(hash);
+            }
 
             /**
              * Check whether a value is contained in the set.
@@ -115,7 +117,7 @@ namespace jolt {
              *
              * @return True if the item is present in the set, false if not.
              */
-            bool contains(const_reference value) const {
+            JLT_NODISCARD bool contains(const_reference value) const {
                 return m_hashes.contains(H::hash(&value, sizeof(value)));
             }
 
@@ -142,9 +144,7 @@ namespace jolt {
              *
              * @param value The value of the item to remove.
              */
-            bool remove(const_reference value) {
-                return remove_hash(H::hash(&value, sizeof(value)));
-            }
+            bool remove(const_reference value) { return remove_hash(H::hash(&value, sizeof(value))); }
 
             /**
              * Remove all the items.
@@ -154,10 +154,10 @@ namespace jolt {
                 m_values.clear();
             }
 
-            const_iterator begin() const { return m_values.cbegin(); }
-            const_iterator end() const { return m_values.cend(); }
-            const_iterator cbegin() const { return m_values.cbegin(); }
-            const_iterator cend() const { return m_values.cend(); }
+            JLT_NODISCARD const_iterator begin() const { return m_values.cbegin(); }
+            JLT_NODISCARD const_iterator end() const { return m_values.cend(); }
+            JLT_NODISCARD const_iterator cbegin() const { return m_values.cbegin(); }
+            JLT_NODISCARD const_iterator cend() const { return m_values.cend(); }
         };
     } // namespace collections
 } // namespace jolt

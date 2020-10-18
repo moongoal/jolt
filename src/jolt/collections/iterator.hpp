@@ -49,19 +49,25 @@ namespace jolt {
             Iterator(Iterator<A, B> &&other) : m_ptr{other.m_ptr} {}
 
             Iterator operator++() {
+                next();
+
+                return *this;
+            }
+
+            JLT_NODISCARD Iterator &operator++(int) {
                 Iterator other = *this;
                 next();
 
                 return other;
-            }
-
-            Iterator &operator++(int) {
-                next();
-
-                return *this;
             }
 
             Iterator operator--() {
+                previous();
+
+                return *this;
+            }
+
+            JLT_NODISCARD Iterator &operator--(int) {
                 Iterator other = *this;
 
                 previous();
@@ -69,14 +75,12 @@ namespace jolt {
                 return other;
             }
 
-            Iterator &operator--(int) {
-                previous();
-
-                return *this;
+            JLT_NODISCARD constexpr Iterator operator+(size_t n) const {
+                return Iterator{F::forward(m_ptr, n)};
             }
-
-            constexpr Iterator operator+(size_t n) const { return Iterator{F::forward(m_ptr, n)}; }
-            constexpr Iterator operator-(size_t n) const { return Iterator{F::backward(m_ptr, n)}; }
+            JLT_NODISCARD constexpr Iterator operator-(size_t n) const {
+                return Iterator{F::backward(m_ptr, n)};
+            }
 
             Iterator &operator+=(size_t n) {
                 m_ptr = F::forward(m_ptr, n);
@@ -89,26 +93,26 @@ namespace jolt {
             }
 
             template<typename It>
-            constexpr bool operator==(const It other) const {
+            JLT_NODISCARD constexpr bool operator==(const It other) const {
                 return m_ptr == other.get_pointer();
             }
 
             template<typename It>
-            constexpr bool operator!=(const It other) const {
+            JLT_NODISCARD constexpr bool operator!=(const It other) const {
                 return m_ptr != other.get_pointer();
             }
 
             template<typename It>
-            constexpr size_t operator-(const It other) const {
+            JLT_NODISCARD constexpr size_t operator-(const It other) const {
                 return m_ptr - other.m_ptr;
             }
 
-            constexpr auto &operator*() { return F::resolve(m_ptr); }
-            constexpr const auto &operator*() const { return F::resolve(m_ptr); }
+            JLT_NODISCARD constexpr auto &operator*() { return F::resolve(m_ptr); }
+            JLT_NODISCARD constexpr const auto &operator*() const { return F::resolve(m_ptr); }
 
             constexpr void next() { m_ptr = F::forward(m_ptr, 1); }
             constexpr void previous() { m_ptr = F::backward(m_ptr, 1); }
-            constexpr pointer get_pointer() const { return m_ptr; }
+            JLT_NODISCARD constexpr pointer get_pointer() const { return m_ptr; }
         };
 
         template<typename T, typename E = T>
@@ -117,10 +121,10 @@ namespace jolt {
 
             static constexpr T *forward(T *const cur, size_t const n) { return cur + n; }
             static constexpr T *backward(T *const cur, size_t const n) { return cur - n; }
-            static constexpr int compare(T *const left, const T *const right) {
+            JLT_NODISCARD static constexpr int compare(T *const left, const T *const right) {
                 return choose(1, choose(-1, 0, left < right), left > right);
             }
-            static constexpr item_type &resolve(T *const cur) { return *cur; }
+            JLT_NODISCARD static constexpr item_type &resolve(T *const cur) { return *cur; }
         };
     } // namespace collections
 } // namespace jolt

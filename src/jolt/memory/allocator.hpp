@@ -78,7 +78,7 @@ namespace jolt {
          * @param flags The allocation flags.
          * @param alignment The alignment requirements for the allocated memory.
          */
-        void *JLTAPI _allocate(size_t const size, flags_t const flags, size_t const alignment);
+        JLT_NODISCARD void *JLTAPI _allocate(size_t const size, flags_t const flags, size_t const alignment);
 
         /**
          * The real free function. Don't call this. Call `free()` instead.
@@ -127,7 +127,7 @@ namespace jolt {
         /**
          * Return the current forced flags.
          */
-        flags_t JLTAPI get_current_force_flags();
+        JLT_NODISCARD flags_t JLTAPI get_current_force_flags();
 
         /**
          * Diable any forced flag currently active.
@@ -146,7 +146,8 @@ namespace jolt {
          * @param alignment The alignment requirements for the allocated memory.
          */
         template<typename T>
-        T *allocate(size_t const n = 1, flags_t flags = ALLOC_NONE, size_t const alignment = alignof(T)) {
+        JLT_NODISCARD T *
+        allocate(size_t const n = 1, flags_t flags = ALLOC_NONE, size_t const alignment = alignof(T)) {
             flags |= get_current_force_flags();
 
             return reinterpret_cast<T *>(_allocate(
@@ -163,7 +164,7 @@ namespace jolt {
          * @return A newly allocated and constructed object.
          */
         template<typename T, typename... Params>
-        T *allocate_and_construct(Params &&...ctor_params) {
+        JLT_NODISCARD T *allocate_and_construct(Params &&...ctor_params) {
             T *ptr = allocate<T>();
 
             return construct(ptr, std::forward<Params>(ctor_params)...);
@@ -203,7 +204,7 @@ namespace jolt {
 
         bool JLTAPI will_relocate(void *const ptr, size_t const new_size);
 
-        inline AllocHeader *get_alloc_header(void *const ptr) {
+        JLT_NODISCARD inline AllocHeader *get_alloc_header(void *const ptr) {
             return reinterpret_cast<AllocHeader *>(ptr) - 1;
         }
 
@@ -216,7 +217,7 @@ namespace jolt {
          */
         JLTAPI AllocatorSlot &get_allocator_slot();
 
-        void JLTAPI *_reallocate(void *const ptr, size_t const new_size);
+        JLT_NODISCARD void JLTAPI *_reallocate(void *const ptr, size_t const new_size);
 
         /**
          * Reallocate a previously allocated memory region, shrinking or growing its size.
@@ -234,7 +235,7 @@ namespace jolt {
          * @return A possibly new pointer to the reallocated memory region.
          */
         template<typename T>
-        T *reallocate(T *const ptr, size_t const old_length, size_t const new_length) {
+        JLT_NODISCARD T *reallocate(T *const ptr, size_t const old_length, size_t const new_length) {
             AllocatorSlot &slot = get_allocator_slot();
             AllocHeader &hdr = *get_alloc_header(ptr); // store old length
             jolt::threading::LockGuard lock{slot.m_lock};

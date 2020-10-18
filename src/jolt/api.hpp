@@ -10,5 +10,6 @@
 #define JLT_INLINE __attribute__((always_inline))
 
 #define JLT_MAYBE_UNUSED [[maybe_unused]]
+#define JLT_NODISCARD [[nodiscard]]
 
 #endif /* JLT_API_HPP */

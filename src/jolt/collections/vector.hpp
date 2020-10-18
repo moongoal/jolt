@@ -6,6 +6,7 @@
 #include <type_traits>
 #include <initializer_list>
 #include <utility>
+#include <jolt/api.hpp>
 #include <jolt/debug.hpp>
 #include <jolt/util.hpp>
 #include <jolt/memory/allocator.hpp>
@@ -64,7 +65,7 @@ namespace jolt {
              * @param length Length (as number of items) of `data`.
              * @param noclone The `noclone` constant.
              */
-            Vector(pointer data, unsigned int const length, noclone_t) :
+            JLT_NODISCARD Vector(pointer data, unsigned int const length, noclone_t) :
               m_data{data}, m_length{length}, m_capacity{length}, m_alloc_flags{
                                                                     memory::get_alloc_flags(data)} {
                 jltassert(data);
@@ -75,7 +76,8 @@ namespace jolt {
              *
              * @param lst The initializer list of items containing the initial state.
              */
-            Vector(const std::initializer_list<value_type> &lst) : Vector(lst.begin(), lst.size()) {}
+            JLT_NODISCARD Vector(const std::initializer_list<value_type> &lst) :
+              Vector(lst.begin(), lst.size()) {}
 
             /**
              * Create a new empty instance of this class.
@@ -83,7 +85,7 @@ namespace jolt {
              * @param capacity The number of items the vector will be able to hold before resizing
              * its internal array.
              */
-            explicit Vector(unsigned int const initial_capacity = DEFAULT_CAPACITY) :
+            JLT_NODISCARD explicit Vector(unsigned int const initial_capacity = DEFAULT_CAPACITY) :
               m_data{memory::allocate<value_type>(initial_capacity)}, m_length{0},
               m_capacity{initial_capacity}, m_alloc_flags{memory::get_current_force_flags()} {}
 
@@ -93,7 +95,7 @@ namespace jolt {
              * @param data Pointer to the data to use.
              * @param length Length (as number of items) of `data`.
              */
-            Vector(const_pointer const data, unsigned int const length) :
+            JLT_NODISCARD Vector(const_pointer const data, unsigned int const length) :
               m_data{memory::allocate<value_type>(max(length, DEFAULT_CAPACITY))}, m_length{length},
               m_capacity{max(length, DEFAULT_CAPACITY)}, m_alloc_flags{memory::get_current_force_flags()} {
                 jltassert(data);
@@ -106,15 +108,15 @@ namespace jolt {
             }
 
             template<typename It>
-            Vector(It const begin, It const end) :
+            JLT_NODISCARD Vector(It const begin, It const end) :
               m_data{memory::allocate<value_type>(end - begin)}, m_length{end - begin},
               m_capacity{end - begin}, m_alloc_flags{memory::get_current_force_flags()} {
                 add_all(begin, end);
             }
 
-            Vector(const Vector<value_type> &other) : Vector(other.m_data, other.m_length) {}
+            JLT_NODISCARD Vector(const Vector<value_type> &other) : Vector(other.m_data, other.m_length) {}
 
-            Vector(Vector<value_type> &&other) :
+            JLT_NODISCARD Vector(Vector<value_type> &&other) :
               m_data{other.m_data}, m_length{other.m_length}, m_capacity{other.m_capacity} {
                 other.m_data = nullptr;
             }
@@ -124,7 +126,7 @@ namespace jolt {
             /**
              * Return the length of the vector.
              */
-            unsigned int get_length() const { return m_length; }
+            JLT_NODISCARD unsigned int get_length() const { return m_length; }
 
             void set_length(unsigned int length) {
                 ensure_capacity(length);
@@ -142,7 +144,7 @@ namespace jolt {
             /**
              * Return the capacity of the vector.
              */
-            unsigned int get_capacity() const { return m_capacity; }
+            JLT_NODISCARD unsigned int get_capacity() const { return m_capacity; }
 
             Vector<value_type> &operator=(const Vector<value_type> &other) {
                 memory::push_force_flags(m_alloc_flags);
@@ -188,13 +190,13 @@ namespace jolt {
                 return *this;
             }
 
-            reference operator[](unsigned int const i) {
+            JLT_NODISCARD reference operator[](unsigned int const i) {
                 jltassert(i < m_length);
 
                 return m_data[i];
             }
 
-            Vector<value_type> operator+(const Vector<value_type> &other) const {
+            JLT_NODISCARD Vector<value_type> operator+(const Vector<value_type> &other) const {
                 memory::push_force_flags(m_alloc_flags);
 
                 unsigned int const new_length = m_length + other.m_length;
@@ -345,7 +347,7 @@ namespace jolt {
              *
              * @return The index of the item in the vector or `-1` if not found.
              */
-            int find(const_reference item) const {
+            JLT_NODISCARD int find(const_reference item) const {
                 for(unsigned int i = 0; i < m_length; ++i) {
                     if(m_data[i] == item) {
                         return static_cast<int>(i);
@@ -398,16 +400,16 @@ namespace jolt {
                 m_length = 0;
             }
 
-            bool contains(const_reference value) const { return find(value) >= 0; }
+            JLT_NODISCARD bool contains(const_reference value) const { return find(value) >= 0; }
 
-            constexpr iterator begin() { return iterator{m_data}; }
-            constexpr iterator end() { return iterator{m_data + m_length}; }
+            JLT_NODISCARD constexpr iterator begin() { return iterator{m_data}; }
+            JLT_NODISCARD constexpr iterator end() { return iterator{m_data + m_length}; }
 
-            constexpr const_iterator begin() const { return const_iterator{m_data}; }
-            constexpr const_iterator end() const { return const_iterator{m_data + m_length}; }
+            JLT_NODISCARD constexpr const_iterator begin() const { return const_iterator{m_data}; }
+            JLT_NODISCARD constexpr const_iterator end() const { return const_iterator{m_data + m_length}; }
 
-            constexpr const_iterator cbegin() const { return const_iterator{m_data}; }
-            constexpr const_iterator cend() const { return const_iterator{m_data + m_length}; }
+            JLT_NODISCARD constexpr const_iterator cbegin() const { return const_iterator{m_data}; }
+            JLT_NODISCARD constexpr const_iterator cend() const { return const_iterator{m_data + m_length}; }
         };
     } // namespace collections
 } // namespace jolt
