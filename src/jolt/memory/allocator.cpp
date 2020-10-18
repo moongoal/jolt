@@ -135,10 +135,10 @@ namespace jolt {
             }
 
             if((hdr_ptr->m_flags & ALLOC_BIG) == ALLOC_BIG) {
-                return slot.m_bg_alloc.reallocate(ptr, new_size, hdr_ptr->m_alignment);
+                return slot.m_bg_alloc.reallocate(ptr, new_size);
             }
 
-            return slot.m_sm_alloc.reallocate(ptr, new_size, hdr_ptr->m_alignment);
+            return slot.m_sm_alloc.reallocate(ptr, new_size);
         }
 
         bool will_relocate(void *const ptr, size_t const new_size) {

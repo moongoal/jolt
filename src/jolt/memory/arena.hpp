@@ -51,8 +51,8 @@ namespace jolt {
             JLT_NODISCARD void *
             reallocate_shrink(void *const ptr, uint32_t const new_size, AllocHeader *const ptr_hdr);
 
-            JLT_NODISCARD void *reallocate_grow(
-              void *const ptr, uint32_t const new_size, uint32_t const alignment, AllocHeader *const ptr_hdr);
+            JLT_NODISCARD void *
+            reallocate_grow(void *const ptr, uint32_t const new_size, AllocHeader *const ptr_hdr);
 
           public:
             JLT_NODISCARD explicit Arena(size_t const memory_size);
@@ -99,13 +99,10 @@ namespace jolt {
              *
              * @param ptr Pointer to the memory to reallocate.
              * @param new_size The new size of the new allocation.
-             * @param alignment The alignment of the new allocation (only used if the allocation is
-             * moved).
              *
              * @return A pointer to the new allocation.
              */
-            JLT_NODISCARD void *
-            reallocate(void *const ptr, uint32_t const new_size, uint32_t const alignment);
+            JLT_NODISCARD void *reallocate(void *const ptr, uint32_t const new_size);
 
             /**
              * Return a value stating whether reallocating a pointer will result in the memory

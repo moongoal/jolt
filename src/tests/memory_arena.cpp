@@ -177,7 +177,7 @@ TEST(reallocate__shrink__nop) { // Full allocation
 
     void *const b1 = arena.allocate(alloc_size, ALLOC_NONE, 1);
     auto const h1 = Arena::get_header(b1);
-    void *const b1_realloc = arena.reallocate(b1, alloc_size, 1);
+    void *const b1_realloc = arena.reallocate(b1, alloc_size);
 
     assert(b1_realloc == b1);
     assert(
@@ -193,7 +193,7 @@ TEST(reallocate__shrink__no_change) { // Full allocation
 
     void *const b1 = arena.allocate(alloc_size, ALLOC_NONE, 1);
     auto const h1 = Arena::get_header(b1);
-    void *const b1_realloc = arena.reallocate(b1, alloc_size - 1, 1);
+    void *const b1_realloc = arena.reallocate(b1, alloc_size - 1);
 
     assert(b1_realloc == b1);
     assert(
@@ -210,7 +210,7 @@ TEST(reallocate__shrink__with_change) { // Full allocation
     void *const b1 = arena.allocate(alloc_size, ALLOC_NONE, 1);
     auto const h1 = Arena::get_header(b1);
     JLT_MAYBE_UNUSED size_t const b1_sz = h1->m_alloc_sz;
-    void *const b1_realloc = arena.reallocate(b1, alloc_size - sizeof(ArenaFreeListNode), 1);
+    void *const b1_realloc = arena.reallocate(b1, alloc_size - sizeof(ArenaFreeListNode));
     ArenaFreeListNode *const free_list = arena.get_free_list();
 
     assert(b1_realloc == b1);
@@ -237,7 +237,7 @@ TEST(reallocate__grow_with_move) {
     void *const b3 = arena.allocate(5, ALLOC_NONE, 64);
     auto const h3 = Arena::get_header(b3);
 
-    void *const b2_realloc = arena.reallocate(b2, 257, 8);
+    void *const b2_realloc = arena.reallocate(b2, 257);
     auto const h2_realloc = Arena::get_header(b2_realloc);
 
     auto const new_free_list = reinterpret_cast<ArenaFreeListNode *>(
@@ -270,7 +270,7 @@ TEST(reallocate__grow_no_move) {
     void *const b3 = arena.allocate(5, ALLOC_NONE, 64);
     auto const h3 = Arena::get_header(b3);
 
-    void *const b3_realloc = arena.reallocate(b3, 256, 64);
+    void *const b3_realloc = arena.reallocate(b3, 256);
     auto const h3_realloc = Arena::get_header(b3_realloc);
 
     auto const new_free_list = reinterpret_cast<ArenaFreeListNode *>(
