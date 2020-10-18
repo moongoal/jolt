@@ -3,7 +3,7 @@
 The following tools need to be installed before running the configuration step:
 
 - clang >= 10
-- cmake >= 3.18
+- cmake >= 3.19
 
 
 The following packages must be installed before running the configuration step:
@@ -44,3 +44,9 @@ Any `{FILENAME}.in` file will have a corresponding `{FILENAME}` generated next t
 - `compile_commands.json`
 
 The `features.cmake` file must also reset to its initial state.
+
+## Compiling the shaders
+
+A `compile_shaders` target is available to compile the shaders.
+
+    cmake --build build --target compile_shaders
