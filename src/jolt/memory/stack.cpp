@@ -79,6 +79,11 @@ namespace jolt {
                 jltassert((ptr_hdr->m_flags & ALLOC_FINALIZED) != ALLOC_FINALIZED);
 
                 ptr_hdr->m_flags |= ALLOC_FINALIZED;
+
+                uint8_t *const raw_ptr = reinterpret_cast<uint8_t *>(ptr);
+
+                JLT_CHECK_OVERFLOW(ptr, ptr_hdr->m_alloc_sz);
+                JLT_FILL_AFTER_FREE(raw_ptr, ptr_hdr->m_alloc_sz); // Don't free header
             }
         }
 
