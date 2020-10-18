@@ -264,11 +264,11 @@ namespace jolt {
              * @return A new string containing the concatenated values of the inputs.
              */
             template<typename... S>
-            static UTF8String merge(const UTF8String &left, const UTF8String &right, S... other) {
+            static UTF8String merge(const UTF8String &left, const UTF8String &right, S &&...other) {
                 if constexpr(sizeof...(other) == 0) {
                     return left + right;
                 } else {
-                    return left + merge(right, other...);
+                    return left + merge(right, std::forward<S>(other)...);
                 }
             }
 
@@ -284,11 +284,11 @@ namespace jolt {
              */
             template<typename... S>
             static UTF8String
-            join(const UTF8String &glue, const UTF8String &left, const UTF8String &right, S... other) {
+            join(const UTF8String &glue, const UTF8String &left, const UTF8String &right, S &&...other) {
                 if constexpr(sizeof...(other) == 0) {
                     return left + glue + right;
                 } else {
-                    return left + glue + join(glue, right, other...);
+                    return left + glue + join(glue, right, std::forward<S>(other)...);
                 }
             }
 
@@ -315,9 +315,9 @@ namespace jolt {
 
             size_t len = strlen(reinterpret_cast<const char *>(raw)); // = size
 
-            if constexpr(std::is_same<C, utf8c>::value) {
-                len = utf8_len(raw, len);
-            }
+            // if constexpr(std::is_same<C, utf8c>::value) {
+            //     len = utf8_len(raw, len);
+            // }
 
             return UTF8String{raw, len};
         }

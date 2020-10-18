@@ -63,6 +63,8 @@ TEST(utf8_next_cp) {
     assert(!utf8_next_cp(&sin[7], sin_len - 7));
     assert(!utf8_next_cp(&sin[8], sin_len - 8));
     assert(!utf8_next_cp(&sin[9], sin_len - 9));
+
+    assert(!utf8_next_cp(u8"", 0));
 }
 
 TEST(utf8_len) {

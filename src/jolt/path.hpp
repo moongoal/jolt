@@ -8,7 +8,7 @@ namespace jolt {
     namespace path {
         using Path = text::String;
 
-        extern JLTAPI const text::String SEPARATOR;
+        extern JLTAPI const text::String SEPARATOR; //< Internal path separator
 
         /**
          * Normalizes a path ensuring every slash is a forward slash and it doesn't end with a slash

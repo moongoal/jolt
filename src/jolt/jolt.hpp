@@ -3,9 +3,11 @@
 
 #include <jolt/api.hpp>
 #include <jolt/util.hpp>
-#include <jolt/debug/console.hpp>
+#include <jolt/path.hpp>
 #include <jolt/memory/allocator.hpp>
 #include <jolt/threading/thread.hpp>
+#include <jolt/debug/console.hpp>
+#include <jolt/vfs/vfs.hpp>
 #include <jolt/ui/window.hpp>
 #include <jolt/graphics/vulkan.hpp>
 

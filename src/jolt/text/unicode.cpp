@@ -15,9 +15,8 @@ using namespace jolt::memory;
  * Bits 0..6 is the next state.
  * Bits 8..15 is the mask to apply to the input character to produce the next input value.
  */
-static const uint16_t utf8_dec_tbl[] = {0x7f00, 2,      2, 0x1fe4, 2, 0x3f00, 0x0fe7, 2,
-                                        0x3fe4, 0x07ea, 2, 0x3fe7, 1, 3,      2,      6,
-                                        5,      2,      9, 8,      2, 2,      11,     2};
+static const uint16_t utf8_dec_tbl[] = {
+  0x7f00, 2, 2, 0x1fe4, 2, 0x3f00, 0x0fe7, 2, 0x3fe4, 0x07ea, 2, 0x3fe7, 1, 3, 2, 6, 5, 2, 9, 8, 2, 2, 11, 2};
 
 /**
  * UTF-8 encoding table.
@@ -88,8 +87,7 @@ namespace jolt {
                    | choose(static_cast<uint16_t>(0x100), static_cast<uint16_t>(k), inc) << 7;
         }
 
-        void
-        utf8_decode(const utf8c *sin, size_t const sin_len, utf32c *sout, size_t const sout_len) {
+        void utf8_decode(const utf8c *sin, size_t const sin_len, utf32c *sout, size_t const sout_len) {
             const utf8c *const sin_begin = sin;
             const utf8c *const sin_end = sin + sin_len;
             const utf32c *const sout_end = sout + sout_len;
@@ -120,10 +118,12 @@ namespace jolt {
         }
 
         inline utf8c *utf8_next_cp(const utf8c *s, long long len) {
-            do {
-                ++s;
-                len--;
-            } while((*s & 0xc0) == 0x80 && len > 0);
+            if(len) {
+                do {
+                    ++s;
+                    len--;
+                } while((*s & 0xc0) == 0x80 && len > 0);
+            }
 
             return len ? const_cast<utf8c *>(s) : nullptr;
         }
@@ -139,24 +139,22 @@ namespace jolt {
         inline uint16_t utf8_encode_cp(const utf32c in, utf8c *const out, uint16_t const state) {
             uint8_t const k = (state >> 5) & 0x07;   // Current state
             uint8_t const tot_shifts = state & 0x1f; // Total amount of shifted bits
-            uint8_t const m = state >> 8; // Number of bits to shift to determine next state
-            utf32c const c = 0xffff'ffff >> m << m; // Mask to determine next state
-            uint8_t const v = (in & c) != 0;        // Automaton input to determine next state
+            uint8_t const m = state >> 8;            // Number of bits to shift to determine next state
+            utf32c const c = 0xffff'ffff >> m << m;  // Mask to determine next state
+            uint8_t const v = (in & c) != 0;         // Automaton input to determine next state
             uint16_t const x = utf8_enc_tbl[k + (5 & (8 - v))]; // Next state word
             uint8_t const next_state = x & 0x000F;
             uint8_t const num_shifts = (x & 0x00F0) >> 4; // Number of bits to shift in next step
             uint8_t const m_next = x >> 8;
             uint8_t const next_tot_shifts = tot_shifts + num_shifts;
 
-            out[k] =
-              (0xff << (num_shifts + 1))
-              | static_cast<uint8_t>((in & ((1UL << (next_tot_shifts + 1)) - 1)) >> tot_shifts);
+            out[k] = (0xff << (num_shifts + 1))
+                     | static_cast<uint8_t>((in & ((1UL << (next_tot_shifts + 1)) - 1)) >> tot_shifts);
 
             return (next_state << 5) | next_tot_shifts | (m_next << 8);
         }
 
-        size_t
-        utf8_encode(const utf32c *sin, size_t const sin_len, utf8c *sout, size_t const sout_len) {
+        size_t utf8_encode(const utf32c *sin, size_t const sin_len, utf8c *sout, size_t const sout_len) {
             const utf32c *const sin_end = sin + sin_len;
             const utf8c *const sout_end = sout + sout_len;
             size_t tot_bytes_out = 0;
@@ -177,13 +175,9 @@ namespace jolt {
                     // Error
                     nc = sizeof(UTF8_CP_REPLACEMENT) / sizeof(UTF8_CP_REPLACEMENT[0]);
 
-                    for(int i = 0; i < nc && sout < sout_end; ++i) {
-                        *(sout++) = UTF8_CP_REPLACEMENT[i];
-                    }
+                    for(int i = 0; i < nc && sout < sout_end; ++i) { *(sout++) = UTF8_CP_REPLACEMENT[i]; }
                 } else {
-                    for(int i = nc - 1; i >= 0 && sout < sout_end; --i) {
-                        *(sout++) = value_out[i];
-                    }
+                    for(int i = nc - 1; i >= 0 && sout < sout_end; --i) { *(sout++) = value_out[i]; }
                 }
 
                 tot_bytes_out += nc;

@@ -23,8 +23,8 @@ TEST(reallocate) {
     int *a = jolt::memory::allocate<int>(100);
     int *b = jolt::memory::allocate<int>(500);
 
-    int *c = jolt::memory::reallocate(a, 2000);
-    int *d = jolt::memory::reallocate(c, 800);
+    int *c = jolt::memory::reallocate(a, 100, 2000);
+    int *d = jolt::memory::reallocate(c, 500, 800);
 
     jolt::memory::free(b);
     jolt::memory::free(d);

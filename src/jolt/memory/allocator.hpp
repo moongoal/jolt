@@ -150,7 +150,9 @@ namespace jolt {
             flags |= get_current_force_flags();
 
             return reinterpret_cast<T *>(_allocate(
-              n * sizeof(T), choose(flags, flags | ALLOC_BIG, sizeof(T) < BIG_OBJECT_MIN_SIZE), alignment));
+              n * sizeof(T),
+              flags | choose<flags_t>(0, ALLOC_BIG, sizeof(T) < BIG_OBJECT_MIN_SIZE),
+              alignment));
         }
 
         /**
@@ -161,10 +163,10 @@ namespace jolt {
          * @return A newly allocated and constructed object.
          */
         template<typename T, typename... Params>
-        T *allocate_and_construct(Params &&... ctor_params) {
+        T *allocate_and_construct(Params &&...ctor_params) {
             T *ptr = allocate<T>();
 
-            return construct(ptr, ctor_params...);
+            return construct(ptr, std::forward<Params>(ctor_params)...);
         }
 
         /**
@@ -179,8 +181,8 @@ namespace jolt {
          * @return The same value as `ptr`.
          */
         template<typename T, typename... Params>
-        T *construct(T *const ptr, Params &&... ctor_params) {
-            return new(ptr) T(ctor_params...);
+        T *construct(T *const ptr, Params &&...ctor_params) {
+            return new(ptr) T(std::forward<Params>(ctor_params)...);
         }
 
         /**
@@ -188,11 +190,12 @@ namespace jolt {
          * first.
          *
          * @param ptr A pointer to the beginning of the memory location to free.
-         * @param n The number of items in the array (1 for non-arrays or arrays where the data has
-         * already been destroyed).
+         * @param n The number of elements in the array.
          */
         template<typename T>
-        void free(T *const ptr, size_t const n = 1) {
+        void free(T *const ptr, uint32_t const n = 1) {
+            AllocHeader *hdr_ptr = get_alloc_header(ptr);
+
             if constexpr(!std::is_void<T>::value && !std::is_trivial<T>::value) {
                 for(size_t i = 0; i < n; ++i) { ptr[i].~T(); }
             }
@@ -227,14 +230,15 @@ namespace jolt {
          * @tparam T The type of the element stored at `ptr`.
          *
          * @param ptr The pointer to the memory region to reallcate.
+         * @param old_length The old number of elements in the memory region.
          * @param new_length The new number of elements in the memory region.
          *
          * @return A possibly new pointer to the reallocated memory region.
          */
         template<typename T>
-        T *reallocate(T *const ptr, size_t const new_length) {
+        T *reallocate(T *const ptr, size_t const old_length, size_t const new_length) {
             AllocatorSlot &slot = get_allocator_slot();
-            AllocHeader &hdr = *get_alloc_header(ptr);
+            AllocHeader &hdr = *get_alloc_header(ptr); // store old length
             jolt::threading::LockGuard lock{slot.m_lock};
 
             if constexpr(std::is_trivial<T>::value) {
@@ -243,12 +247,11 @@ namespace jolt {
                 if(will_relocate(ptr, new_length)) {
                     T *const data_new = allocate<T>(new_length, hdr.m_flags, hdr.m_alignment);
 
-                    for(size_t i = 0; i < new_length; ++i) {
+                    for(size_t i = 0; i < min(new_length, old_length); ++i) {
                         construct(data_new + i, std::move(ptr[i]));
-                        ptr[i].~T();
                     }
 
-                    jolt::memory::free(ptr);
+                    jolt::memory::free(ptr, old_length);
 
                     return data_new;
                 }

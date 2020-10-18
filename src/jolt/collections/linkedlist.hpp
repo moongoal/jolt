@@ -14,7 +14,7 @@ namespace jolt {
             static constexpr Node *forward(Node *const cur, size_t const n) {
                 Node *result = cur;
 
-                for(size_t i = 0; i < n; ++i) { result = cur->get_next(); }
+                for(size_t i = 0; i < n; ++i) { result = result->get_next(); }
 
                 return result;
             }
@@ -23,8 +23,9 @@ namespace jolt {
                 return left != right;
             }
 
-            static constexpr item_type &resolve(const Node *const node) {
-                return const_cast<item_type &>(node->get_value());
+            template<typename NodeT>
+            static constexpr auto &resolve(NodeT *const node) {
+                return node->get_value();
             }
         };
 
@@ -77,16 +78,15 @@ namespace jolt {
              * Create a new empty list.
              */
             LinkedList() :
-              m_first{nullptr}, m_last{nullptr}, m_length{0},
-              m_alloc_flags{memory::get_current_force_flags()} {}
+              m_first{nullptr}, m_last{nullptr}, m_length{0}, m_alloc_flags{
+                                                                memory::get_current_force_flags()} {}
 
             /**
              * Create a new instance of this class.
              *
              * @param lst The initializer list.
              */
-            LinkedList(const std::initializer_list<value_type> &lst) :
-              LinkedList(lst.begin(), lst.end()) {}
+            LinkedList(const std::initializer_list<value_type> &lst) : LinkedList(lst.begin(), lst.end()) {}
 
             /**
              * Create a new instance of this class.
@@ -114,8 +114,8 @@ namespace jolt {
              * @remarks After this constructor returns, the other list will be empty.
              */
             LinkedList(LinkedList &&other) :
-              m_first{other.m_first}, m_last{other.m_last}, m_length{other.m_length},
-              m_alloc_flags{other.m_alloc_flags} {
+              m_first{other.m_first}, m_last{other.m_last}, m_length{other.m_length}, m_alloc_flags{
+                                                                                        other.m_alloc_flags} {
                 other.m_first = other.m_last = nullptr;
                 other.m_length = 0;
             }
@@ -139,11 +139,11 @@ namespace jolt {
             Node *add_after(const_reference item, Node *const where) {
                 memory::push_force_flags(m_alloc_flags);
 
-                Node *const new_node = memory::construct<Node>(
-                  memory::allocate<Node>(), Node(item, where ? where->m_next : nullptr));
+                Node *const new_node =
+                  memory::allocate_and_construct<Node>(item, where ? where->m_next : nullptr);
 
                 if(!where) {
-                    Node *old_first = m_first;
+                    Node *const old_first = m_first;
 
                     m_first = new_node;
                     new_node->m_next = old_first;
@@ -237,7 +237,6 @@ namespace jolt {
 
                 --m_length;
 
-                node.m_value.~value_type();
                 jolt::memory::free(&node);
             }
 
@@ -250,7 +249,6 @@ namespace jolt {
                 while(node) {
                     Node *const next = node->m_next;
 
-                    node->m_value.~value_type();
                     jolt::memory::free(node);
 
                     node = next;

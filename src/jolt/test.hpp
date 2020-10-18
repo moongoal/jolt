@@ -190,18 +190,23 @@ namespace jolt {
 
                 return result;
             }
-        } test_case_instance;
+        } test_case_instance; // NOLINT(misc-definitions-in-headers)
 
+        // NOLINTNEXTLINE(misc-definitions-in-headers)
         test_function::test_function(std::string_view test_name, bool ignore) :
           m_name{test_name}, m_result{ignore ? test_result::IGNORE : test_result::NOT_RUN} {
             test_case_instance.register_test(*this);
         }
 
+        // NOLINTNEXTLINE(misc-definitions-in-headers)
         setup_function::setup_function() { test_case_instance.register_setup(*this); }
+
+        // NOLINTNEXTLINE(misc-definitions-in-headers)
         cleanup_function::cleanup_function() { test_case_instance.register_cleanup(*this); }
     } // namespace test
 } // namespace jolt
 
+// NOLINTNEXTLINE(misc-definitions-in-headers)
 int main() { return 1 - jolt::test::test_case_instance.run(); }
 
 #endif // JLT_TEST_HPP

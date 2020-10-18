@@ -48,10 +48,10 @@ namespace jolt {
             ArenaFreeListNode *find_right_closest_node(void *const ptr, size_t const size) const;
 
             void *reallocate_shrink(
-              void *const ptr, size_t const new_size, size_t const alignment, AllocHeader *const ptr_hdr);
+              void *const ptr, uint32_t const new_size, uint32_t const alignment, AllocHeader *const ptr_hdr);
 
             void *reallocate_grow(
-              void *const ptr, size_t const new_size, size_t const alignment, AllocHeader *const ptr_hdr);
+              void *const ptr, uint32_t const new_size, uint32_t const alignment, AllocHeader *const ptr_hdr);
 
           public:
             explicit Arena(size_t const memory_size);
@@ -103,7 +103,7 @@ namespace jolt {
              *
              * @return A pointer to the new allocation.
              */
-            void *reallocate(void *const ptr, size_t const new_size, size_t const alignment);
+            void *reallocate(void *const ptr, uint32_t const new_size, uint32_t const alignment);
 
             /**
              * Return a value stating whether reallocating a pointer will result in the memory
@@ -115,7 +115,7 @@ namespace jolt {
              * @return True if reallocating `ptr` will result in a different pointer being returned
              * by `reallocate()`. False otherwise.
              */
-            bool will_relocate(void *const ptr, size_t const new_size) const;
+            bool will_relocate(void *const ptr, uint32_t const new_size) const;
 
             /**
              * Return the allocation header for a given pointer.
@@ -140,7 +140,7 @@ namespace jolt {
              * the base of the allocation or not and will return garbage if it
              * doesn't.
              */
-            static size_t get_total_allocation_size(void *const ptr) {
+            static uint32_t get_total_allocation_size(void *const ptr) {
                 AllocHeader *const ptr_hdr = get_header(ptr);
 
                 return get_total_allocation_size(ptr_hdr->m_alloc_sz, ptr_hdr->m_alloc_offset);
@@ -157,12 +157,8 @@ namespace jolt {
              * the base of the allocation or not and will return garbage if it
              * doesn't.
              */
-            static size_t get_total_allocation_size(size_t const size, size_t const padding) {
-                return size + padding + sizeof(AllocHeader)
-#ifdef JLT_WITH_MEM_CHECKS
-                       + JLT_MEM_CANARY_VALUE_SIZE
-#endif // JLT_WITH_MEM_CHECKS
-                  ;
+            static uint32_t get_total_allocation_size(uint32_t const size, uint32_t const padding) {
+                return size + padding + sizeof(AllocHeader) + JLT_MEM_CANARY_VALUE_SIZE;
             }
         };
     } // namespace memory

@@ -239,9 +239,10 @@ namespace jolt {
              */
             void reserve_capacity(unsigned int const new_capacity) {
                 if(new_capacity > m_capacity) {
+                    unsigned int const old_capacity = m_capacity;
                     m_capacity = new_capacity;
 
-                    m_data = memory::reallocate(m_data, m_capacity);
+                    m_data = memory::reallocate(m_data, old_capacity, m_capacity);
                 }
             }
 

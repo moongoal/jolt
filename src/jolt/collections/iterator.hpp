@@ -103,8 +103,8 @@ namespace jolt {
                 return m_ptr - other.m_ptr;
             }
 
-            constexpr typename F::item_type &operator*() { return F::resolve(m_ptr); }
-            constexpr const typename F::item_type &operator*() const { return F::resolve(m_ptr); }
+            constexpr auto &operator*() { return F::resolve(m_ptr); }
+            constexpr const auto &operator*() const { return F::resolve(m_ptr); }
 
             constexpr void next() { m_ptr = F::forward(m_ptr, 1); }
             constexpr void previous() { m_ptr = F::backward(m_ptr, 1); }
