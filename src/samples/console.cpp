@@ -8,7 +8,7 @@ using namespace jolt::debug;
 using namespace jolt::io;
 using namespace jolt::text;
 
-int main(int argc, char **argv) {
+int main(JLT_MAYBE_UNUSED int argc, JLT_MAYBE_UNUSED char **argv) {
     jolt::threading::initialize();
 
     StandardErrorStream s_err;

@@ -17,8 +17,7 @@ namespace jolt {
             size_t const sz_free = get_free_committed_size();
             void *const ptr_alloc = align_raw_ptr(m_ptr_top + sizeof(AllocHeader), alignment);
             AllocHeader *const ptr_hdr = get_header(ptr_alloc);
-            size_t const padding =
-              reinterpret_cast<uint8_t *>(ptr_alloc) - m_ptr_top - sizeof(AllocHeader);
+            size_t const padding = reinterpret_cast<uint8_t *>(ptr_alloc) - m_ptr_top - sizeof(AllocHeader);
             size_t const total_alloc_sz = reinterpret_cast<uint8_t *>(ptr_alloc) + size - m_ptr_top
                                           + JLT_MEM_CANARY_VALUE_SIZE + sizeof(void *);
 
@@ -45,8 +44,7 @@ namespace jolt {
         }
 
         void Stack::free_top_finalized() {
-            for(void *top_alloc = get_top_allocation(); top_alloc;
-                top_alloc = get_top_allocation()) {
+            for(void *top_alloc = get_top_allocation(); top_alloc; top_alloc = get_top_allocation()) {
                 AllocHeader *hdr = get_header(top_alloc);
 
                 if((hdr->m_flags & ALLOC_FINALIZED) == ALLOC_FINALIZED) {
@@ -84,18 +82,15 @@ namespace jolt {
             }
         }
 
-        void Stack::realloc_shrink_top(
-          void *const ptr, size_t const new_size, AllocHeader *const ptr_hdr) {
+        void Stack::realloc_shrink_top(size_t const new_size, AllocHeader *const ptr_hdr) {
             size_t const top_diff = ptr_hdr->m_alloc_sz - new_size;
             m_ptr_top -= top_diff;
 
             JLT_FILL_AFTER_FREE(m_ptr_top, top_diff);
         }
 
-        void Stack::realloc_grow_top(
-          void *const ptr, size_t const new_size, AllocHeader *const ptr_hdr) {
-            uint8_t *const ptr_far_end =
-              reinterpret_cast<uint8_t *>(get_base()) + get_committed_size();
+        void Stack::realloc_grow_top(size_t const new_size, AllocHeader *const ptr_hdr) {
+            uint8_t *const ptr_far_end = reinterpret_cast<uint8_t *>(get_base()) + get_committed_size();
             size_t const top_diff = new_size - ptr_hdr->m_alloc_sz;
             m_ptr_top += top_diff;
 
@@ -112,9 +107,9 @@ namespace jolt {
 
             if(is_top(ptr)) {
                 if(new_size < ptr_hdr->m_alloc_sz) {
-                    realloc_shrink_top(ptr, new_size, ptr_hdr);
+                    realloc_shrink_top(new_size, ptr_hdr);
                 } else {
-                    realloc_grow_top(ptr, new_size, ptr_hdr);
+                    realloc_grow_top(new_size, ptr_hdr);
                 }
 
                 // Update header
@@ -146,9 +141,9 @@ namespace jolt {
         bool Stack::is_top(void *const ptr) const {
             AllocHeader *const ptr_hdr = get_header(ptr);
 
-            return ptr_hdr->m_alloc_sz + reinterpret_cast<uint8_t *>(ptr)
-                     + JLT_MEM_CANARY_VALUE_SIZE + sizeof(void *)
-            == m_ptr_top;
+            return ptr_hdr->m_alloc_sz + reinterpret_cast<uint8_t *>(ptr) + JLT_MEM_CANARY_VALUE_SIZE
+                     + sizeof(void *)
+                   == m_ptr_top;
         }
     } // namespace memory
 } // namespace jolt

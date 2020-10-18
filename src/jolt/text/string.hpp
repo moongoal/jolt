@@ -41,7 +41,7 @@ namespace jolt {
              * @remarks This constructor will not create a copy of the string and will *NOT* acquire ownership
              * of `s`.
              */
-            UTF8String(utf8c const *const s, size_t const s_size, size_t const s_len, noclone_t noclone);
+            UTF8String(utf8c const *const s, size_t const s_size, size_t const s_len, JLT_MAYBE_UNUSED noclone_t noclone);
 
             /**
              * Disposes the allocated resources. Will do nothing if called more than once.
@@ -66,7 +66,7 @@ namespace jolt {
              * @remarks This constructor will not create a copy of the string but will acquire
              * ownership of the input `s`.
              */
-            UTF8String(utf8c const *const s, size_t const s_size, noclone_t noclone);
+            UTF8String(utf8c const *const s, size_t const s_size, JLT_MAYBE_UNUSED noclone_t noclone);
 
             /**
              * Initialize a new instance of this class.
@@ -78,7 +78,7 @@ namespace jolt {
              * @remarks This constructor will not create a copy of the string but will acquire
              * ownership of the input `s`.
              */
-            UTF8String(char const *const s, size_t const s_size, noclone_t noclone);
+            UTF8String(char const *const s, size_t const s_size, JLT_MAYBE_UNUSED noclone_t noclone);
 
             /**
              * Initialize a new instance of this class.

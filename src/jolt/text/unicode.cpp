@@ -163,7 +163,7 @@ namespace jolt {
                 utf8c value_out[4];
                 uint16_t state = UTF8_ENCODE_STATE_INIT;
                 uint8_t result;
-                size_t nc = 0;
+                int nc = 0;
 
                 do {
                     ++nc;

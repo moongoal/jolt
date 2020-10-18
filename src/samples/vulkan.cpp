@@ -14,8 +14,8 @@ Renderer renderer;
 
 void main_loop(ui::Window const &wnd);
 
-int main(int argc, char **argv) {
-    GraphicsEngineInitializationParams gparams{0};
+int main(JLT_MAYBE_UNUSED int argc, JLT_MAYBE_UNUSED char **argv) {
+    GraphicsEngineInitializationParams gparams{};
 
     initialize();
     console.set_output_stream(&io::standard_error_stream);

@@ -346,9 +346,9 @@ namespace jolt {
              * @return The index of the item in the vector or `-1` if not found.
              */
             int find(const_reference item) const {
-                for(int i = 0; i < m_length; ++i) {
+                for(unsigned int i = 0; i < m_length; ++i) {
                     if(m_data[i] == item) {
-                        return i;
+                        return static_cast<int>(i);
                     }
                 }
 

@@ -174,7 +174,6 @@ TEST(reallocate__shrink__nop) { // Full allocation
 
     void *const b1 = arena.allocate(alloc_size, ALLOC_NONE, 1);
     auto const h1 = Arena::get_header(b1);
-    size_t const b1_sz = h1->m_alloc_sz;
     void *const b1_realloc = arena.reallocate(b1, alloc_size, 1);
 
     assert(b1_realloc == b1);
@@ -191,7 +190,6 @@ TEST(reallocate__shrink__no_change) { // Full allocation
 
     void *const b1 = arena.allocate(alloc_size, ALLOC_NONE, 1);
     auto const h1 = Arena::get_header(b1);
-    size_t const b1_sz = h1->m_alloc_sz;
     void *const b1_realloc = arena.reallocate(b1, alloc_size - 1, 1);
 
     assert(b1_realloc == b1);
@@ -208,7 +206,7 @@ TEST(reallocate__shrink__with_change) { // Full allocation
 
     void *const b1 = arena.allocate(alloc_size, ALLOC_NONE, 1);
     auto const h1 = Arena::get_header(b1);
-    size_t const b1_sz = h1->m_alloc_sz;
+    JLT_MAYBE_UNUSED size_t const b1_sz = h1->m_alloc_sz;
     void *const b1_realloc = arena.reallocate(b1, alloc_size - sizeof(ArenaFreeListNode), 1);
     ArenaFreeListNode *const free_list = arena.get_free_list();
 
@@ -264,8 +262,7 @@ TEST(reallocate__grow_no_move) {
     void *const b1 = arena.allocate(1024, ALLOC_NONE, 16);
     auto const h1 = Arena::get_header(b1);
 
-    void *const b2 = arena.allocate(256, ALLOC_NONE, 8);
-    auto const h2 = Arena::get_header(b2);
+    JLT_MAYBE_UNUSED void *const b2 = arena.allocate(256, ALLOC_NONE, 8);
 
     void *const b3 = arena.allocate(5, ALLOC_NONE, 64);
     auto const h3 = Arena::get_header(b3);

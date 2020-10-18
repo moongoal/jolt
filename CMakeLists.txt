@@ -46,6 +46,17 @@ target_compile_features(
     cxx_attributes
 )
 
+# TODO: Only in dev build
+target_compile_options(
+    libjolt
+    PUBLIC
+        -Werror
+        -Wfatal-errors
+        -Wpedantic
+        -Wall
+        -Wextra
+)
+
 target_compile_definitions(libjolt
     PRIVATE
         JLT_INTERNAL

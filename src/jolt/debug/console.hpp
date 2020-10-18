@@ -31,14 +31,14 @@ namespace jolt {
             explicit Console(
               io::FileStream *const source = nullptr,
               io::FileStream *const sink = nullptr,
-              LogLevel loglevel = LogLevel::Warning) :
+              JLT_MAYBE_UNUSED LogLevel loglevel = LogLevel::Warning) :
               m_source{source},
               m_sink{sink},
 #ifdef JLT_WITH_DEBUG_LOGGING
               m_loglevel {
                 LogLevel::Debug
             }
-#else  // JLT_WITH_DEBUG_LOGGING
+#else // JLT_WITH_DEBUG_LOGGING
               m_loglevel {
                 loglevel
             }
@@ -73,7 +73,7 @@ namespace jolt {
             void set_input_stream(io::FileStream *const source) { m_source = source; }
             void set_output_stream(io::FileStream *const sink) { m_sink = sink; }
 
-            void set_log_level(LogLevel loglevel) {
+            void set_log_level(JLT_MAYBE_UNUSED LogLevel loglevel) {
 #ifndef JLT_WITH_DEBUG_LOGGING
                 m_loglevel = loglevel;
 #endif // !JLT_WITH_DEBUG_LOGGING

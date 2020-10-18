@@ -19,8 +19,8 @@ namespace jolt {
         volatile std::atomic<thread_id> Thread::s_next_id = 0;
 
         Thread::Thread(thread_id os_id, ThreadState const state, const char *const thread_name) :
-          m_id{s_next_id++}, m_os_id{os_id}, m_handler{nullptr}, m_state{state}, m_param{nullptr},
-          m_name{thread_name} {}
+          m_id{s_next_id++}, m_os_id{os_id}, m_name{thread_name}, m_param{nullptr}, m_state{state},
+          m_handler{nullptr} {}
 
         Thread &Thread::get_current() { return *t_current_thread; }
 

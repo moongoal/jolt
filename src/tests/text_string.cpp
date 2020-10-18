@@ -144,7 +144,7 @@ TEST(find) {
     assert2(s.find(s) == 0, "3");
     assert2(s.find(EmptyString) == 0, "4");
     assert2(EmptyString.find("bleh") == -1, "5");
-    assert2(s.find(EmptyString, s.get_length() - 1) == s.get_length() - 1, "6");
+    assert2(s.find(EmptyString, s.get_length() - 1) == static_cast<int>(s.get_length() - 1), "6");
     assert2(s.find(EmptyString, s.get_length()) == -1, "7");
 }
 

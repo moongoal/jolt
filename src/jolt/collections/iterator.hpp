@@ -35,7 +35,7 @@ namespace jolt {
 
           private:
             template<typename A, typename B>
-            friend class Iterator;
+            friend struct Iterator;
 
             pointer m_ptr;
 
@@ -48,11 +48,11 @@ namespace jolt {
             template<typename A, typename B>
             Iterator(Iterator<A, B> &&other) : m_ptr{other.m_ptr} {}
 
-            Iterator &operator++() {
+            Iterator operator++() {
                 Iterator other = *this;
                 next();
 
-                return *this;
+                return other;
             }
 
             Iterator &operator++(int) {

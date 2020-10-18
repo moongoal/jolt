@@ -35,7 +35,6 @@ namespace jolt {
                 jltassert2(result == VK_SUCCESS, "Unable to create staging buffer");
 
                 uint32_t mem_type_idx = choose_memory_type();
-                const bool m_memory_is_coherent = mem_type_idx & COHERENT_BIT;
                 mem_type_idx &= 0x0000ffffUL;
 
                 VkMemoryAllocateInfo ainfo{

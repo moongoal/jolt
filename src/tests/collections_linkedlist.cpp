@@ -25,7 +25,7 @@ TEST(ctor) {
     auto c_end = c.cend();
     auto d_end = d.cend();
     auto e_end = e.cend();
-    size_t i = 1;
+    int i = 1;
 
     for(auto it = c.begin(); it != c_end; ++it) { assert2(*it == i++, "Move constructor value"); }
 
@@ -101,7 +101,7 @@ TEST(add_all_after) {
     auto a_end = a.cend();
     auto a_it = a.begin();
 
-    for(size_t i = 0; i <= 6; ++i, ++a_it) { assert(*a_it == i); }
+    for(int i = 0; i <= 6; ++i, ++a_it) { assert(*a_it == i); }
 
     assert(a_it == a_end);
     assert2(a.get_length() == 7, "Length");

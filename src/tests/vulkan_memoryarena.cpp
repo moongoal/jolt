@@ -45,7 +45,7 @@ TEST(allocate) {
     assert2(arena.get_free_list().get_length() == 1, "Free list not length 1");
     assert2(arena.get_alloc_list().get_length() == 1, "Metadata list not length 0");
 
-    VkDeviceSize const alloc2 = arena.allocate(1024, 1);
+    JLT_MAYBE_UNUSED VkDeviceSize const alloc2 = arena.allocate(1024, 1);
     assert2(arena.get_allocated_size() == 2048, "Invalid allocated size 2");
     assert2(arena.get_free_list().get_length() == 1, "Free list not length 1");
     assert2(arena.get_alloc_list().get_length() == 2, "Metadata list not length 2");
@@ -55,7 +55,7 @@ TEST(allocate) {
     assert2(arena.get_free_list().get_length() == 2, "Free list not length 2");
     assert2(arena.get_alloc_list().get_length() == 1, "Metadata list not length 1");
 
-    VkDeviceSize const alloc3 = arena.allocate(1025, 1);
+    JLT_MAYBE_UNUSED VkDeviceSize const alloc3 = arena.allocate(1025, 1);
     assert2(arena.get_allocated_size() == 2049, "Invalid allocated size 3");
     assert2(arena.get_free_list().get_length() == 2, "Free list not length 2");
     assert2(arena.get_alloc_list().get_length() == 2, "Metadata list not length 2");

@@ -11,8 +11,7 @@ namespace jolt {
                 }
             }
 
-            void
-            CommandPool::initialize(bool transient, bool allow_reset, uint32_t queue_fam_index) {
+            void CommandPool::initialize(bool transient, bool allow_reset, uint32_t queue_fam_index) {
                 VkResult result;
                 VkCommandPoolCreateFlags flags = 0;
 
@@ -31,8 +30,8 @@ namespace jolt {
                   queue_fam_index                             // queueFamilyIndex
                 };
 
-                result = vkCreateCommandPool(
-                  m_renderer.get_device(), &cinfo, get_vulkan_allocator(), &m_pool);
+                result =
+                  vkCreateCommandPool(m_renderer.get_device(), &cinfo, get_vulkan_allocator(), &m_pool);
 
                 jltassert2(result == VK_SUCCESS, "Unable to create command pool");
             }
@@ -54,14 +53,12 @@ namespace jolt {
                   VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO, // sType
                   nullptr,                                        // pNext
                   m_pool,                                         // commandPool
-                  primary ? VK_COMMAND_BUFFER_LEVEL_PRIMARY
-                          : VK_COMMAND_BUFFER_LEVEL_SECONDARY, // level
-                  n                                            // commandBufferCount
+                  primary ? VK_COMMAND_BUFFER_LEVEL_PRIMARY : VK_COMMAND_BUFFER_LEVEL_SECONDARY, // level
+                  n // commandBufferCount
                 };
                 collections::Array<VkCommandBuffer> raw_buffers{n};
 
-                VkResult result =
-                  vkAllocateCommandBuffers(m_renderer.get_device(), &ainfo, raw_buffers);
+                VkResult result = vkAllocateCommandBuffers(m_renderer.get_device(), &ainfo, raw_buffers);
 
                 for(size_t i = 0; i < n; ++i) {
                     jltconstruct(out_buffers + i, m_renderer, raw_buffers[i], primary);
@@ -75,14 +72,12 @@ namespace jolt {
                   VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO, // sType
                   nullptr,                                        // pNext
                   m_pool,                                         // commandPool
-                  primary ? VK_COMMAND_BUFFER_LEVEL_PRIMARY
-                          : VK_COMMAND_BUFFER_LEVEL_SECONDARY, // level
-                  1                                            // commandBufferCount
+                  primary ? VK_COMMAND_BUFFER_LEVEL_PRIMARY : VK_COMMAND_BUFFER_LEVEL_SECONDARY, // level
+                  1 // commandBufferCount
                 };
                 VkCommandBuffer raw_cmd_buffer;
 
-                VkResult result =
-                  vkAllocateCommandBuffers(m_renderer.get_device(), &ainfo, &raw_cmd_buffer);
+                VkResult result = vkAllocateCommandBuffers(m_renderer.get_device(), &ainfo, &raw_cmd_buffer);
 
                 jltassert2(result == VK_SUCCESS, "Unable to allocate command buffers");
 
@@ -148,7 +143,7 @@ namespace jolt {
                 VkExtent2D const &win_extent =
                   m_renderer.get_window()->get_surface_capabilities().currentExtent;
 
-                VkClearValue clear_values[2] = {0};
+                VkClearValue clear_values[2] = {};
 
                 clear_values[0].color.float32[0] = 0.0f;
                 clear_values[0].color.float32[1] = 1.0f;
@@ -160,13 +155,17 @@ namespace jolt {
                   nullptr,                                  // pNext
                   tgt.get_render_pass(),                    // renderPass
                   tgt.get_active_framebuffer(),             // framebuffer
-                  {
-                    // renderArea
-                    0,                // x
-                    0,                // y
-                    win_extent.width, // width
-                    win_extent.height // height
-                  },
+                  {                                         // renderArea
+                   {
+                     // offset
+                     0, // x
+                     0, // y
+                   },
+                   {
+                     // extent
+                     win_extent.width, // width
+                     win_extent.height // height
+                   }},
                   2,           // clearValueCount
                   clear_values // pClearValues
                 };

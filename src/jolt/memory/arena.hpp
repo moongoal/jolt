@@ -9,8 +9,8 @@
 namespace jolt {
     namespace memory {
         struct ArenaFreeListNode {
-            ArenaFreeListNode *m_prev, *m_next;
             size_t m_size;
+            ArenaFreeListNode *m_prev, *m_next;
 
             ArenaFreeListNode(
               size_t const size, ArenaFreeListNode *const prev, ArenaFreeListNode *const next) :
@@ -47,8 +47,7 @@ namespace jolt {
              */
             ArenaFreeListNode *find_right_closest_node(void *const ptr, size_t const size) const;
 
-            void *reallocate_shrink(
-              void *const ptr, uint32_t const new_size, uint32_t const alignment, AllocHeader *const ptr_hdr);
+            void *reallocate_shrink(void *const ptr, uint32_t const new_size, AllocHeader *const ptr_hdr);
 
             void *reallocate_grow(
               void *const ptr, uint32_t const new_size, uint32_t const alignment, AllocHeader *const ptr_hdr);

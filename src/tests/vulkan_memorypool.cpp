@@ -9,8 +9,6 @@ constexpr size_t const Sobjs = 128; //< Object size.
 
 using TestPool = ObjectPool<Sobjs, Nobjs>;
 
-constexpr VkDeviceSize const HEAP_SIZE = 16 * 1024 * 1024;
-
 Renderer renderer;
 ui::Window *ui_window;
 

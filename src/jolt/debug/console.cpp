@@ -59,6 +59,6 @@ namespace jolt {
             }
         }
 
-        bool Console::interpret_command(const text::String &cmdline) { return true; }
+        bool Console::interpret_command(JLT_MAYBE_UNUSED const text::String &cmdline) { return true; }
     } // namespace debug
 } // namespace jolt

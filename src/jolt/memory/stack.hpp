@@ -30,8 +30,8 @@ namespace jolt {
              */
             void free_single_alloc(void *const ptr);
 
-            void realloc_shrink_top(void *const ptr, size_t const new_size, AllocHeader *const ptr_hdr);
-            void realloc_grow_top(void *const ptr, size_t const new_size, AllocHeader *const ptr_hdr);
+            void realloc_shrink_top(size_t const new_size, AllocHeader *const ptr_hdr);
+            void realloc_grow_top(size_t const new_size, AllocHeader *const ptr_hdr);
 
           public:
             explicit Stack(size_t const memory_size) : Heap(memory_size) {

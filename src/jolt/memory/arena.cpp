@@ -276,8 +276,7 @@ namespace jolt {
             jltassert(JLT_CHECK_MEM_USE_AFTER_FREE(free_mem_ptr, size_to_check));
         }
 
-        void *Arena::reallocate_shrink(
-          void *const ptr, uint32_t const new_size, uint32_t const alignment, AllocHeader *const ptr_hdr) {
+        void *Arena::reallocate_shrink(void *const ptr, uint32_t const new_size, AllocHeader *const ptr_hdr) {
             uint32_t const extent = ptr_hdr->m_alloc_sz - new_size;
 
             if(extent >= sizeof(ArenaFreeListNode) && new_size >= sizeof(ArenaFreeListNode)) {
@@ -381,7 +380,7 @@ namespace jolt {
             AllocHeader *const ptr_hdr = get_header(ptr);
 
             if(new_size < ptr_hdr->m_alloc_sz) {
-                return reallocate_shrink(ptr, new_size, alignment, ptr_hdr);
+                return reallocate_shrink(ptr, new_size, ptr_hdr);
             } else if(new_size > ptr_hdr->m_alloc_sz) {
                 return reallocate_grow(ptr, new_size, alignment, ptr_hdr);
             }

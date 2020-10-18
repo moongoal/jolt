@@ -58,17 +58,7 @@ TEST(ctor_move) {
     assert(t.get_name() == thr_name);
 }
 
-// TEST(ctor_default) {
-//     Thread t;
-
-//     assert(t.get_state() == ThreadState::Invalid);
-//     assert(t.get_handler() == nullptr);
-//     assert(t.get_id() == INVALID_THREAD_ID);
-//     assert(t.get_os_id() == INVALID_OS_THREAD_ID);
-//     assert(t.get_name() == UNNAMED_THREAD_NAME);
-// }
-
-void join_handler(void *param) noexcept { sleep(1000); }
+void join_handler(JLT_MAYBE_UNUSED void *param) noexcept { sleep(1000); }
 
 TEST(join) {
     Thread t{&join_handler};

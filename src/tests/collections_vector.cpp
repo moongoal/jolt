@@ -27,7 +27,7 @@ TEST(ctor) {
 
     assert2(numbers.get_length() == 5, "Wrong length");
 
-    for(size_t i = 0; i < 5; ++i) { assert2(numbers[i] == i + 1, "Wrong value"); }
+    for(int i = 0; i < 5; ++i) { assert2(numbers[i] == i + 1, "Wrong value"); }
 }
 
 TEST(push__pop) {
@@ -58,7 +58,7 @@ TEST(operator_plus) {
     Vector<int> v2 = {6, 7, 8, 9, 10};
     Vector<int> v3 = v1 + v2;
 
-    for(size_t i = 1; i <= 10; ++i) { assert(v3[i - 1] == i); }
+    for(int i = 1; i <= 10; ++i) { assert(v3[i - 1] == i); }
 }
 
 TEST(operator_plus_equal) {
@@ -66,7 +66,7 @@ TEST(operator_plus_equal) {
 
     v += {6, 7, 8, 9, 10};
 
-    for(size_t i = 1; i <= 10; ++i) { assert(v[i - 1] == i); }
+    for(int i = 1; i <= 10; ++i) { assert(v[i - 1] == i); }
 }
 
 TEST(capacity) {
@@ -81,7 +81,7 @@ TEST(capacity) {
 TEST(find) {
     Vector<int> numbers = {1, 2, 3, 4, 5};
 
-    for(size_t i = 0; i < 5; ++i) { assert(numbers.find(i + 1) == i); }
+    for(int i = 0; i < 5; ++i) { assert(numbers.find(i + 1) == i); }
 }
 
 TEST(remove) {

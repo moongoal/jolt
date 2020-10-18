@@ -18,7 +18,12 @@ namespace jolt {
             bool const m_closeable;
 
             virtual size_t read_impl(uint8_t *const buf, size_t const buf_sz) = 0;
-            virtual size_t write_impl(const uint8_t *const buf, size_t const buf_sz) { return 0; }
+            
+            virtual size_t
+            write_impl(JLT_MAYBE_UNUSED const uint8_t *const buf, JLT_MAYBE_UNUSED size_t const buf_sz) {
+                return 0;
+            }
+
             virtual void close_impl() {}
 
           public:

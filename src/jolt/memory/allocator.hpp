@@ -194,8 +194,6 @@ namespace jolt {
          */
         template<typename T>
         void free(T *const ptr, uint32_t const n = 1) {
-            AllocHeader *hdr_ptr = get_alloc_header(ptr);
-
             if constexpr(!std::is_void<T>::value && !std::is_trivial<T>::value) {
                 for(size_t i = 0; i < n; ++i) { ptr[i].~T(); }
             }

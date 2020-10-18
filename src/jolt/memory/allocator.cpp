@@ -12,9 +12,7 @@ namespace jolt {
         static thread_local flags_t flags_stack[JLT_ALLOC_FLAGS_STACK_LEN];
         static thread_local size_t flags_stack_top = 0;
 
-        inline uint32_t map_thread_id_to_allocator_slot(thread_id id) {
-            return id % ALLOCATOR_SLOTS;
-        }
+        inline uint32_t map_thread_id_to_allocator_slot(thread_id id) { return id % ALLOCATOR_SLOTS; }
 
         AllocatorSlot &get_allocator_slot() {
             thread_id const tid = Thread::get_current().get_id();
@@ -66,7 +64,6 @@ namespace jolt {
         static inline AllocatorSlot &get_slot_for_allocation(void *const ptr) {
             AllocatorSlot *slot = &get_allocator_slot();
             AllocatorSlot *const thread_slot = slot;
-            AllocHeader *const hdr_ptr = get_alloc_header(ptr);
 
             if(!is_allocation_from_slot(ptr, *slot)) {
                 size_t i;
@@ -91,7 +88,7 @@ namespace jolt {
         }
 
         void _free(void *const ptr) {
-            AllocatorSlot &slot = get_allocator_slot();
+            AllocatorSlot &slot = get_slot_for_allocation(ptr);
             flags_t flags = get_alloc_flags(ptr);
             LockGuard lock{slot.m_lock};
 

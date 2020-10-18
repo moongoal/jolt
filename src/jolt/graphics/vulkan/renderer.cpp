@@ -26,11 +26,11 @@ static PFN_vkDestroyDebugUtilsMessengerEXT pfnDestroyDebugUtilsMessengerEXT;
 
 VkBool32 VKAPI_PTR debug_logger_clbk(
   VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
-  VkDebugUtilsMessageTypeFlagsEXT messageTypes,
+  JLT_MAYBE_UNUSED VkDebugUtilsMessageTypeFlagsEXT messageTypes,
   const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData,
-  void *pUserData) {
+  JLT_MAYBE_UNUSED void *pUserData) {
     switch(messageSeverity) {
-    #define log(type)                                                                              \
+    #define log(type)                                                                                        \
         jolt::console.type(s(pCallbackData->pMessageIdName) + " - " + s(pCallbackData->pMessage))
 
         case VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT:
@@ -63,11 +63,9 @@ static void log_phy_devs(It const &begin, It const &end) {
     StringBuilder sb{5};
 
     for(auto it = begin; it != end; ++it) {
-        VkPhysicalDeviceProperties2 props{
-          VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2, // sType
-          nullptr,                                        // pNext
-          {0}                                             // properties
-        };
+        VkPhysicalDeviceProperties2 props{};
+
+        props.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
 
         vkGetPhysicalDeviceProperties2(*it, &props);
 
@@ -119,8 +117,7 @@ namespace jolt {
                   "VK_LAYER_KHRONOS_validation"
 #endif // _DEBUG
                 };
-                const size_t required_layers_length =
-                  sizeof(required_layers) / sizeof(const char *);
+                const size_t required_layers_length = sizeof(required_layers) / sizeof(const char *);
 
                 vkEnumerateInstanceLayerProperties(&n_available_layers, nullptr);
 
@@ -196,11 +193,9 @@ namespace jolt {
                 const char *required_ext[] = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
                 const size_t required_ext_length = sizeof(required_ext) / sizeof(const char *);
 
-                vkEnumerateDeviceExtensionProperties(
-                  m_phy_device, nullptr, &n_available_ext, nullptr);
+                vkEnumerateDeviceExtensionProperties(m_phy_device, nullptr, &n_available_ext, nullptr);
                 collections::Array<VkExtensionProperties> ext_props{n_available_ext};
-                vkEnumerateDeviceExtensionProperties(
-                  m_phy_device, nullptr, &n_available_ext, ext_props);
+                vkEnumerateDeviceExtensionProperties(m_phy_device, nullptr, &n_available_ext, ext_props);
 
                 for(size_t i = 0; i < required_ext_length; ++i) {
                     bool found = false;
@@ -217,8 +212,7 @@ namespace jolt {
                     if(found) {
                         console.debug("Found required device extension " + s(required_ext[i]));
                     } else {
-                        console.err(
-                          "Required device extension " + s(required_ext[i]) + " not found");
+                        console.err("Required device extension " + s(required_ext[i]) + " not found");
                         abort();
                     }
                 }
@@ -238,9 +232,8 @@ namespace jolt {
                     params.app_version_minor,
                     params.app_version_revision), // applicationVersion
                   params.app_name,                // pEngineName
-                  VK_MAKE_VERSION(
-                    JLT_VERSION_MAJOR, JLT_VERSION_MINOR, JLT_VERSION_PATCH), // engineVersion
-                  VK_API_VERSION_1_2                                          // apiVersion
+                  VK_MAKE_VERSION(JLT_VERSION_MAJOR, JLT_VERSION_MINOR, JLT_VERSION_PATCH), // engineVersion
+                  VK_API_VERSION_1_2                                                        // apiVersion
                 };
                 layer_vector layers = select_required_layers();
                 extension_vector extensions = select_required_instance_extensions();
@@ -279,8 +272,7 @@ namespace jolt {
                 m_phy_props.pNext = &m_phy_props11;
                 m_phy_props11.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_PROPERTIES;
                 m_phy_props11.pNext = &m_phy_maint_3_props;
-                m_phy_maint_3_props.sType =
-                  VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAINTENANCE_3_PROPERTIES;
+                m_phy_maint_3_props.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAINTENANCE_3_PROPERTIES;
                 m_phy_maint_3_props.pNext = nullptr;
 
                 m_phy_feats.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
@@ -302,8 +294,7 @@ namespace jolt {
                         m_phy_device = *it;
                         found = true;
 
-                        console.info(
-                          "Chosen physical device " + s(m_phy_props.properties.deviceName));
+                        console.info("Chosen physical device " + s(m_phy_props.properties.deviceName));
                         break;
                     }
                 }
@@ -327,11 +318,10 @@ namespace jolt {
                 VkPhysicalDeviceVulkan12Features features12 = {};
                 features12.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES;
 
-                VkPhysicalDeviceFeatures2 features{
-                  VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2, // sType
-                  &features12,                                  // pNext
-                  {0}};
+                VkPhysicalDeviceFeatures2 features{};
 
+                features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+                features.pNext = &features12;
                 features.features.logicOp = VK_TRUE;
                 features.features.fillModeNonSolid = VK_TRUE;
                 features.features.wideLines = VK_TRUE;
@@ -340,10 +330,7 @@ namespace jolt {
                 features12.separateDepthStencilLayouts = VK_TRUE;
 
                 queue_ci_vector q_cinfo = select_device_queues(
-                  q_fam_props,
-                  params.n_queues_graphics,
-                  params.n_queues_transfer,
-                  params.n_queues_compute);
+                  q_fam_props, params.n_queues_graphics, params.n_queues_transfer, params.n_queues_compute);
 
                 extension_vector exts = select_required_device_extensions();
 
@@ -430,17 +417,14 @@ namespace jolt {
 #ifdef _DEBUG
                 console.debug("Initializing Vulkan debug logger");
 
-                pfnCreateDebugUtilsMessengerEXT =
-                  reinterpret_cast<typeof(pfnCreateDebugUtilsMessengerEXT)>(
-                    vkGetDeviceProcAddr(m_device, "vkCreateDebugUtilsMessengerEXT"));
-                pfnDestroyDebugUtilsMessengerEXT =
-                  reinterpret_cast<typeof(pfnDestroyDebugUtilsMessengerEXT)>(
-                    vkGetDeviceProcAddr(m_device, "vkDestroyDebugUtilsMessengerEXT"));
+                pfnCreateDebugUtilsMessengerEXT = reinterpret_cast<PFN_vkCreateDebugUtilsMessengerEXT>(
+                  vkGetDeviceProcAddr(m_device, "vkCreateDebugUtilsMessengerEXT"));
+                pfnDestroyDebugUtilsMessengerEXT = reinterpret_cast<PFN_vkDestroyDebugUtilsMessengerEXT>(
+                  vkGetDeviceProcAddr(m_device, "vkDestroyDebugUtilsMessengerEXT"));
 
                 if(!pfnCreateDebugUtilsMessengerEXT || !pfnDestroyDebugUtilsMessengerEXT) {
-                    console.warn(
-                      "Unable to initialize debug logger API. No Vulkan-specific logging "
-                      "will be provided");
+                    console.warn("Unable to initialize debug logger API. No Vulkan-specific logging "
+                                 "will be provided");
 
                     pfnCreateDebugUtilsMessengerEXT = nullptr;
                     pfnDestroyDebugUtilsMessengerEXT = nullptr;
@@ -455,8 +439,7 @@ namespace jolt {
                     | VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT
                     | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT
                     | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT, // messageSeverity
-                  VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT
-                    | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT
+                  VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT
                     | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT, // messageType
                   &debug_logger_clbk,                                  // pfnUserCallback
                   nullptr                                              // pUserDate
@@ -473,10 +456,8 @@ namespace jolt {
             }
 
             int Renderer::select_single_queue(
-              Renderer::queue_fam_prop_array &fam_props,
-              VkQueueFlags const requirements,
-              bool const exact) {
-                for(int i = 0; i < fam_props.get_length(); ++i) {
+              Renderer::queue_fam_prop_array &fam_props, VkQueueFlags const requirements, bool const exact) {
+                for(size_t i = 0; i < fam_props.get_length(); ++i) {
                     VkQueueFamilyProperties *const p = fam_props + i;
 
                     if(p->queueCount > 0) {
@@ -499,26 +480,25 @@ namespace jolt {
               uint32_t const n_compute) {
                 queue_ci_vector result;
 
-                using fam_count_map =
-                  collections::HashMap<uint32_t, uint32_t, hash::Identity<uint32_t>>;
+                using fam_count_map = collections::HashMap<uint32_t, uint32_t, hash::Identity<uint32_t>>;
 
                 fam_count_map fam_counts;
                 uint32_t n_graph2 = n_graph;
                 uint32_t n_trans2 = n_trans;
                 uint32_t n_compute2 = n_compute;
 
-#define selqueue(n, req, exact)                                                                    \
-    do {                                                                                           \
-        int fam_idx = 0;                                                                           \
-        do {                                                                                       \
-            fam_idx = select_single_queue(fam_props, req, exact);                                  \
-            if(fam_idx != -1) {                                                                    \
-                fam_counts.set_value(                                                              \
-                  static_cast<uint32_t>(fam_idx),                                                  \
-                  fam_counts.get_value_with_default(static_cast<uint32_t>(fam_idx), 0) + 1);       \
-                n--;                                                                               \
-            }                                                                                      \
-        } while(n > 0 && fam_idx != -1);                                                           \
+#define selqueue(n, req, exact)                                                                              \
+    do {                                                                                                     \
+        int fam_idx = 0;                                                                                     \
+        do {                                                                                                 \
+            fam_idx = select_single_queue(fam_props, req, exact);                                            \
+            if(fam_idx != -1) {                                                                              \
+                fam_counts.set_value(                                                                        \
+                  static_cast<uint32_t>(fam_idx),                                                            \
+                  fam_counts.get_value_with_default(static_cast<uint32_t>(fam_idx), 0) + 1);                 \
+                n--;                                                                                         \
+            }                                                                                                \
+        } while(n > 0 && fam_idx != -1);                                                                     \
     } while(false)
 
                 jltassert2(n_graph, "At least one graphics queue is required");
@@ -656,9 +636,7 @@ namespace jolt {
                 }
             }
 
-            VkQueue Renderer::acquire_graphics_queue() const {
-                return acquire_queue(VK_QUEUE_GRAPHICS_BIT);
-            }
+            VkQueue Renderer::acquire_graphics_queue() const { return acquire_queue(VK_QUEUE_GRAPHICS_BIT); }
 
             VkQueue Renderer::acquire_transfer_queue() const {
                 VkQueue queue = acquire_queue(VK_QUEUE_TRANSFER_BIT);
@@ -674,9 +652,7 @@ namespace jolt {
                 return queue;
             }
 
-            VkQueue Renderer::acquire_compute_queue() const {
-                return acquire_queue(VK_QUEUE_COMPUTE_BIT);
-            }
+            VkQueue Renderer::acquire_compute_queue() const { return acquire_queue(VK_QUEUE_COMPUTE_BIT); }
 
             void Renderer::signal_lost(RendererLostState const state) const {
                 if(state > m_lost) {
@@ -686,8 +662,8 @@ namespace jolt {
 
             void Renderer::reset_lost_state() { m_lost = RENDERER_NOT_LOST; }
 
-            void check_vulkan_result(
-              Renderer const &renderer, VkResult const result, text::String const &errmsg) {
+            void
+            check_vulkan_result(Renderer const &renderer, VkResult const result, text::String const &errmsg) {
                 RendererLostState state = RENDERER_NOT_LOST;
 
                 switch(result) {
@@ -724,8 +700,7 @@ namespace jolt {
                 renderer.signal_lost(state);
             }
 
-            uint32_t
-            Renderer::get_memory_type_index(VkMemoryPropertyFlags const requirements) const {
+            uint32_t Renderer::get_memory_type_index(VkMemoryPropertyFlags const requirements) const {
                 for(uint32_t mem_type_idx = 0; mem_type_idx < m_phy_mem_props.memoryTypeCount;
                     ++mem_type_idx) {
                     VkMemoryType const &mem_type = m_phy_mem_props.memoryTypes[mem_type_idx];
@@ -739,8 +714,7 @@ namespace jolt {
             }
 
             uint32_t Renderer::get_memory_type_index(
-              VkMemoryPropertyFlags const requirements,
-              VkMemoryPropertyFlags const exclusions) const {
+              VkMemoryPropertyFlags const requirements, VkMemoryPropertyFlags const exclusions) const {
                 for(uint32_t mem_type_idx = 0; mem_type_idx < m_phy_mem_props.memoryTypeCount;
                     ++mem_type_idx) {
                     VkMemoryType const &mem_type = m_phy_mem_props.memoryTypes[mem_type_idx];

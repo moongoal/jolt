@@ -72,9 +72,9 @@ namespace jolt {
 
             Thread(Thread &&other) :
               m_id{other.m_id.load(std::memory_order_acquire)},
-              m_os_id{other.m_os_id.load(std::memory_order_acquire)}, m_handler{std::move(other.m_handler)},
-              m_state{other.m_state.load(std::memory_order_acquire)}, m_param{std::move(other.m_param)},
-              m_win_handle{std::move(other.m_win_handle)}, m_name{std::move(other.m_name)} {
+              m_os_id{other.m_os_id.load(std::memory_order_acquire)}, m_name{std::move(other.m_name)},
+              m_param{std::move(other.m_param)}, m_state{other.m_state.load(std::memory_order_acquire)},
+              m_handler{std::move(other.m_handler)}, m_win_handle{std::move(other.m_win_handle)} {
                 other.m_id.store(INVALID_THREAD_ID, std::memory_order_release);
                 other.m_state.store(ThreadState::Invalid, std::memory_order_release);
             }
@@ -88,8 +88,8 @@ namespace jolt {
               thread_handler_ptr const handler, const char *const thread_name = UNNAMED_THREAD_NAME) noexcept
               :
               m_id{s_next_id++},
-              m_os_id{INVALID_OS_THREAD_ID}, m_handler{handler}, m_state{ThreadState::Created},
-              m_param{nullptr}, m_win_handle{NULL}, m_name{thread_name} {}
+              m_os_id{INVALID_OS_THREAD_ID}, m_name{thread_name}, m_param{nullptr},
+              m_state{ThreadState::Created}, m_handler{handler}, m_win_handle{NULL} {}
 
             Thread(Thread &other) = delete;
             Thread &operator=(Thread &other) = delete;

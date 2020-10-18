@@ -4,7 +4,7 @@
 using namespace jolt;
 using namespace jolt::ui;
 
-int main(int argc, char **argv) {
+int main(JLT_MAYBE_UNUSED int argc, JLT_MAYBE_UNUSED char **argv) {
     jolt::initialize();
 
     console = debug::Console{nullptr, &io::standard_output_stream};

@@ -41,8 +41,8 @@
 namespace jolt {
     namespace text {
         using utf8c = char8_t;
-        using utf16c = uint16_t;
-        using utf32c = uint32_t;
+        using utf16c = char16_t;
+        using utf32c = char32_t;
 
         constexpr int UNICODE_VERSION_MAJOR = 13; //< Unicode standard major version
         constexpr int UNICODE_VERSION_MINOR = 0;  //< Unicode standard minor version

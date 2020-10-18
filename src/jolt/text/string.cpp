@@ -14,8 +14,10 @@ namespace jolt {
           m_str{EmptyString.m_str}, m_str_len{EmptyString.m_str_len},
           m_str_size{EmptyString.m_str_size}, m_own{false} {}
 
-        UTF8String::UTF8String(utf8c const *const s, size_t const s_size, noclone_t noclone) :
-          m_str{const_cast<utf8c *>(s)}, m_str_len{utf8_len(s, s_size)}, m_str_size{s_size} {}
+        UTF8String::UTF8String(
+          utf8c const *const s, size_t const s_size, JLT_MAYBE_UNUSED noclone_t noclone) :
+          m_str{const_cast<utf8c *>(s)},
+          m_str_len{utf8_len(s, s_size)}, m_str_size{s_size} {}
 
         UTF8String::UTF8String(utf8c const *const s, size_t const s_size) :
           m_str{allocate<utf8c>(s_size + 1)}, m_str_len{utf8_len(s, s_size)}, m_str_size{s_size} {
@@ -32,11 +34,11 @@ namespace jolt {
         }
 
         UTF8String::UTF8String(
-          utf8c const *const s, size_t const s_size, size_t const s_len, noclone_t noclone) :
+          utf8c const *const s, size_t const s_size, size_t const s_len, JLT_MAYBE_UNUSED noclone_t noclone) :
           m_str{const_cast<utf8c *>(s)},
           m_str_len{s_len}, m_str_size{s_size}, m_own{false} {}
 
-        UTF8String::UTF8String(char const *const s, size_t const s_size, noclone_t noclone) :
+        UTF8String::UTF8String(char const *const s, size_t const s_size, JLT_MAYBE_UNUSED noclone_t noclone) :
           m_str{const_cast<utf8c *>(reinterpret_cast<utf8c const *>(s))}, m_str_len{s_size}, m_str_size{
                                                                                                s_size} {}
 
@@ -164,7 +166,7 @@ namespace jolt {
         }
 
         UTF8String UTF8String::replace(UTF8String const &what, UTF8String const &with) const {
-            size_t const start_idx = find(what);
+            int const start_idx = find(what);
 
             if(start_idx != -1 && what.get_length()) {
                 size_t const s_end_idx = start_idx + what.get_length();
@@ -204,9 +206,9 @@ namespace jolt {
                 len = get_length() - start_idx;
             }
 
-            jltassert(start_idx >= 0 && start_idx + len <= get_length());
+            jltassert(start_idx >= 0 && start_idx + len <= static_cast<int>(get_length()));
 
-            bool const to_end = (len < 0) || (start_idx + len == get_length());
+            bool const to_end = (len < 0) || (start_idx + len == static_cast<int>(get_length()));
             const utf8c *const start = &((*this)[start_idx]);
             const utf8c *const end = to_end ? get_raw() + m_str_size : &((*this)[start_idx + len]);
 

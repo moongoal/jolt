@@ -29,7 +29,7 @@ namespace jolt {
 
           private:
             template<typename A, typename B>
-            friend class HashMapIterator;
+            friend struct HashMapIterator;
 
             table_entry *const m_table;
             size_t const m_table_length;

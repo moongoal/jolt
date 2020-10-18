@@ -88,7 +88,7 @@ namespace jolt {
                 VkDeviceSize get_buffer_size() const { return m_buffer_size; }
                 bool is_coherent() const { return m_memory_is_coherent; }
                 Renderer const &get_renderer() const { return m_renderer; }
-                VkDeviceMemory const get_memory() const { return m_memory; }
+                VkDeviceMemory get_memory() const { return m_memory; }
                 CommandPool &get_command_pool() { return m_cmdpool; }
                 VkBuffer get_buffer() const { return m_buffer; }
                 VkQueue get_queue() const { return m_queue; }

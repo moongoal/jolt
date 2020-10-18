@@ -14,19 +14,14 @@ namespace jolt {
                 result = vkGetPhysicalDeviceSurfacePresentModesKHR(
                   m_renderer.get_phy_device(), window.get_surface(), &n_present_modes, nullptr);
                 jltassert2(
-                  result == VK_SUCCESS,
-                  "Unable to get available device surface presentation formats");
+                  result == VK_SUCCESS, "Unable to get available device surface presentation formats");
 
                 collections::Array<VkPresentModeKHR> present_modes{n_present_modes};
                 result = vkGetPhysicalDeviceSurfacePresentModesKHR(
-                  m_renderer.get_phy_device(),
-                  window.get_surface(),
-                  &n_present_modes,
-                  present_modes);
+                  m_renderer.get_phy_device(), window.get_surface(), &n_present_modes, present_modes);
 
                 jltassert2(
-                  result == VK_SUCCESS,
-                  "Unable to get available device surface presentation formats");
+                  result == VK_SUCCESS, "Unable to get available device surface presentation formats");
 
                 bool present_mode_fifo_supported = false, present_mode_mailbox_supported = false;
                 VkPresentModeKHR chosen_present_mode = VK_PRESENT_MODE_IMMEDIATE_KHR;
@@ -85,12 +80,11 @@ namespace jolt {
                 // Get images
                 uint32_t n_images;
 
-                result =
-                  vkGetSwapchainImagesKHR(m_renderer.get_device(), m_swapchain, &n_images, nullptr);
+                result = vkGetSwapchainImagesKHR(m_renderer.get_device(), m_swapchain, &n_images, nullptr);
                 jltassert2(result == VK_SUCCESS, "Unable to get swapchain images");
 
-                m_swapchain_images = jltalloc(typeof(*m_swapchain_images), 1);
-                m_swapchain_image_views = jltalloc(typeof(*m_swapchain_image_views), 1);
+                m_swapchain_images = jltalloc(image_array, 1);
+                m_swapchain_image_views = jltalloc(view_array, 1);
 
                 jltassert(m_swapchain_images);
 
@@ -157,8 +151,7 @@ namespace jolt {
                 }
 
                 if(m_swapchain) {
-                    vkDestroySwapchainKHR(
-                      m_renderer.get_device(), m_swapchain, get_vulkan_allocator());
+                    vkDestroySwapchainKHR(m_renderer.get_device(), m_swapchain, get_vulkan_allocator());
 
                     m_swapchain = VK_NULL_HANDLE;
                 }
@@ -179,8 +172,7 @@ namespace jolt {
                 jltvkcheck(result, "Unable to acquire next swapchain image");
             }
 
-            void
-            PresentationTarget::present_active_image(WaitSemaphoreActionSynchro const &synchro) {
+            void PresentationTarget::present_active_image(WaitSemaphoreActionSynchro const &synchro) {
                 VkPresentInfoKHR pinfo{
                   VK_STRUCTURE_TYPE_PRESENT_INFO_KHR, // sType
                   nullptr,                            // pNext

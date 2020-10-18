@@ -30,8 +30,7 @@ namespace jolt {
             explicit constexpr Array(size_t const length) :
               m_ptr{memory::allocate<value_type>(length)}, m_length{length} {}
 
-            constexpr Array(pointer const ptr, size_t const length) :
-              m_ptr{ptr}, m_length{length} {}
+            constexpr Array(pointer const ptr, size_t const length) : m_ptr{ptr}, m_length{length} {}
 
             ~Array() { memory::free(m_ptr); }
 
@@ -98,6 +97,8 @@ namespace jolt {
                 auto it = lst.begin();
                 auto const it_end = lst.end();
                 size_t n_elements = it_end - it;
+
+                jltassert(n_elements >= N);
 
                 for(size_t i = 0; i < N; ++i) { memory::construct(&m_data[i], *(it++)); }
             }
