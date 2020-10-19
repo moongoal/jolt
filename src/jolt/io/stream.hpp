@@ -12,19 +12,23 @@ namespace jolt {
 
         enum Mode : ModeFlags { MODE_READ = 1, MODE_WRITE };
 
-        class Stream {
+        class JLTAPI Stream {
           private:
             ModeFlags m_mode;
             bool const m_closeable;
+            bool mutable m_error = false;
 
             virtual size_t read_impl(uint8_t *const buf, size_t const buf_sz) = 0;
-            
+
             virtual size_t
             write_impl(JLT_MAYBE_UNUSED const uint8_t *const buf, JLT_MAYBE_UNUSED size_t const buf_sz) {
                 return 0;
             }
 
             virtual void close_impl() {}
+
+          protected:
+            void set_error() const { m_error = true; }
 
           public:
             Stream(ModeFlags const mode, bool const closeable) : m_mode{mode}, m_closeable{closeable} {}
@@ -36,6 +40,8 @@ namespace jolt {
             size_t read(uint8_t *const buf, size_t const buf_sz) { return read_impl(buf, buf_sz); }
             size_t write(const uint8_t *const buf, size_t const buf_sz);
             void close();
+
+            bool has_error() const { return m_error; }
         };
 
         class JLTAPI FileStream : public Stream {

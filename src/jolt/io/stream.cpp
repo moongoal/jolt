@@ -27,6 +27,13 @@ namespace jolt {
               ((mode & MODE_READ) ? 'r' : 'w'), 'b', (((mode & RW_FLAGS) == RW_FLAGS) ? '+' : '\0'), 0};
 
             m_file = fopen((char *)path.get_raw(), fo_mode);
+
+            if(!m_file || ferror(m_file)) {
+                set_error();
+
+                return;
+            }
+
             m_eof = !feof(m_file);
 #undef RW_FLAGS
         }
@@ -41,13 +48,23 @@ namespace jolt {
 
             if(!x) {
                 m_eof = feof(m_file);
+
+                if(ferror(m_file)) {
+                    set_error();
+                }
             }
 
             return x;
         }
 
         size_t FileStream::write_impl(const uint8_t *const buf, size_t const buf_sz) {
-            return fwrite(buf, sizeof(uint8_t), buf_sz, m_file);
+            size_t res = fwrite(buf, sizeof(uint8_t), buf_sz, m_file);
+
+            if(ferror(m_file)) {
+                set_error();
+            }
+
+            return res;
         }
 
         void FileStream::close_impl() {
