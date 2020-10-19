@@ -97,7 +97,7 @@ namespace jolt {
              * @param end The iterator pointing right after the last element to add.
              */
             template<typename It>
-            JLT_NODISCARD LinkedList(It const &begin, It const &end) : LinkedList() {
+            JLT_NODISCARD LinkedList(It const &begin, It const &end) : LinkedList{} {
                 add_all(begin, end);
             }
 
@@ -106,7 +106,7 @@ namespace jolt {
              *
              * @param other The other list.
              */
-            JLT_NODISCARD LinkedList(const LinkedList &other) : LinkedList(other.cbegin(), other.cend()) {}
+            JLT_NODISCARD LinkedList(const LinkedList &other) : LinkedList{other.cbegin(), other.cend()} {}
 
             /**
              * Create a new list, taking ownership of the data of another.
@@ -190,6 +190,7 @@ namespace jolt {
                 for(It it = begin; it != end; ++it) { last = add_after(*it, last); }
             }
 
+            ///@{
             /**
              * Find an item.
              *
@@ -199,17 +200,24 @@ namespace jolt {
              *
              * @remarks Comparison is checked via the equality operator.
              */
-            JLT_NODISCARD Node *find(const_reference item) const {
+            JLT_NODISCARD Node *find(const_reference item) {
                 const_iterator end = cend();
 
-                for(const_iterator it = cbegin(); it != end; ++it) {
+                for(iterator it = begin(); it != end; ++it) {
                     if(*it == item) {
-                        return const_cast<Node *>(it.get_pointer());
+                        return it.get_pointer();
                     }
                 }
 
                 return nullptr;
             }
+
+            JLT_NODISCARD const Node *find(const_reference item) const {
+                LinkedList *const self = const_cast<LinkedList *>(this);
+
+                return self->find(item);
+            }
+            ///@}
 
             /**
              * Remove a node from the list.
@@ -217,19 +225,13 @@ namespace jolt {
              * @param node The node to remove.
              */
             void remove(Node &node) {
-                const_iterator end = cend();
-                Node *prev = nullptr;
-
-                for(iterator it = begin(); it != end; ++it) {
-                    if(it.get_pointer()->m_next == &node) {
-                        prev = it.get_pointer();
-                        break;
-                    }
-                }
+                Node *prev = find_previous_node(node);
 
                 if(prev) {
                     prev->m_next = node.m_next;
-                } else if(m_first == &node) {
+                } else {
+                    jltassert2(
+                      m_first == &node, "Attempting to remove a node that is not part of this linked list");
                     m_first = node.m_next;
                 }
 
@@ -240,6 +242,23 @@ namespace jolt {
                 --m_length;
 
                 jolt::memory::free(&node);
+            }
+
+            /**
+             * Find the previous node of a given node.
+             *
+             * @param node The node for which to find the previous.
+             *
+             * @return A pointer to the previous node or `nullptr` if none was found.
+             */
+            Node *find_previous_node(const Node &node) {
+                for(Node *result = m_first; result; result = result->m_next) {
+                    if(result->get_next() == &node) {
+                        return result;
+                    }
+                }
+
+                return nullptr;
             }
 
             /**

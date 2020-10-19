@@ -41,7 +41,11 @@ namespace jolt {
              * @remarks This constructor will not create a copy of the string and will *NOT* acquire ownership
              * of `s`.
              */
-            UTF8String(utf8c const *const s, size_t const s_size, size_t const s_len, JLT_MAYBE_UNUSED noclone_t noclone);
+            UTF8String(
+              utf8c const *const s,
+              size_t const s_size,
+              size_t const s_len,
+              JLT_MAYBE_UNUSED noclone_t noclone);
 
             /**
              * Disposes the allocated resources. Will do nothing if called more than once.
@@ -236,7 +240,7 @@ namespace jolt {
              * Get a slice of the string.
              *
              * @param start_idx The starting index of the slice.
-             * @param len The length of the slice.
+             * @param len The length of the slice. Set to -1 for the full remaining length.
              *
              * @return A new string containing the slice.
              */
@@ -313,13 +317,9 @@ namespace jolt {
             static_assert(
               std::is_same<C, char>::value || std::is_same<C, utf8c>::value, "Invalid string literal");
 
-            size_t len = strlen(reinterpret_cast<const char *>(raw)); // = size
+            size_t sz = strlen(reinterpret_cast<const char *>(raw));
 
-            // if constexpr(std::is_same<C, utf8c>::value) {
-            //     len = utf8_len(raw, len);
-            // }
-
-            return UTF8String{raw, len};
+            return UTF8String{raw, sz};
         }
 
         /**

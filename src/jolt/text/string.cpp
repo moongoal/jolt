@@ -52,7 +52,7 @@ namespace jolt {
         UTF8String::UTF8String(const UTF8String &other) :
           m_str_len{other.m_str_len}, m_str_size{other.m_str_size}, m_own{other.m_own} {
             if(other.m_own) {
-                m_str = allocate<utf8c>(other.m_str_size + 1);
+                m_str = allocate<utf8c>(m_str_size + 1);
                 memcpy(m_str, other.m_str, m_str_size);
 
                 m_str[m_str_size] = 0;
@@ -174,15 +174,18 @@ namespace jolt {
                 utf8c const *const s_end = (s_end_idx < get_length()) ? &((*this)[s_end_idx]) : nullptr;
 
                 StringBuilder sb{UTF8String(get_raw(), s - get_raw(), start_idx, noclone)};
+                UTF8String end_str;
 
                 sb.add(with);
 
                 if(s_end) {
-                    sb.add(UTF8String(
+                    end_str = UTF8String(
                       s_end,
                       get_raw() + m_str_size - s_end,
                       get_length() - start_idx - with.get_length(),
-                      noclone));
+                      noclone);
+
+                    sb.add(end_str);
                 }
 
                 return sb.to_string();
@@ -202,17 +205,18 @@ namespace jolt {
         }
 
         UTF8String UTF8String::slice(int const start_idx, int len) const {
+            bool const to_end = (len < 0) || (start_idx + len == static_cast<int>(get_length()));
+
             if(len < 0) {
                 len = get_length() - start_idx;
             }
 
             jltassert(start_idx >= 0 && start_idx + len <= static_cast<int>(get_length()));
 
-            bool const to_end = (len < 0) || (start_idx + len == static_cast<int>(get_length()));
             const utf8c *const start = &((*this)[start_idx]);
             const utf8c *const end = to_end ? get_raw() + m_str_size : &((*this)[start_idx + len]);
 
-            return UTF8String(start, end - start, len);
+            return UTF8String{start, static_cast<size_t>(end - start), static_cast<size_t>(len)};
         }
 
         UTF8String &UTF8String::operator=(const UTF8String &other) {
