@@ -171,6 +171,11 @@ namespace jolt {
             size_t get_length() const { return m_str_len; }
 
             /**
+             * Return the size of the string in bytes.
+             */
+            size_t get_size() const { return m_str_size; }
+
+            /**
              * Return a pointer to the string's raw data.
              */
             const utf8c *get_raw() const { return m_str; }

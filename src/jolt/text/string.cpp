@@ -172,18 +172,19 @@ namespace jolt {
                 size_t const s_end_idx = start_idx + what.get_length();
                 utf8c const *const s = &((*this)[start_idx]);
                 utf8c const *const s_end = (s_end_idx < get_length()) ? &((*this)[s_end_idx]) : nullptr;
+                UTF8String s_begin{
+                  get_raw(), static_cast<size_t>(s - get_raw()), static_cast<size_t>(start_idx), noclone};
 
-                StringBuilder sb{UTF8String(get_raw(), s - get_raw(), start_idx, noclone)};
-                UTF8String end_str;
+                StringBuilder sb{s_begin, 3};
 
                 sb.add(with);
 
                 if(s_end) {
-                    end_str = UTF8String(
+                    UTF8String end_str = UTF8String{
                       s_end,
-                      get_raw() + m_str_size - s_end,
+                      static_cast<size_t>(get_raw() + m_str_size - s_end),
                       get_length() - start_idx - with.get_length(),
-                      noclone);
+                      noclone};
 
                     sb.add(end_str);
                 }
@@ -195,7 +196,7 @@ namespace jolt {
         }
 
         UTF8String UTF8String::replace_all(UTF8String const &what, UTF8String const &with) const {
-            UTF8String res = *this;
+            UTF8String res{*this};
 
             if(what.get_length()) {
                 do { res = res.replace(what, with); } while(res.find(what) != -1);

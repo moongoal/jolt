@@ -15,22 +15,22 @@ namespace jolt {
         StringBuilder::StringBuilder(unsigned int const capacity) : m_strings{capacity} {}
 
         UTF8String StringBuilder::to_string() {
-            size_t len = 0;
+            size_t sz = 0;
 
-            for(const auto &s : m_strings) { len += s.get_length(); }
+            for(const auto &s : m_strings) { sz += s.get_size(); }
 
-            auto res = allocate<utf8c>(len + 1);
+            auto res = allocate<utf8c>(sz + 1);
             size_t i = 0;
 
             for(const auto &s : m_strings) {
-                memcpy(res + i, s.get_raw(), sizeof(utf8c) * s.get_length());
+                memcpy(res + i, s.get_raw(), sizeof(utf8c) * s.get_size());
 
-                i += s.get_length();
+                i += s.get_size();
             }
 
-            res[len] = 0;
+            res[sz] = 0;
 
-            return UTF8String{res, len, UTF8String::noclone};
+            return UTF8String{res, sz, UTF8String::noclone};
         }
     } // namespace text
 } // namespace jolt
