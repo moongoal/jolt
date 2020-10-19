@@ -27,7 +27,7 @@ namespace jolt {
             uint32_t const m_alignment;
 
 #ifdef JLT_WITH_MEM_CHECKS
-            JLT_MEM_CANARY_VALUE_TYPE m_free_canary = JLT_MEM_CANARY_VALUE;
+            JLT_MEM_OVERFLOW_CANARY_VALUE_TYPE m_free_canary = JLT_MEM_ALLOC_HDR_CANARY_VALUE;
 #endif // JLT_WITH_MEM_CHECKS
 
             AllocHeader(

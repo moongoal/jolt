@@ -69,6 +69,13 @@ namespace jolt {
                 return ptr > base && ptr < base + get_size();
             }
 
+            /**
+             * Dump the contents of the committed memory to file.
+             *
+             * @param path The path to the memory dump.
+             */
+            void dump_to_file(const char *const path);
+
           protected:
             /**
              * Commit a new chunk of memory.

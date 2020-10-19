@@ -12,10 +12,14 @@ namespace jolt {
             size_t m_size;
             ArenaFreeListNode *m_prev, *m_next;
 
+#ifdef JLT_WITH_MEM_CHECKS
+            JLT_MEM_OVERFLOW_CANARY_VALUE_TYPE m_free_canary = JLT_MEM_ARENA_FLN_CANARY_VALUE;
+#endif // JLT_WITH_MEM_CHECKS
+
             ArenaFreeListNode(
               size_t const size, ArenaFreeListNode *const prev, ArenaFreeListNode *const next) :
-              m_size(size),
-              m_prev(prev), m_next(next) {}
+              m_size{size},
+              m_prev{prev}, m_next{next} {}
         };
 
         class JLTAPI Arena : public Heap {
@@ -158,7 +162,7 @@ namespace jolt {
              */
             JLT_NODISCARD static uint32_t
             get_total_allocation_size(uint32_t const size, uint32_t const padding) {
-                return size + padding + sizeof(AllocHeader) + JLT_MEM_CANARY_VALUE_SIZE;
+                return size + padding + sizeof(AllocHeader) + JLT_MEM_OVERFLOW_CANARY_VALUE_SIZE;
             }
         };
     } // namespace memory

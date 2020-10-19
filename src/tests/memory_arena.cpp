@@ -22,7 +22,7 @@ TEST(ctor) {
 }
 
 TEST(allocate1) { // Full allocation
-    constexpr size_t alloc_size = Heap::MIN_ALLOC_SIZE - sizeof(AllocHeader) - JLT_MEM_CANARY_VALUE_SIZE;
+    constexpr size_t alloc_size = Heap::MIN_ALLOC_SIZE - sizeof(AllocHeader) - JLT_MEM_OVERFLOW_CANARY_VALUE_SIZE;
     Arena arena(Heap::MIN_ALLOC_SIZE);
 
     void *const b1 = arena.allocate(alloc_size, ALLOC_NONE, 1);
@@ -50,7 +50,7 @@ TEST(allocate2) {
     auto const h3 = reinterpret_cast<AllocHeader *>(b3) - 1;
 
     auto const new_free_list = reinterpret_cast<ArenaFreeListNode *>(
-      reinterpret_cast<uint8_t *>(b3) + h3->m_alloc_sz + JLT_MEM_CANARY_VALUE_SIZE);
+      reinterpret_cast<uint8_t *>(b3) + h3->m_alloc_sz + JLT_MEM_OVERFLOW_CANARY_VALUE_SIZE);
 
     assert(align_raw_ptr(b1, 16) == b1);
     assert(
@@ -61,14 +61,14 @@ TEST(allocate2) {
     assert(
       h2->m_alloc_offset
       == reinterpret_cast<uint8_t *>(h2) - reinterpret_cast<uint8_t *>(b1) - h1->m_alloc_sz
-           - JLT_MEM_CANARY_VALUE_SIZE);
+           - JLT_MEM_OVERFLOW_CANARY_VALUE_SIZE);
     assert(h2->m_alloc_sz == 256);
 
     assert(align_raw_ptr(b3, 64) == b3);
     assert(
       h3->m_alloc_offset
       == reinterpret_cast<uint8_t *>(h3) - reinterpret_cast<uint8_t *>(b2) - h2->m_alloc_sz
-           - JLT_MEM_CANARY_VALUE_SIZE);
+           - JLT_MEM_OVERFLOW_CANARY_VALUE_SIZE);
     assert(h3->m_alloc_sz == 5);
 
     assert(new_free_list != free_list);
@@ -76,7 +76,7 @@ TEST(allocate2) {
     assert(
       new_free_list->m_size
       == arena.get_size() - 3 * sizeof(AllocHeader) - h1->m_alloc_offset - h1->m_alloc_sz - h2->m_alloc_offset
-           - h2->m_alloc_sz - h3->m_alloc_offset - h3->m_alloc_sz - 3 * JLT_MEM_CANARY_VALUE_SIZE);
+           - h2->m_alloc_sz - h3->m_alloc_offset - h3->m_alloc_sz - 3 * JLT_MEM_OVERFLOW_CANARY_VALUE_SIZE);
 }
 
 TEST(overflow_canary_location) { // Issue #14
@@ -111,7 +111,7 @@ TEST(free__right_free_node_available) { // Single free (only right free list nod
 }
 
 TEST(free__no_free_node_available) { // Single free with full memory (no free list node available)
-    constexpr size_t alloc_size = Heap::MIN_ALLOC_SIZE - sizeof(AllocHeader) - JLT_MEM_CANARY_VALUE_SIZE;
+    constexpr size_t alloc_size = Heap::MIN_ALLOC_SIZE - sizeof(AllocHeader) - JLT_MEM_OVERFLOW_CANARY_VALUE_SIZE;
     Arena arena(Heap::MIN_ALLOC_SIZE);
     ArenaFreeListNode *const free_list = arena.get_free_list();
     size_t const available_memory = free_list->m_size;
@@ -172,7 +172,7 @@ TEST(free__both_free_nodes_available) { // Free with both left & right free list
 }
 
 TEST(reallocate__shrink__nop) { // Full allocation
-    constexpr size_t alloc_size = Heap::MIN_ALLOC_SIZE - sizeof(AllocHeader) - JLT_MEM_CANARY_VALUE_SIZE;
+    constexpr size_t alloc_size = Heap::MIN_ALLOC_SIZE - sizeof(AllocHeader) - JLT_MEM_OVERFLOW_CANARY_VALUE_SIZE;
     Arena arena(Heap::MIN_ALLOC_SIZE);
 
     void *const b1 = arena.allocate(alloc_size, ALLOC_NONE, 1);
@@ -188,7 +188,7 @@ TEST(reallocate__shrink__nop) { // Full allocation
 }
 
 TEST(reallocate__shrink__no_change) { // Full allocation
-    constexpr size_t alloc_size = Heap::MIN_ALLOC_SIZE - sizeof(AllocHeader) - JLT_MEM_CANARY_VALUE_SIZE;
+    constexpr size_t alloc_size = Heap::MIN_ALLOC_SIZE - sizeof(AllocHeader) - JLT_MEM_OVERFLOW_CANARY_VALUE_SIZE;
     Arena arena(Heap::MIN_ALLOC_SIZE);
 
     void *const b1 = arena.allocate(alloc_size, ALLOC_NONE, 1);
@@ -204,7 +204,7 @@ TEST(reallocate__shrink__no_change) { // Full allocation
 }
 
 TEST(reallocate__shrink__with_change) { // Full allocation
-    constexpr size_t alloc_size = Heap::MIN_ALLOC_SIZE - sizeof(AllocHeader) - JLT_MEM_CANARY_VALUE_SIZE;
+    constexpr size_t alloc_size = Heap::MIN_ALLOC_SIZE - sizeof(AllocHeader) - JLT_MEM_OVERFLOW_CANARY_VALUE_SIZE;
     Arena arena(Heap::MIN_ALLOC_SIZE);
 
     void *const b1 = arena.allocate(alloc_size, ALLOC_NONE, 1);
@@ -241,7 +241,7 @@ TEST(reallocate__grow_with_move) {
     auto const h2_realloc = Arena::get_header(b2_realloc);
 
     auto const new_free_list = reinterpret_cast<ArenaFreeListNode *>(
-      reinterpret_cast<uint8_t *>(b2_realloc) + h2_realloc->m_alloc_sz + JLT_MEM_CANARY_VALUE_SIZE);
+      reinterpret_cast<uint8_t *>(b2_realloc) + h2_realloc->m_alloc_sz + JLT_MEM_OVERFLOW_CANARY_VALUE_SIZE);
 
     assert(align_raw_ptr(b1, 16) == b1);
     assert(
@@ -274,7 +274,7 @@ TEST(reallocate__grow_no_move) {
     auto const h3_realloc = Arena::get_header(b3_realloc);
 
     auto const new_free_list = reinterpret_cast<ArenaFreeListNode *>(
-      reinterpret_cast<uint8_t *>(b3_realloc) + h3_realloc->m_alloc_sz + JLT_MEM_CANARY_VALUE_SIZE);
+      reinterpret_cast<uint8_t *>(b3_realloc) + h3_realloc->m_alloc_sz + JLT_MEM_OVERFLOW_CANARY_VALUE_SIZE);
 
     assert(align_raw_ptr(b1, 16) == b1);
     assert(

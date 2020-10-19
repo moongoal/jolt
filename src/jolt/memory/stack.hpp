@@ -142,7 +142,7 @@ namespace jolt {
              * doesn't.
              */
             JLT_NODISCARD static size_t get_total_allocation_size(size_t const size, size_t const padding) {
-                return size + padding + sizeof(AllocHeader) + JLT_MEM_CANARY_VALUE_SIZE + sizeof(void *);
+                return size + padding + sizeof(AllocHeader) + JLT_MEM_OVERFLOW_CANARY_VALUE_SIZE + sizeof(void *);
             }
 
             JLT_NODISCARD bool will_relocate(void *const ptr, size_t new_size) const {

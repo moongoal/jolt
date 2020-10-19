@@ -147,8 +147,9 @@ namespace jolt {
          */
         template<typename T>
         JLT_NODISCARD T *
-        allocate(size_t const n = 1, flags_t flags = ALLOC_NONE, size_t const alignment = alignof(T)) {
+        allocate(size_t const n = 1, flags_t flags = ALLOC_NONE, size_t alignment = alignof(T)) {
             flags |= get_current_force_flags();
+            alignment = max(alignment, __STDCPP_DEFAULT_NEW_ALIGNMENT__);
 
             return reinterpret_cast<T *>(_allocate(
               n * sizeof(T),

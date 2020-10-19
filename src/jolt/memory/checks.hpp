@@ -14,18 +14,28 @@
 /**
  * Memory overflow canary value.
  */
-#define JLT_MEM_CANARY_VALUE 0x0000deadbeef0000
+#define JLT_MEM_OVERFLOW_CANARY_VALUE 0x0000deadbeef0000
+
+/**
+ * Arena free list node canary value.
+ */
+#define JLT_MEM_ARENA_FLN_CANARY_VALUE 0x0000454552460000 // FREE
+
+/**
+ * Allocation header canary value.
+ */
+#define JLT_MEM_ALLOC_HDR_CANARY_VALUE 0x0000444145480000 // HEAD
 
 /**
  * Memory overflow canary value type.
  */
-#define JLT_MEM_CANARY_VALUE_TYPE uint64_t
+#define JLT_MEM_OVERFLOW_CANARY_VALUE_TYPE uint64_t
 
 #ifdef JLT_WITH_MEM_CHECKS
     /**
      * Memory overflow canary value size.
      */
-    #define JLT_MEM_CANARY_VALUE_SIZE sizeof(JLT_MEM_CANARY_VALUE_TYPE)
+    #define JLT_MEM_OVERFLOW_CANARY_VALUE_SIZE sizeof(JLT_MEM_OVERFLOW_CANARY_VALUE_TYPE)
 
     /**
      * Check the memory hasn't be used after being freed.
@@ -53,8 +63,8 @@
      */
     #define JLT_FILL_OVERFLOW(ptr, size)                                                                     \
         do {                                                                                                 \
-            *reinterpret_cast<JLT_MEM_CANARY_VALUE_TYPE *>(reinterpret_cast<uint8_t *>(ptr) + size) =        \
-              JLT_MEM_CANARY_VALUE;                                                                          \
+            *reinterpret_cast<JLT_MEM_OVERFLOW_CANARY_VALUE_TYPE *>(                                         \
+              reinterpret_cast<uint8_t *>(ptr) + size) = JLT_MEM_OVERFLOW_CANARY_VALUE;                      \
         } while(false)
 
     /**
@@ -66,10 +76,10 @@
      */
     #define JLT_CHECK_OVERFLOW(ptr, size)                                                                    \
         jltassert(                                                                                           \
-          *reinterpret_cast<JLT_MEM_CANARY_VALUE_TYPE *>(reinterpret_cast<uint8_t *>(ptr) + size)            \
-          == JLT_MEM_CANARY_VALUE)
+          *reinterpret_cast<JLT_MEM_OVERFLOW_CANARY_VALUE_TYPE *>(reinterpret_cast<uint8_t *>(ptr) + size)   \
+          == JLT_MEM_OVERFLOW_CANARY_VALUE)
 #else // JLT_WITH_MEM_CHECKS
-    #define JLT_MEM_CANARY_VALUE_SIZE 0
+    #define JLT_MEM_OVERFLOW_CANARY_VALUE_SIZE 0
     #define JLT_CHECK_MEM_USE_AFTER_FREE(ptr, size)
     #define JLT_FILL_AFTER_FREE(ptr, size)
     #define JLT_FILL_OVERFLOW(ptr, size)
@@ -81,7 +91,7 @@ namespace jolt {
 #ifdef JLT_WITH_MEM_CHECKS
         bool check_use_after_free(void *const ptr, size_t const size) JLTAPI;
 #endif // JLT_WITH_MEM_CHECKS
-    }  // namespace memory
+    } // namespace memory
 } // namespace jolt
 
 #endif /* JLT_MEMORY_CHECKS_HPP */

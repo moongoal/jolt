@@ -19,7 +19,7 @@ namespace jolt {
             AllocHeader *const ptr_hdr = get_header(ptr_alloc);
             size_t const padding = reinterpret_cast<uint8_t *>(ptr_alloc) - m_ptr_top - sizeof(AllocHeader);
             size_t const total_alloc_sz = reinterpret_cast<uint8_t *>(ptr_alloc) + size - m_ptr_top
-                                          + JLT_MEM_CANARY_VALUE_SIZE + sizeof(void *);
+                                          + JLT_MEM_OVERFLOW_CANARY_VALUE_SIZE + sizeof(void *);
 
             ensure_free_memory_consistency(m_ptr_top, sz_free);
 
@@ -32,10 +32,9 @@ namespace jolt {
 
             // Footer
             auto footer_ptr = reinterpret_cast<void **>(
-              reinterpret_cast<uint8_t *>(ptr_alloc) + size + JLT_MEM_CANARY_VALUE_SIZE);
+              reinterpret_cast<uint8_t *>(ptr_alloc) + size + JLT_MEM_OVERFLOW_CANARY_VALUE_SIZE);
 
             *footer_ptr = ptr_alloc; // Footer is returned pointer
-            // m_ptr_top += get_total_allocation_size(size, padding);
             m_ptr_top += total_alloc_sz;
 
             JLT_FILL_OVERFLOW(ptr_alloc, size);
@@ -70,6 +69,11 @@ namespace jolt {
 
         void Stack::free(void *const ptr) {
             AllocHeader *const ptr_hdr = get_header(ptr);
+
+#ifdef JLT_WITH_MEM_CHECKS
+            jltassert(ptr_hdr->m_free_canary == JLT_MEM_ALLOC_HDR_CANARY_VALUE);
+#endif // JLT_WITH_MEM_CHECKS
+            JLT_CHECK_OVERFLOW(ptr, ptr_hdr->m_alloc_sz);
 
             if(is_top(ptr)) {
                 ptr_hdr->m_flags |= ALLOC_FINALIZED;
@@ -110,6 +114,11 @@ namespace jolt {
 
             AllocHeader *const ptr_hdr = get_header(ptr);
 
+#ifdef JLT_WITH_MEM_CHECKS
+            jltassert(ptr_hdr->m_free_canary == JLT_MEM_OVERFLOW_CANARY_VALUE);
+#endif // JLT_WITH_MEM_CHECKS
+            JLT_CHECK_OVERFLOW(ptr, ptr_hdr->m_alloc_sz);
+
             if(is_top(ptr)) {
                 if(new_size < ptr_hdr->m_alloc_sz) {
                     realloc_shrink_top(new_size, ptr_hdr);
@@ -122,7 +131,7 @@ namespace jolt {
 
                 // Update footer
                 auto alloc_end_ptr = reinterpret_cast<uint8_t *>(ptr) + ptr_hdr->m_alloc_sz
-                                     + JLT_MEM_CANARY_VALUE_SIZE + sizeof(void *);
+                                     + JLT_MEM_OVERFLOW_CANARY_VALUE_SIZE + sizeof(void *);
                 auto footer_ptr = reinterpret_cast<void **>(alloc_end_ptr) - 1;
 
                 *footer_ptr = ptr;
@@ -146,7 +155,7 @@ namespace jolt {
         bool Stack::is_top(void *const ptr) const {
             AllocHeader *const ptr_hdr = get_header(ptr);
 
-            return ptr_hdr->m_alloc_sz + reinterpret_cast<uint8_t *>(ptr) + JLT_MEM_CANARY_VALUE_SIZE
+            return ptr_hdr->m_alloc_sz + reinterpret_cast<uint8_t *>(ptr) + JLT_MEM_OVERFLOW_CANARY_VALUE_SIZE
                      + sizeof(void *)
                    == m_ptr_top;
         }

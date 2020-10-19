@@ -123,7 +123,7 @@ namespace jolt {
         }
 
         void *_reallocate(void *const ptr, size_t const new_size) {
-            AllocatorSlot &slot = get_allocator_slot();
+            AllocatorSlot &slot = get_slot_for_allocation(ptr);
             AllocHeader *const hdr_ptr = get_alloc_header(ptr);
 
             if((hdr_ptr->m_flags & ALLOC_SCRATCH) == ALLOC_SCRATCH) {
