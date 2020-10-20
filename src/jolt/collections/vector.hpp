@@ -195,6 +195,12 @@ namespace jolt {
                 return m_data[i];
             }
 
+            JLT_NODISCARD const_reference operator[](size_t const i) const {
+                jltassert(i < m_length);
+
+                return m_data[i];
+            }
+
             JLT_NODISCARD Vector<value_type> operator+(const Vector<value_type> &other) const {
                 memory::push_force_flags(m_alloc_flags);
 

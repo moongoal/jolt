@@ -10,5 +10,6 @@
 #include <jolt/graphics/vulkan/renderer.hpp>
 #include <jolt/graphics/vulkan/memory.hpp>
 #include <jolt/graphics/vulkan/transfer.hpp>
+#include <jolt/graphics/vulkan/shader-mgr.hpp>
 
 #endif /* JLT_GRAPHICS_VULKAN_HPP */

@@ -11,6 +11,7 @@
 #include "render_tgt.hpp"
 #include "presentation_tgt.hpp"
 #include "cmd.hpp"
+#include "shader-mgr.hpp"
 
 namespace jolt {
     namespace graphics {
@@ -64,6 +65,7 @@ namespace jolt {
                 Window *m_window = nullptr;
                 RenderTarget *m_render_target = nullptr;
                 PresentationTarget *m_presentation_target = nullptr;
+                ShaderManager *m_shader_manager = nullptr;
 
                 mutable RendererLostState m_lost = RENDERER_NOT_LOST;
 
@@ -80,9 +82,7 @@ namespace jolt {
                   uint32_t const n_compute);
 
                 int select_single_queue(
-                  queue_fam_prop_array &fam_props,
-                  VkQueueFlags const requirements,
-                  bool const exact);
+                  queue_fam_prop_array &fam_props, VkQueueFlags const requirements, bool const exact);
 
                 layer_vector select_required_layers();
                 extension_vector select_required_instance_extensions();
@@ -98,13 +98,9 @@ namespace jolt {
                 VkPhysicalDevice get_phy_device() const { return m_phy_device; }
                 VkDevice get_device() const { return m_device; }
 
-                const VkPhysicalDeviceFeatures2 &get_phy_device_features() const {
-                    return m_phy_feats;
-                }
+                const VkPhysicalDeviceFeatures2 &get_phy_device_features() const { return m_phy_feats; }
 
-                const VkPhysicalDeviceProperties2 &get_phy_device_properties() const {
-                    return m_phy_props;
-                }
+                const VkPhysicalDeviceProperties2 &get_phy_device_properties() const { return m_phy_props; }
 
                 const VkPhysicalDeviceVulkan11Properties &get_phy_device_properties11() const {
                     return m_phy_props11;
@@ -125,6 +121,9 @@ namespace jolt {
                 VkDeviceSize get_max_alloc_size() const {
                     return m_phy_maint_3_props.maxMemoryAllocationSize;
                 }
+
+                ShaderManager &get_shader_manager() const { return *m_shader_manager; }
+                void set_shader_manager(ShaderManager *const manager) { m_shader_manager = manager; }
 
                 /**
                  * Return the family index for a queue.
@@ -172,9 +171,7 @@ namespace jolt {
                  * @remarks Target shut down is responsibility of the application. The renderer will
                  * never shut down or deallocate the render target.
                  */
-                void set_render_target(RenderTarget *const render_target) {
-                    m_render_target = render_target;
-                }
+                void set_render_target(RenderTarget *const render_target) { m_render_target = render_target; }
 
                 /**
                  * Set the presentation target.
@@ -188,9 +185,7 @@ namespace jolt {
                     m_presentation_target = presentation_target;
                 }
 
-                PresentationTarget const *get_presentation_target() const {
-                    return m_presentation_target;
-                }
+                PresentationTarget const *get_presentation_target() const { return m_presentation_target; }
 
                 void initialize(GraphicsEngineInitializationParams const &params);
                 void shutdown();
@@ -259,13 +254,12 @@ namespace jolt {
                  * available memory type meets the requirements.
                  */
                 uint32_t get_memory_type_index(
-                  VkMemoryPropertyFlags const requirements,
-                  VkMemoryPropertyFlags const exclusions) const;
+                  VkMemoryPropertyFlags const requirements, VkMemoryPropertyFlags const exclusions) const;
             };
 
             VkAllocationCallbacks JLTAPI *get_vulkan_allocator();
-            void JLTAPI check_vulkan_result(
-              Renderer const &renderer, VkResult const result, text::String const &errmsg);
+            void JLTAPI
+            check_vulkan_result(Renderer const &renderer, VkResult const result, text::String const &errmsg);
         } // namespace vulkan
     }     // namespace graphics
 } // namespace jolt
