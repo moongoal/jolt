@@ -32,6 +32,13 @@ namespace jolt {
              */
             virtual file_name_vec list_impl() const = 0;
 
+            /**
+             * Implementation for the `list(path, recurse)` function.
+             *
+             * @see list().
+             */
+            virtual file_name_vec list_impl(path::Path const &path, bool const recurse = true) const = 0;
+
           protected:
             /**
              * Create a new driver.
@@ -57,6 +64,16 @@ namespace jolt {
              * List all the files.
              */
             file_name_vec list() const { return list_impl(); }
+
+            /**
+             * List all files in a directory.
+             *
+             * @param path The virtual path to the directory.
+             * @param recurse A boolean value stating whether to search recursively or not.
+             */
+            file_name_vec list(path::Path const &path, bool const recurse = true) const {
+                return list_impl(path, recurse);
+            }
 
             /**
              * Check whether this driver supports opening a file in write mode.

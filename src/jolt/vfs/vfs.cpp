@@ -86,5 +86,12 @@ namespace jolt {
 
             return files;
         }
+
+        Driver::file_name_vec VirtualFileSystem::list(Path const &path, bool const recurse) const {
+            Driver *driver = get_path_driver(path);
+            Driver::file_name_vec files = path ? driver->list(path, recurse) : Driver::file_name_vec{};
+
+            return files;
+        }
     } // namespace vfs
 } // namespace jolt

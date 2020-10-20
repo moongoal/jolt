@@ -9,7 +9,7 @@ using namespace jolt::path;
 
 namespace jolt {
     namespace vfs {
-        Path FSDriver::virtual_to_actual(Path const &vpath) {
+        Path FSDriver::virtual_to_actual(Path const &vpath) const {
             Path final_path{normalize(vpath)};
 
             final_path = is_absolute(final_path) ? final_path.replace(get_virtual_path(), get_os_path())
@@ -24,10 +24,12 @@ namespace jolt {
             return jltnew(io::FileStream, actual_path, mode);
         }
 
-        FSDriver::file_name_vec FSDriver::list_impl() const {
+        FSDriver::file_name_vec FSDriver::list_impl() const { return list_impl(get_virtual_path(), true); }
+
+        FSDriver::file_name_vec FSDriver::list_impl(path::Path const &path, bool const recurse) const {
             WIN32_FIND_DATAA find_data;
             file_name_vec result{256};
-            collections::LinkedList<Path> folders{m_os_path};
+            collections::LinkedList<Path> folders{virtual_to_actual(path)};
 
             while(folders.get_first_node()) {
                 decltype(folders)::Node *const cur_node = folders.get_first_node();
@@ -44,7 +46,7 @@ namespace jolt {
 
                         result.push(file_path);
 
-                        if(find_data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+                        if(find_data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY && recurse) {
                             folders.add(file_path);
                         }
                     }

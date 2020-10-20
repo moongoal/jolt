@@ -86,6 +86,11 @@ namespace jolt {
              * List all the files in the VFS.
              */
             Driver::file_name_vec list_all() const;
+
+            /**
+             * List all the files in a virtual folder.
+             */
+            Driver::file_name_vec list(path::Path const &path, bool const recurse = false) const;
         };
     } // namespace vfs
 } // namespace jolt

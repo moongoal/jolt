@@ -13,6 +13,7 @@ namespace jolt {
         class FSDriver : public Driver {
             virtual io::Stream *open_impl(const path::Path &path, io::ModeFlags const mode);
             virtual file_name_vec list_impl() const;
+            virtual file_name_vec list_impl(path::Path const &path, bool const recurse = true) const;
 
             path::Path const m_os_path; //< Root driver path on the actual FS.
 
@@ -23,7 +24,7 @@ namespace jolt {
              *
              * @return The actual path.
              */
-            path::Path virtual_to_actual(path::Path const &vpath);
+            path::Path virtual_to_actual(path::Path const &vpath) const;
 
           public:
             /**
