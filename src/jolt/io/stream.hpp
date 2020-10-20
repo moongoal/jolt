@@ -17,6 +17,7 @@ namespace jolt {
             ModeFlags m_mode;
             bool const m_closeable;
             bool mutable m_error = false;
+            long long m_size = -1;
 
             virtual size_t read_impl(uint8_t *const buf, size_t const buf_sz) = 0;
 
@@ -29,6 +30,7 @@ namespace jolt {
 
           protected:
             void set_error() const { m_error = true; }
+            void set_size(long long const size) { m_size = size; }
 
           public:
             Stream(ModeFlags const mode, bool const closeable) : m_mode{mode}, m_closeable{closeable} {}
@@ -42,6 +44,8 @@ namespace jolt {
             void close();
 
             bool has_error() const { return m_error; }
+            long long get_size() const { return m_size; }
+            bool supports_size() const { return m_size >= 0; }
         };
 
         class JLTAPI FileStream : public Stream {
@@ -51,8 +55,7 @@ namespace jolt {
             virtual bool eof_impl() const { return m_eof; }
             virtual void close_impl();
 
-          protected:
-            FILE *m_file;
+              protected : FILE *m_file;
             bool m_eof;
 
             FileStream(FILE *const file, ModeFlags const mode);

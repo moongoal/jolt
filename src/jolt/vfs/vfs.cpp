@@ -13,7 +13,7 @@ namespace jolt {
     namespace vfs {
         VirtualFileSystem::VirtualFileSystem() {
 #ifdef _DEBUG
-            m_driver_build = memory::allocate<FSDriver>(1, memory::ALLOC_PERSIST);
+            m_driver_build = memory::allocate<FSDriver>(memory::ALLOC_PERSIST);
             memory::construct(m_driver_build, BUILD_DRIVER_PATH, JLT_BUILD_DIR);
 
             mount(BUILD_DRIVER_PATH, *m_driver_build);

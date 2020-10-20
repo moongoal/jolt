@@ -13,8 +13,8 @@ namespace jolt {
             JLT_NODISCARD static JLTAPI hash_t hash(const void *const data, size_t const size);
         };
 
-        template<typename T>
         struct Identity {
+            template<typename T>
             JLT_NODISCARD static hash_t hash(const T *const data, size_t const size) {
                 return (hash_t)(*data);
             }

@@ -20,14 +20,14 @@ namespace jolt {
           m_str_len{utf8_len(s, s_size)}, m_str_size{s_size} {}
 
         UTF8String::UTF8String(utf8c const *const s, size_t const s_size) :
-          m_str{allocate<utf8c>(s_size + 1)}, m_str_len{utf8_len(s, s_size)}, m_str_size{s_size} {
+          m_str{allocate_array<utf8c>(s_size + 1)}, m_str_len{utf8_len(s, s_size)}, m_str_size{s_size} {
             memcpy(m_str, s, s_size);
 
             m_str[s_size] = 0;
         }
 
         UTF8String::UTF8String(utf8c const *const s, size_t const s_size, size_t const s_len) :
-          m_str{allocate<utf8c>(s_size + 1)}, m_str_len{s_len}, m_str_size{s_size} {
+          m_str{allocate_array<utf8c>(s_size + 1)}, m_str_len{s_len}, m_str_size{s_size} {
             memcpy(m_str, s, s_size);
 
             m_str[s_size] = 0;
@@ -43,7 +43,7 @@ namespace jolt {
                                                                                                s_size} {}
 
         UTF8String::UTF8String(char const *const s, size_t const s_size) :
-          m_str{allocate<utf8c>(s_size + 1)}, m_str_len{s_size}, m_str_size{s_size} {
+          m_str{allocate_array<utf8c>(s_size + 1)}, m_str_len{s_size}, m_str_size{s_size} {
             memcpy(m_str, s, s_size * sizeof(char));
 
             m_str[s_size] = 0;
@@ -52,7 +52,7 @@ namespace jolt {
         UTF8String::UTF8String(const UTF8String &other) :
           m_str_len{other.m_str_len}, m_str_size{other.m_str_size}, m_own{other.m_own} {
             if(other.m_own) {
-                m_str = allocate<utf8c>(m_str_size + 1);
+                m_str = allocate_array<utf8c>(m_str_size + 1);
                 memcpy(m_str, other.m_str, m_str_size);
 
                 m_str[m_str_size] = 0;
@@ -70,7 +70,7 @@ namespace jolt {
 
         void UTF8String::dispose() {
             if(m_str && m_own) {
-                free(m_str);
+                free_array(m_str);
                 m_str = nullptr;
             }
         }
@@ -91,7 +91,7 @@ namespace jolt {
 
         UTF8String UTF8String::operator+(const UTF8String &other) const {
             size_t const total_size = m_str_size + other.m_str_size;
-            utf8c *const new_str = allocate<utf8c>(total_size + 1);
+            utf8c *const new_str = allocate_array<utf8c>(total_size + 1);
 
             memcpy(new_str, m_str, m_str_size);
             memcpy(new_str + m_str_size, other.m_str, other.m_str_size);
@@ -225,7 +225,7 @@ namespace jolt {
 
             // No need to copy if not owned
             if(other.m_own) {
-                m_str = allocate<utf8c>(other.m_str_size + 1);
+                m_str = allocate_array<utf8c>(other.m_str_size + 1);
                 memcpy(m_str, other.m_str, other.m_str_size);
 
                 m_str[other.m_str_size] = 0;

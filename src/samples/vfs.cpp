@@ -23,6 +23,7 @@ void check_shader_magic(VirtualFileSystem &vfs) {
     if(shader_stream) {
         shader_stream->read(buff, sizeof(uint32_t));
         shader_stream->close();
+        jltfree(shader_stream);
 
         uint32_t *const shader_magic = reinterpret_cast<uint32_t *>(buff);
 

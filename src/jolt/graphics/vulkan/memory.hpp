@@ -24,10 +24,8 @@ namespace jolt {
                 size_type const m_size;
 
               public:
-                DeviceAlloc(
-                  handle_type const handle, size_type const offset, size_type const size) :
-                  m_handle{handle},
-                  m_offset{offset}, m_size{size} {}
+                DeviceAlloc(handle_type const handle, size_type const offset, size_type const size) :
+                  m_handle{handle}, m_offset{offset}, m_size{size} {}
 
                 operator handle_type() const { return m_handle; }
                 operator size_type() const { return m_offset; }
@@ -75,9 +73,7 @@ namespace jolt {
                  * @param mem_flags Memory type requirements.
                  */
                 MemoryHeap(
-                  Renderer const &renderer,
-                  VkDeviceSize const size,
-                  VkMemoryPropertyFlags const mem_flags);
+                  Renderer const &renderer, VkDeviceSize const size, VkMemoryPropertyFlags const mem_flags);
 
                 MemoryHeap(MemoryHeap const &other) = delete;
 
@@ -137,9 +133,7 @@ namespace jolt {
                         uint64_t const n_non_alloc = s_slot_n_bits - rem;
                         uint64_t val = 0;
 
-                        for(uint32_t i = 0; i < n_non_alloc; ++i) {
-                            val |= 1ULL << (s_slot_n_bits - i);
-                        }
+                        for(uint32_t i = 0; i < n_non_alloc; ++i) { val |= 1ULL << (s_slot_n_bits - i); }
 
                         m_bitmap[m_bitmap.get_length() - 1] = val;
                     }
@@ -212,8 +206,8 @@ namespace jolt {
                     VkDeviceSize offset = allocate();
 
                     if(offset != JLT_VULKAN_INVALIDSZ) {
-                        VkResult result = vkBindBufferMemory(
-                          get_renderer().get_device(), buffer, get_base(), offset);
+                        VkResult result =
+                          vkBindBufferMemory(get_renderer().get_device(), buffer, get_base(), offset);
                         jltassert2(result == VK_SUCCESS, "Unable to bind buffer memory");
 
                         return BufferDeviceAlloc{buffer, offset, S};
@@ -254,8 +248,7 @@ namespace jolt {
                     uint64_t const slot_mask = (1ULL << slot);
 
                     jltassert2(
-                      m_bitmap[cluster] & slot_mask,
-                      "Attempting to free a slot that is not allocated");
+                      m_bitmap[cluster] & slot_mask, "Attempting to free a slot that is not allocated");
                     m_bitmap[cluster] &= ~slot_mask;
                 }
             };
@@ -275,23 +268,21 @@ namespace jolt {
                 };
 
                 struct AllocMetadata {
-                    VkDeviceSize m_size; //< Total size of the allocation, including padding.
-                    VkDeviceSize
-                      m_padding; //< Padding added to `m_base` to obtain the final pointer.
+                    VkDeviceSize m_size;    //< Total size of the allocation, including padding.
+                    VkDeviceSize m_padding; //< Padding added to `m_base` to obtain the final pointer.
 
                     AllocMetadata(VkDeviceSize const size, VkDeviceSize const padding) :
                       m_size{size}, m_padding{padding} {}
                 };
 
                 using free_list = collections::LinkedList<FreeListNode>;
-                using alloc_list = collections::
-                  HashMap<VkDeviceSize, AllocMetadata, jolt::hash::Identity<VkDeviceSize>>;
+                using alloc_list = collections::HashMap<VkDeviceSize, AllocMetadata, jolt::hash::Identity>;
 
               private:
                 free_list m_freelist; //< List of free spots in memory.
-                alloc_list m_allocs; //< Mapping between offsets and allocation medatada structures.
+                alloc_list m_allocs;  //< Mapping between offsets and allocation medatada structures.
                 VkDeviceSize m_total_alloc_size; //< Amount of total allocated memory.
-                VkBuffer m_buffer; //< The internal buffer associated with the memory chunk.
+                VkBuffer m_buffer;               //< The internal buffer associated with the memory chunk.
 
                 free_list::Node *find_prev_closest_node(VkDeviceSize const ptr);
 

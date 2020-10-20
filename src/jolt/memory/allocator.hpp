@@ -19,6 +19,13 @@
 #define jltalloc(object_type, ...) jolt::memory::allocate<object_type>(__VA_ARGS__)
 
 /**
+ * Shortcut to jolt::memory::allocate.
+ *
+ * @see jolt::memory::allocate_array().
+ */
+#define jltallocarray(object_type, n, ...) jolt::memory::allocate_array<object_type>(n, __VA_ARGS__)
+
+/**
  * Construct an already allocated object.
  *
  * @param ptr Pointer the the allocated memory.
@@ -43,11 +50,11 @@
 #define jltfree(ptr) jolt::memory::free(ptr)
 
 /**
- * Shortcut to jolt::memory::free.
+ * Shortcut to jolt::memory::free_array.
  *
- * @see jolt::memory::free().
+ * @see jolt::memory::free_array().
  */
-#define jltfreearray(ptr, n) jolt::memory::free(ptr, n)
+#define jltfreearray(ptr) jolt::memory::free_array(ptr)
 
 namespace jolt {
     namespace memory {
@@ -69,6 +76,18 @@ namespace jolt {
             jolt::threading::Lock m_lock;
 
             AllocatorSlot();
+        };
+
+        /**
+         * Array header for allocations performed with `allocate_array()`.
+         */
+        template<typename T>
+        struct ArrayHeader {
+            using value_type = T;
+            using pointer = T *;
+
+            size_t m_length; //< Number of items.
+            pointer m_data;  //< Pointer to the items.
         };
 
         /**
@@ -141,20 +160,40 @@ namespace jolt {
          * `construct()` after allocating the memory to construct the object.
          *
          * @tparam T The type of the object to allocate.
-         * @param n The number of elements of size `T` to allocate.
+         * @param flags The allocation flags.
+         * @param alignment The alignment requirements for the allocated memory.
+         */
+        template<typename T>
+        JLT_NODISCARD T *allocate(flags_t flags = ALLOC_NONE, size_t alignment = alignof(T)) {
+            flags |= get_current_force_flags();
+            flags |= choose<flags_t>(0, ALLOC_BIG, sizeof(T) < BIG_OBJECT_MIN_SIZE);
+            alignment = max(alignment, __STDCPP_DEFAULT_NEW_ALIGNMENT__);
+
+            return reinterpret_cast<T *>(_allocate(sizeof(T), flags, alignment));
+        }
+
+        /**
+         * Allocate memory for an array of objects of type T. This function will not construct the objects.
+         * Use `construct()` after allocating the memory to construct the objects.
+         *
+         * @tparam T The type of the object to allocate.
+         * @param n The number of elements of type `T` to allocate.
          * @param flags The allocation flags.
          * @param alignment The alignment requirements for the allocated memory.
          */
         template<typename T>
         JLT_NODISCARD T *
-        allocate(size_t const n = 1, flags_t flags = ALLOC_NONE, size_t alignment = alignof(T)) {
+        allocate_array(size_t const n, flags_t flags = ALLOC_NONE, size_t alignment = alignof(T)) {
             flags |= get_current_force_flags();
+            flags |= choose<flags_t>(0, ALLOC_BIG, sizeof(T) < BIG_OBJECT_MIN_SIZE);
             alignment = max(alignment, __STDCPP_DEFAULT_NEW_ALIGNMENT__);
 
-            return reinterpret_cast<T *>(_allocate(
-              n * sizeof(T),
-              flags | choose<flags_t>(0, ALLOC_BIG, sizeof(T) < BIG_OBJECT_MIN_SIZE),
-              alignment));
+            void *const ptr = _allocate(sizeof(T) * n + sizeof(size_t), flags, alignment);
+            auto const len_ptr = reinterpret_cast<size_t *>(ptr);
+
+            *len_ptr = n;
+
+            return reinterpret_cast<T *>(len_ptr + 1);
         }
 
         /**
@@ -195,12 +234,31 @@ namespace jolt {
          * @param n The number of elements in the array.
          */
         template<typename T>
-        void free(T *const ptr, uint32_t const n = 1) {
+        void free(T *const ptr) {
+            if constexpr(!std::is_void<T>::value && !std::is_trivial<T>::value) {
+                ptr->~T();
+            }
+
+            _free(ptr);
+        }
+
+        /**
+         * Free a location in memory given its pointer. The object's constructor will be called
+         * first.
+         *
+         * @param ptr A pointer to the beginning of the memory location to free.
+         * @param n The number of elements in the array.
+         */
+        template<typename T>
+        void free_array(T *const ptr) {
+            auto const len_ptr = reinterpret_cast<size_t *>(ptr) - 1;
+            size_t const n = *len_ptr;
+
             if constexpr(!std::is_void<T>::value && !std::is_trivial<T>::value) {
                 for(size_t i = 0; i < n; ++i) { ptr[i].~T(); }
             }
 
-            _free(ptr);
+            _free(len_ptr);
         }
 
         bool JLTAPI will_relocate(void *const ptr, size_t const new_size);
@@ -212,6 +270,10 @@ namespace jolt {
         inline flags_t get_alloc_flags(void *const ptr) { return get_alloc_header(ptr)->m_flags; }
 
         size_t JLTAPI get_allocated_size();
+
+        JLT_NODISCARD inline size_t get_array_length(void *ptr) {
+            return *(reinterpret_cast<size_t *>(ptr) - 1);
+        }
 
         /**
          * Return the allocator slot for the calling thread.
@@ -230,34 +292,34 @@ namespace jolt {
          * @tparam T The type of the element stored at `ptr`.
          *
          * @param ptr The pointer to the memory region to reallcate.
-         * @param old_length The old number of elements in the memory region.
          * @param new_length The new number of elements in the memory region.
          *
          * @return A possibly new pointer to the reallocated memory region.
          */
         template<typename T>
-        JLT_NODISCARD T *reallocate(T *const ptr, size_t const old_length, size_t const new_length) {
+        JLT_NODISCARD T *reallocate(T *const ptr, size_t const new_length) {
             AllocatorSlot &slot = get_allocator_slot();
             AllocHeader &hdr = *get_alloc_header(ptr); // store old length
-            jolt::threading::LockGuard lock{slot.m_lock};
+            threading::LockGuard lock{slot.m_lock};
+            auto const old_len_ptr = reinterpret_cast<size_t *>(ptr) - 1;
+            size_t const old_length = *old_len_ptr;
+            size_t const new_size = new_length * sizeof(T) + sizeof(size_t);
 
-            if constexpr(std::is_trivial<T>::value) {
-                return reinterpret_cast<T *>(_reallocate(ptr, new_length * sizeof(T)));
-            } else {
+            if constexpr(!std::is_trivial<T>::value) {
                 if(will_relocate(ptr, new_length)) {
-                    T *const data_new = allocate<T>(new_length, hdr.m_flags, hdr.m_alignment);
+                    T *const data_new = allocate_array<T>(new_length, hdr.m_flags, hdr.m_alignment);
 
                     for(size_t i = 0; i < min(new_length, old_length); ++i) {
                         construct(data_new + i, std::move(ptr[i]));
                     }
 
-                    jolt::memory::free(ptr, old_length);
+                    free_array(ptr);
 
                     return data_new;
                 }
             }
 
-            return reinterpret_cast<T *>(_reallocate(ptr, new_length * sizeof(T)));
+            return reinterpret_cast<T *>(_reallocate(ptr, new_size));
         }
     } // namespace memory
 } // namespace jolt

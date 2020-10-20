@@ -34,6 +34,10 @@ namespace jolt {
                 return;
             }
 
+            fseek(m_file, 0, SEEK_END);
+            set_size(ftell(m_file));
+            rewind(m_file);
+
             m_eof = !feof(m_file);
 #undef RW_FLAGS
         }

@@ -27,18 +27,19 @@ namespace jolt {
             using const_reference = const T &;
 
             struct noclone_t {};
+            struct cap_ctor_t {};
 
             template<typename E>
             using base_iterator = Iterator<E, ArrayIteratorImpl<E>>;
             using iterator = base_iterator<T>;
             using const_iterator = base_iterator<const T>;
 
-            static constexpr noclone_t noclone{};
+            static constexpr noclone_t noclone;
+            static constexpr cap_ctor_t cap_ctor;
 
           private:
             pointer m_data;                //< Pointer to the data.
-            unsigned int m_length;         //< Length of the data.
-            unsigned int m_capacity;       //< Capacity of the array.
+            size_t m_length;               //< Length of the data.
             memory::flags_t m_alloc_flags; //< Allocation flags.
 
           protected:
@@ -47,14 +48,14 @@ namespace jolt {
              */
             void dispose() {
                 if(m_data) {
-                    memory::free(m_data, m_length);
+                    memory::free_array(m_data);
 
                     m_data = nullptr;
                 }
             }
 
           public:
-            static constexpr unsigned int DEFAULT_CAPACITY = 16; //< The default capacity.
+            static constexpr size_t DEFAULT_CAPACITY = 16; //< The default capacity.
 
             /**
              * Create a new instance of this class.
@@ -65,9 +66,8 @@ namespace jolt {
              * @param length Length (as number of items) of `data`.
              * @param noclone The `noclone` constant.
              */
-            JLT_NODISCARD Vector(pointer data, unsigned int const length, noclone_t) :
-              m_data{data}, m_length{length}, m_capacity{length}, m_alloc_flags{
-                                                                    memory::get_alloc_flags(data)} {
+            JLT_NODISCARD Vector(pointer data, size_t const length, noclone_t) :
+              m_data{data}, m_length{length}, m_alloc_flags{memory::get_alloc_flags(data)} {
                 jltassert(data);
             }
 
@@ -85,9 +85,10 @@ namespace jolt {
              * @param capacity The number of items the vector will be able to hold before resizing
              * its internal array.
              */
-            JLT_NODISCARD explicit Vector(unsigned int const initial_capacity = DEFAULT_CAPACITY) :
-              m_data{memory::allocate<value_type>(initial_capacity)}, m_length{0},
-              m_capacity{initial_capacity}, m_alloc_flags{memory::get_current_force_flags()} {}
+            JLT_NODISCARD explicit Vector(
+              size_t const initial_capacity = DEFAULT_CAPACITY, JLT_MAYBE_UNUSED cap_ctor_t = cap_ctor) :
+              m_data{memory::allocate_array<value_type>(initial_capacity)},
+              m_length{0}, m_alloc_flags{memory::get_current_force_flags()} {}
 
             /**
              * Create a new instance of this class.
@@ -95,29 +96,29 @@ namespace jolt {
              * @param data Pointer to the data to use.
              * @param length Length (as number of items) of `data`.
              */
-            JLT_NODISCARD Vector(const_pointer const data, unsigned int const length) :
-              m_data{memory::allocate<value_type>(max(length, DEFAULT_CAPACITY))}, m_length{length},
-              m_capacity{max(length, DEFAULT_CAPACITY)}, m_alloc_flags{memory::get_current_force_flags()} {
+            JLT_NODISCARD Vector(const_pointer const data, size_t const length) :
+              m_data{memory::allocate_array<value_type>(max(length, DEFAULT_CAPACITY))}, m_length{length},
+              m_alloc_flags{memory::get_current_force_flags()} {
                 jltassert(data);
 
                 if constexpr(std::is_trivial<value_type>::value) {
                     memcpy(m_data, data, length * sizeof(value_type));
                 } else {
-                    for(unsigned int i = 0; i < length; ++i) { memory::construct(m_data + i, *(data + i)); }
+                    for(size_t i = 0; i < length; ++i) { memory::construct(m_data + i, *(data + i)); }
                 }
             }
 
             template<typename It>
             JLT_NODISCARD Vector(It const begin, It const end) :
-              m_data{memory::allocate<value_type>(end - begin)}, m_length{end - begin},
-              m_capacity{end - begin}, m_alloc_flags{memory::get_current_force_flags()} {
+              m_data{memory::allocate_array<value_type>(end - begin)}, m_length{end - begin},
+              m_alloc_flags{memory::get_current_force_flags()} {
                 add_all(begin, end);
             }
 
             JLT_NODISCARD Vector(const Vector<value_type> &other) : Vector(other.m_data, other.m_length) {}
 
             JLT_NODISCARD Vector(Vector<value_type> &&other) :
-              m_data{other.m_data}, m_length{other.m_length}, m_capacity{other.m_capacity} {
+              m_data{other.m_data}, m_length{other.m_length} {
                 other.m_data = nullptr;
             }
 
@@ -126,9 +127,9 @@ namespace jolt {
             /**
              * Return the length of the vector.
              */
-            JLT_NODISCARD unsigned int get_length() const { return m_length; }
+            JLT_NODISCARD size_t get_length() const { return m_length; }
 
-            void set_length(unsigned int length) {
+            void set_length(size_t length) {
                 ensure_capacity(length);
 
                 if constexpr(!std::is_trivial<value_type>::value) {
@@ -144,18 +145,17 @@ namespace jolt {
             /**
              * Return the capacity of the vector.
              */
-            JLT_NODISCARD unsigned int get_capacity() const { return m_capacity; }
+            JLT_NODISCARD size_t get_capacity() const { return memory::get_array_length(m_data); }
 
             Vector<value_type> &operator=(const Vector<value_type> &other) {
                 memory::push_force_flags(m_alloc_flags);
 
-                if(m_capacity >= other.m_capacity) {
+                if(get_capacity() >= other.get_capacity()) {
                     clear();
                 } else {
                     dispose();
 
-                    m_data = memory::allocate<value_type>(other.m_capacity);
-                    m_capacity = other.m_capacity;
+                    m_data = memory::allocate_array<value_type>(other.get_capacity());
                 }
 
                 m_length = other.m_length;
@@ -182,7 +182,6 @@ namespace jolt {
 
                 m_data = other.m_data;
                 m_length = other.m_length;
-                m_capacity = other.m_capacity;
                 m_alloc_flags = other.m_alloc_flags;
 
                 other.m_data = nullptr;
@@ -190,7 +189,7 @@ namespace jolt {
                 return *this;
             }
 
-            JLT_NODISCARD reference operator[](unsigned int const i) {
+            JLT_NODISCARD reference operator[](size_t const i) {
                 jltassert(i < m_length);
 
                 return m_data[i];
@@ -199,8 +198,8 @@ namespace jolt {
             JLT_NODISCARD Vector<value_type> operator+(const Vector<value_type> &other) const {
                 memory::push_force_flags(m_alloc_flags);
 
-                unsigned int const new_length = m_length + other.m_length;
-                pointer const new_vec = memory::allocate<value_type>(new_length);
+                size_t const new_length = m_length + other.m_length;
+                pointer const new_vec = memory::allocate_array<value_type>(new_length);
 
                 if constexpr(std::is_trivial<value_type>::value) {
                     memcpy(new_vec, m_data, m_length * sizeof(value_type));
@@ -239,12 +238,11 @@ namespace jolt {
              *
              * @param new_capacity The minimum capacity to reserve.
              */
-            void reserve_capacity(unsigned int const new_capacity) {
-                if(new_capacity > m_capacity) {
-                    unsigned int const old_capacity = m_capacity;
-                    m_capacity = new_capacity;
+            void reserve_capacity(size_t const new_capacity) {
+                size_t const old_capacity = get_capacity();
 
-                    m_data = memory::reallocate(m_data, old_capacity, m_capacity);
+                if(new_capacity > old_capacity) {
+                    m_data = memory::reallocate(m_data, new_capacity);
                 }
             }
 
@@ -254,9 +252,11 @@ namespace jolt {
              *
              * @param n The number of extra items to ensure capacity for.
              */
-            void ensure_capacity(unsigned int const n) {
-                if(m_capacity < m_length + n) {
-                    reserve_capacity((m_capacity + n) * 1.3 + DEFAULT_CAPACITY);
+            void ensure_capacity(size_t const n) {
+                size_t const capacity = get_capacity();
+
+                if(capacity < m_length + n) {
+                    reserve_capacity((capacity + n) * 1.3 + DEFAULT_CAPACITY);
                 }
             }
 
@@ -267,7 +267,7 @@ namespace jolt {
              * @param item The item to add.
              * @param position The index at which to add the new item.
              */
-            void add(const_reference item, unsigned int const position) { add_all(&item, 1, position); }
+            void add(const_reference item, size_t const position) { add_all(&item, 1, position); }
 
             /**
              * Add many items.
@@ -277,7 +277,7 @@ namespace jolt {
              * @param position The index at which to add the items.
              */
             template<typename It>
-            void add_all(It const begin, It const end, unsigned int const position) {
+            void add_all(It const begin, It const end, size_t const position) {
                 add_all(begin.get_pointer(), end - begin, position);
             }
 
@@ -288,7 +288,7 @@ namespace jolt {
              * @param length The number of items to add.
              * @param position The index at which to add the items.
              */
-            void add_all(const_pointer const items, unsigned int const length, unsigned int const position) {
+            void add_all(const_pointer const items, size_t const length, size_t const position) {
                 ensure_capacity(length);
 
                 if constexpr(std::is_trivial<value_type>::value) {
@@ -298,7 +298,9 @@ namespace jolt {
                       (m_length - position) * sizeof(value_type));
                     memcpy(m_data + position, items, length * sizeof(value_type));
                 } else {
-                    for(long long i = static_cast<long long>(m_length) - 1; i >= position; --i) {
+                    for(long long i = static_cast<long long>(m_length) - 1;
+                        i >= static_cast<long long>(position);
+                        --i) {
                         pointer const cur = m_data + i;
 
                         memory::construct(cur + length, value_type(std::move(*cur)));
@@ -306,9 +308,7 @@ namespace jolt {
 
                     pointer const base_pos = m_data + position;
 
-                    for(unsigned int i = 0; i < length; ++i) {
-                        memory::construct(base_pos + i, *(items + i));
-                    }
+                    for(size_t i = 0; i < length; ++i) { memory::construct(base_pos + i, *(items + i)); }
                 }
 
                 m_length += length;
@@ -347,8 +347,8 @@ namespace jolt {
              *
              * @return The index of the item in the vector or `-1` if not found.
              */
-            JLT_NODISCARD int find(const_reference item) const {
-                for(unsigned int i = 0; i < m_length; ++i) {
+            JLT_NODISCARD long long find(const_reference item) const {
+                for(size_t i = 0; i < m_length; ++i) {
                     if(m_data[i] == item) {
                         return static_cast<int>(i);
                     }
@@ -363,7 +363,7 @@ namespace jolt {
              * @param item The item to remove.
              */
             void remove(const_reference item) {
-                int const i = find(item);
+                long long const i = find(item);
 
                 if(i >= 0) {
                     remove_at(i);
@@ -375,8 +375,8 @@ namespace jolt {
              *
              * @param i The index of the item to remove.
              */
-            void remove_at(unsigned int i) {
-                jltassert(i >= 0 && i < m_length);
+            void remove_at(size_t i) {
+                jltassert(i < m_length);
 
                 if constexpr(!std::is_trivial<value_type>::value) {
                     m_data[i].~value_type();

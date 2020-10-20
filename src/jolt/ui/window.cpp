@@ -8,7 +8,7 @@ using namespace jolt::debug;
 using namespace jolt::text;
 using namespace jolt::collections;
 
-using window_map = HashMap<HWND, jolt::ui::Window *, jolt::hash::Identity<HWND>>;
+using window_map = HashMap<HWND, jolt::ui::Window *, jolt::hash::Identity>;
 
 static constexpr const char MAIN_CLASS_NAME[] = "JoltMainWindow";
 
@@ -17,7 +17,7 @@ static ATOM g_window_class = NULL;
 
 #ifdef JLT_WITH_MULTI_WINDOWS
 static window_map *g_windows = nullptr;
-#else  // JLT_WITH_MULTI_WINDOWS
+#else // JLT_WITH_MULTI_WINDOWS
 static ui::Window *g_main_window = nullptr;
 #endif // JLT_WITH_MULTI_WINDOWS
 
@@ -113,7 +113,7 @@ namespace jolt {
 
 #ifdef JLT_WITH_MULTI_WINDOWS
                     g_windows->add(wnd, window);
-#else  // JLT_WITH_MULTI_WINDOWS
+#else // JLT_WITH_MULTI_WINDOWS
                     g_main_window = window;
 #endif // JLT_WITH_MULTI_WINDOWS
                 }
@@ -145,7 +145,7 @@ namespace jolt {
                     if(g_windows->get_length() == 0) {
                         PostQuitMessage(0);
                     }
-#else  // JLT_WITH_MULTI_WINDOWS
+#else // JLT_WITH_MULTI_WINDOWS
                     PostQuitMessage(0);
 #endif // JLT_WITH_MULTI_WINDOWS
                 }
@@ -183,7 +183,7 @@ namespace jolt {
 
         void initialize() {
 #ifdef JLT_WITH_MULTI_WINDOWS
-            g_windows = jolt::memory::allocate<window_map>(1, jolt::memory::ALLOC_PERSIST);
+            g_windows = memory::allocate<window_map>(jolt::memory::ALLOC_PERSIST);
             jolt::memory::construct(g_windows, 2);
 #endif // JLT_WITH_MULTI_WINDOWS
 

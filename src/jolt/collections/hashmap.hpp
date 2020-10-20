@@ -32,7 +32,6 @@ namespace jolt {
             friend struct HashMapIterator;
 
             table_entry *const m_table;
-            size_t const m_table_length;
             size_t m_current_table_entry;
             typename table_entry::iterator m_cur_entry_it, m_cur_entry_end;
 
@@ -41,7 +40,7 @@ namespace jolt {
 
                 do {
                     ++m_current_table_entry;
-                    not_table_end = m_current_table_entry < m_table_length;
+                    not_table_end = m_current_table_entry < memory::get_array_length(m_table);
 
                     if(not_table_end) {
                         m_cur_entry_it = m_table[m_current_table_entry].begin();
@@ -57,12 +56,10 @@ namespace jolt {
             }
 
           public:
-            HashMapIterator(
-              table_entry *const table, size_t const table_length, bool const end = false) :
-              m_table{table},
-              m_table_length{table_length}, m_current_table_entry{end ? table_length : 0},
-              m_cur_entry_it{end ? m_table[m_table_length - 1].end() : m_table[0].begin()},
-              m_cur_entry_end{end ? m_table[m_table_length - 1].end() : m_table[0].end()} {
+            HashMapIterator(table_entry *const table, bool const end = false) :
+              m_table{table}, m_current_table_entry{end ? memory::get_array_length(m_table) : 0},
+              m_cur_entry_it{end ? m_table[memory::get_array_length(m_table) - 1].end() : m_table[0].begin()},
+              m_cur_entry_end{end ? m_table[memory::get_array_length(m_table) - 1].end() : m_table[0].end()} {
                 if(!end && m_cur_entry_it == m_cur_entry_end) {
                     next_entry();
                 }
@@ -150,7 +147,6 @@ namespace jolt {
             using table_entry = ValueSet<pair_type>;
 
             table_entry *m_table;
-            size_t const m_capacity;
 
             /**
              * Compute the index in the hash table given for a given key.
@@ -162,7 +158,7 @@ namespace jolt {
             size_t compute_index(const key_type &key) const {
                 hash::hash_t hash = H::hash(&key, sizeof(key));
 
-                return static_cast<size_t>(hash) % m_capacity;
+                return static_cast<size_t>(hash) % memory::get_array_length(m_table);
             }
 
           public:
@@ -175,18 +171,15 @@ namespace jolt {
              * decaying to a list when many items are inserted.
              */
             explicit HashMap(size_t const capacity = DEFAULT_CAPACITY) :
-              m_table{jolt::memory::allocate<table_entry>(capacity)}, m_capacity{capacity} {
+              m_table{jolt::memory::allocate_array<table_entry>(capacity)} {
                 jltassert(capacity);
 
                 for(size_t i = 0; i < capacity; ++i) { memory::construct(&m_table[i]); }
             }
 
-            HashMap(const HashMap &other) :
-              HashMap{other.cbegin(), other.cend(), other.m_capacity} {}
+            HashMap(const HashMap &other) : HashMap{other.cbegin(), other.cend()} {}
 
-            HashMap(HashMap &&other) : m_table{other.m_table}, m_capacity{other.m_capacity} {
-                other.m_table = nullptr;
-            }
+            HashMap(HashMap &&other) : m_table{other.m_table} { other.m_table = nullptr; }
 
             /**
              * Create a new hash map.
@@ -196,17 +189,14 @@ namespace jolt {
              * @param capacity The capacity.
              */
             template<typename V>
-            HashMap(
-              base_iterator<V> begin,
-              base_iterator<V> end,
-              size_t const capacity = DEFAULT_CAPACITY) :
+            HashMap(base_iterator<V> begin, base_iterator<V> end, size_t const capacity = DEFAULT_CAPACITY) :
               HashMap{capacity} {
                 add_all(begin, end);
             }
 
             ~HashMap() {
                 if(m_table) {
-                    jolt::memory::free(m_table, m_capacity);
+                    jolt::memory::free_array(m_table);
                 }
             }
 
@@ -228,9 +218,7 @@ namespace jolt {
              */
             template<typename V>
             void add_all(base_iterator<V> begin, base_iterator<V> end) {
-                for(base_iterator<V> it = begin; it != end; ++it) {
-                    add((*it).get_key(), (*it).get_value());
-                }
+                for(base_iterator<V> it = begin; it != end; ++it) { add((*it).get_key(), (*it).get_value()); }
             }
 
             /**
@@ -328,8 +316,7 @@ namespace jolt {
              *
              * @return The value for the given key or `default_value` if the key is not present.
              */
-            const_reference
-            get_value_with_default(const key_type &key, const_reference default_value) const {
+            const_reference get_value_with_default(const key_type &key, const_reference default_value) const {
                 const_pair_pointer const pair = get_pair(key);
 
                 return pair ? pair->get_value() : default_value;
@@ -372,7 +359,7 @@ namespace jolt {
              * Remove all items.
              */
             void clear() {
-                for(size_t i = 0; i < m_capacity; ++i) { m_table[i].clear(); }
+                for(size_t i = 0; i < memory::get_array_length(m_table); ++i) { m_table[i].clear(); }
             }
 
             /**
@@ -381,19 +368,21 @@ namespace jolt {
             size_t get_length() const {
                 size_t sz = 0;
 
-                for(size_t i = 0; i < m_capacity; ++i) { sz += m_table[i].get_length(); }
+                for(size_t i = 0; i < memory::get_array_length(m_table); ++i) {
+                    sz += m_table[i].get_length();
+                }
 
                 return sz;
             }
 
-            iterator begin() { return iterator{m_table, m_capacity}; }
-            iterator end() { return iterator{m_table, m_capacity, true}; }
+            iterator begin() { return iterator{m_table}; }
+            iterator end() { return iterator{m_table, true}; }
 
-            const_iterator begin() const { return const_iterator{m_table, m_capacity}; }
-            const_iterator end() const { return const_iterator{m_table, m_capacity, true}; }
+            const_iterator begin() const { return const_iterator{m_table}; }
+            const_iterator end() const { return const_iterator{m_table, true}; }
 
-            const_iterator cbegin() const { return const_iterator{m_table, m_capacity}; }
-            const_iterator cend() const { return const_iterator{m_table, m_capacity, true}; }
+            const_iterator cbegin() const { return const_iterator{m_table}; }
+            const_iterator cend() const { return const_iterator{m_table, true}; }
         };
     } // namespace collections
 } // namespace jolt

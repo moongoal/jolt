@@ -19,7 +19,7 @@ namespace jolt {
 
             for(const auto &s : m_strings) { sz += s.get_size(); }
 
-            auto res = allocate<utf8c>(sz + 1);
+            auto res = allocate_array<utf8c>(sz + 1);
             size_t i = 0;
 
             for(const auto &s : m_strings) {

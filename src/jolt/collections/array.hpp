@@ -23,26 +23,31 @@ namespace jolt {
             using const_iterator = base_iterator<const T>;
 
           private:
-            pointer const m_ptr;   //< Pointer to the data.
-            size_t const m_length; //< Length of the array.
+            pointer const m_ptr; //< Pointer to the data.
 
           public:
             JLT_NODISCARD explicit constexpr Array(size_t const length) :
-              m_ptr{memory::allocate<value_type>(length)}, m_length{length} {}
+              m_ptr{memory::allocate_array<value_type>(length)} {}
 
-            JLT_NODISCARD constexpr Array(pointer const ptr, size_t const length) :
-              m_ptr{ptr}, m_length{length} {}
+            JLT_NODISCARD constexpr Array(pointer const ptr) : m_ptr{ptr} {}
 
-            ~Array() { memory::free(m_ptr); }
+            Array(Array const &) = delete;
+            Array(Array &&other) : m_ptr{other.m_ptr} { other.m_ptr = nullptr; }
+
+            ~Array() {
+                if(m_ptr) {
+                    memory::free_array(m_ptr);
+                }
+            }
 
             JLT_NODISCARD constexpr reference operator[](size_t const i) {
-                jltassert(i < m_length);
+                jltassert(i < get_length());
 
                 return m_ptr[i];
             }
 
             JLT_NODISCARD constexpr const_reference operator[](size_t const i) const {
-                jltassert(i < m_length);
+                jltassert(i < get_length());
 
                 return m_ptr[i];
             }
@@ -50,16 +55,20 @@ namespace jolt {
             JLT_NODISCARD operator pointer() { return m_ptr; }
             JLT_NODISCARD operator const_pointer() const { return m_ptr; }
 
-            JLT_NODISCARD constexpr size_t get_length() const { return m_length; }
+            JLT_NODISCARD constexpr size_t get_length() const { return memory::get_array_length(m_ptr); }
 
             JLT_NODISCARD constexpr iterator begin() { return iterator{m_ptr}; }
-            JLT_NODISCARD constexpr iterator end() { return iterator{m_ptr + m_length}; }
+            JLT_NODISCARD constexpr iterator end() { return iterator{m_ptr + get_length()}; }
 
             JLT_NODISCARD constexpr const_iterator begin() const { return const_iterator{m_ptr}; }
-            JLT_NODISCARD constexpr const_iterator end() const { return const_iterator{m_ptr + m_length}; }
+            JLT_NODISCARD constexpr const_iterator end() const {
+                return const_iterator{m_ptr + get_length()};
+            }
 
             JLT_NODISCARD constexpr const_iterator cbegin() const { return const_iterator{m_ptr}; }
-            JLT_NODISCARD constexpr const_iterator cend() const { return const_iterator{m_ptr + m_length}; }
+            JLT_NODISCARD constexpr const_iterator cend() const {
+                return const_iterator{m_ptr + get_length()};
+            }
 
             /**
              * Fill all the items with the given value.

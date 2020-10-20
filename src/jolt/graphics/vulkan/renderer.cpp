@@ -239,14 +239,14 @@ namespace jolt {
                 extension_vector extensions = select_required_instance_extensions();
 
                 VkInstanceCreateInfo icf{
-                  VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO, // sType
-                  nullptr,                                // pNext
-                  0,                                      // flags
-                  &app_info,                              // pApplicationInfo
-                  layers.get_length(),                    // enabledLayerCount
-                  &layers[0],                             // ppEnabledLayerNames
-                  extensions.get_length(),                // enabledExtensionCount
-                  &extensions[0]                          // ppEnabledExtensionNames
+                  VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,         // sType
+                  nullptr,                                        // pNext
+                  0,                                              // flags
+                  &app_info,                                      // pApplicationInfo
+                  static_cast<uint32_t>(layers.get_length()),     // enabledLayerCount
+                  &layers[0],                                     // ppEnabledLayerNames
+                  static_cast<uint32_t>(extensions.get_length()), // enabledExtensionCount
+                  &extensions[0]                                  // ppEnabledExtensionNames
                 };
 
                 VkResult result = vkCreateInstance(&icf, g_allocator, &m_instance);
@@ -350,16 +350,16 @@ namespace jolt {
 
                 // Create the device & queues
                 VkDeviceCreateInfo cinfo{
-                  VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO, // sType
-                  &features,                            // pNext
-                  0,                                    // flags
-                  q_cinfo.get_length(),                 // queueCreateInfoCount
-                  &q_cinfo[0],                          // pQueueCreateInfos
-                  0,                                    // enabledLayerCount
-                  nullptr,                              // ppEnabledLayerNames
-                  exts.get_length(),                    // enabledExtensionCount
-                  &exts[0],                             // ppEnabledExtensionNames
-                  nullptr                               // pEnabledFeatures
+                  VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,        // sType
+                  &features,                                   // pNext
+                  0,                                           // flags
+                  static_cast<uint32_t>(q_cinfo.get_length()), // queueCreateInfoCount
+                  &q_cinfo[0],                                 // pQueueCreateInfos
+                  0,                                           // enabledLayerCount
+                  nullptr,                                     // ppEnabledLayerNames
+                  static_cast<uint32_t>(exts.get_length()),    // enabledExtensionCount
+                  &exts[0],                                    // ppEnabledExtensionNames
+                  nullptr                                      // pEnabledFeatures
                 };
 
                 result = vkCreateDevice(m_phy_device, &cinfo, g_allocator, &m_device);
@@ -480,7 +480,7 @@ namespace jolt {
               uint32_t const n_compute) {
                 queue_ci_vector result;
 
-                using fam_count_map = collections::HashMap<uint32_t, uint32_t, hash::Identity<uint32_t>>;
+                using fam_count_map = collections::HashMap<uint32_t, uint32_t, hash::Identity>;
 
                 fam_count_map fam_counts;
                 uint32_t n_graph2 = n_graph;
@@ -583,7 +583,7 @@ namespace jolt {
                 m_window = nullptr;
 
                 if(m_queues) {
-                    jltfreearray(m_queues, m_queues->get_length());
+                    jltfree(m_queues);
                     m_queues = nullptr;
                 }
 
