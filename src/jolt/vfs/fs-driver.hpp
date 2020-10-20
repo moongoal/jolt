@@ -26,6 +26,15 @@ namespace jolt {
              */
             path::Path virtual_to_actual(path::Path const &vpath) const;
 
+            /**
+             * Convert an actual FS path to a virtual path.
+             *
+             * @param apath The actual path.
+             *
+             * @return The virtual path.
+             */
+            path::Path actual_to_virtual(path::Path const &apath) const;
+
           public:
             /**
              * Create a new instance of this class.

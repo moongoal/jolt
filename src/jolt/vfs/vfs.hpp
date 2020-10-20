@@ -24,7 +24,7 @@ namespace jolt {
 
 #ifdef _DEBUG
             jolt::vfs::FSDriver *m_driver_build; //< The default-mounted /build driver.
-#endif                                           // _DEBUG
+#endif
 
             Driver *get_path_driver(path::Path const &path) const;
 
@@ -80,7 +80,7 @@ namespace jolt {
              * @param path The virtual path to the file.
              * @param mode Stream mode flags.
              */
-            io::Stream *open(path::Path const &path, io::ModeFlags const mode);
+            io::Stream *open(path::Path const &path, io::ModeFlags const mode = io::MODE_READ);
 
             /**
              * List all the files in the VFS.

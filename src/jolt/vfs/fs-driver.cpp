@@ -18,6 +18,12 @@ namespace jolt {
             return final_path;
         }
 
+        Path FSDriver::actual_to_virtual(Path const &apath) const {
+            Path final_path = apath.replace(get_os_path(), get_virtual_path());
+
+            return normalize(final_path);
+        }
+
         io::Stream *FSDriver::open_impl(const Path &res_path, io::ModeFlags const mode) {
             Path actual_path = virtual_to_actual(res_path);
 
@@ -43,8 +49,9 @@ namespace jolt {
                     if(find_data.cFileName[0] != '.') {
                         Path const &file_name = s(find_data.cFileName);
                         Path const file_path = String::join(SEPARATOR, cur_dir, file_name);
+                        Path const vpath = actual_to_virtual(file_path);
 
-                        result.push(file_path);
+                        result.push(vpath);
 
                         if(find_data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY && recurse) {
                             folders.add(file_path);
