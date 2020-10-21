@@ -271,8 +271,8 @@ namespace jolt {
 
         size_t JLTAPI get_allocated_size();
 
-        JLT_NODISCARD inline size_t get_array_length(void *ptr) {
-            return *(reinterpret_cast<size_t *>(ptr) - 1);
+        JLT_NODISCARD inline size_t get_array_length(void const *const ptr) {
+            return *(reinterpret_cast<size_t const *>(ptr) - 1);
         }
 
         /**
