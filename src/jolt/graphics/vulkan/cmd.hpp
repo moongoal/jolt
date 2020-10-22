@@ -19,16 +19,14 @@ namespace jolt {
              * https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/chap6.html#VkCommandBufferBeginInfo
              */
             struct CommandBufferRecordParams {
-                static constexpr const uint32_t INVALID_SUBPASS =
-                  std::numeric_limits<uint32_t>::max();
+                static constexpr const uint32_t INVALID_SUBPASS = std::numeric_limits<uint32_t>::max();
 
                 uint32_t subpass;
                 bool occlusion_query_enable = VK_FALSE;
                 VkQueryControlFlags query_flags = 0;
                 VkQueryPipelineStatisticFlags pipeline_statistics = 0;
 
-                explicit CommandBufferRecordParams(uint32_t spass = INVALID_SUBPASS) :
-                  subpass{spass} {}
+                explicit CommandBufferRecordParams(uint32_t spass = INVALID_SUBPASS) : subpass{spass} {}
             };
 
             class JLTAPI CommandPool {
@@ -47,10 +45,7 @@ namespace jolt {
                  * @param allow_reset True if the queue will be allowed to be reset.
                  */
                 CommandPool(
-                  Renderer const &renderer,
-                  bool transient,
-                  bool allow_reset,
-                  uint32_t queue_fam_index) :
+                  Renderer const &renderer, bool transient, bool allow_reset, uint32_t queue_fam_index) :
                   m_renderer{renderer} {
                     initialize(transient, allow_reset, queue_fam_index);
                 }
@@ -94,8 +89,8 @@ namespace jolt {
                  * @remarks Primary command buffers are directly executable, secondary command
                  * buffers can only be executed by a primary command buffer.
                  */
-                void allocate_command_buffers(
-                  CommandBuffer *out_buffers, uint32_t const n, bool const primary);
+                void
+                allocate_command_buffers(CommandBuffer *out_buffers, uint32_t const n, bool const primary);
 
                 /**
                  * Allocate new command buffer.
@@ -151,8 +146,7 @@ namespace jolt {
                 bool is_primary() const { return m_primary; }
 
                 void begin_record(
-                  VkCommandBufferUsageFlags flags = 0,
-                  CommandBufferRecordParams *const params = nullptr);
+                  VkCommandBufferUsageFlags flags = 0, CommandBufferRecordParams *const params = nullptr);
                 void end_record();
 
                 void cmd_begin_render_pass(bool const inline_commands);
