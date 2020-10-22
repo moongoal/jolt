@@ -53,6 +53,8 @@ namespace jolt {
                 viewports m_viewports;
                 scissors m_scissors;
                 dynamic_states m_dynamic_states;
+                VkShaderModule m_shader_vert;
+                VkShaderModule m_shader_frag;
 
               public:
                 /**

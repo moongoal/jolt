@@ -39,11 +39,21 @@ void main_loop(Renderer &renderer) {
     uint32_t const gqueue_fam_idx = renderer.get_queue_family_index(gqueue);
 
     // Shaders
+    path::Path vertex_shader_path = "/build/src/shaders/vertex/triangle.vert.spv";
+    hash::hash_t vertex_shader_hash = vertex_shader_path.hash<ShaderManager::hash_function>();
+
+    path::Path fragment_shader_path = "/build/src/shaders/fragment/red.frag.spv";
+    hash::hash_t fragment_shader_hash = fragment_shader_path.hash<ShaderManager::hash_function>();
+
     vfs::VirtualFileSystem vfs;
     ShaderManager shader_manager{renderer, vfs};
 
-    shader_manager.scan_shaders();
+    shader_manager.register_shader(vertex_shader_path);
+    shader_manager.register_shader(fragment_shader_path);
     renderer.set_shader_manager(&shader_manager);
+
+    VkShaderModule const vertex_shader = shader_manager.get_vulkan_shader(vertex_shader_hash);
+    VkShaderModule const fragment_shader = shader_manager.get_vulkan_shader(fragment_shader_hash);
 
     DescriptorManager::pool_size_vector pool_sizes;
 
@@ -57,7 +67,8 @@ void main_loop(Renderer &renderer) {
       desc_manager.create_pipeline_layout(desc_set_layouts, push_const_ranges);
 
     // Pipeline
-    pipelines::DefaultGraphicsPipelineConfiguration pipeline_cfg{renderer, pipeline_layout};
+    pipelines::DefaultGraphicsPipelineConfiguration pipeline_cfg{
+      renderer, pipeline_layout, vertex_shader, fragment_shader};
     GraphicsPipelineManager pipeline_manager{renderer};
 
     pipeline_manager.add_configuration(pipeline_cfg);

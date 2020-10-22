@@ -6,21 +6,13 @@ namespace jolt {
         namespace vulkan {
             namespace pipelines {
                 void DefaultGraphicsPipelineConfiguration::initialize_impl() {
-                    ShaderManager &shader_manager = get_renderer().get_shader_manager();
-
-                    path::Path path_vertex_shader = "/build/src/shaders/vertex/triangle.vert.spv";
-                    hash::hash_t vertex_shader = path_vertex_shader.hash<ShaderManager::hash_function>();
-
-                    path::Path path_fragment_shader = "/build/src/shaders/fragment/red.frag.spv";
-                    hash::hash_t fragment_shader = path_fragment_shader.hash<ShaderManager::hash_function>();
-
                     // Shader stages
                     m_shader_stage_create_infos.push({
                       VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO, // sType
                       nullptr,                                             // pNext
                       0,                                                   // flags
                       VK_SHADER_STAGE_VERTEX_BIT,                          // stage
-                      shader_manager.get_vulkan_shader(vertex_shader),     // module
+                      m_shader_vert,                                       // module
                       "main",                                              // name
                       nullptr                                              // pSpecializationInfo
                     });
@@ -30,7 +22,7 @@ namespace jolt {
                       nullptr,                                             // pNext
                       0,                                                   // flags
                       VK_SHADER_STAGE_FRAGMENT_BIT,                        // stage
-                      shader_manager.get_vulkan_shader(fragment_shader),   // module
+                      m_shader_frag,                                       // module
                       "main",                                              // name
                       nullptr                                              // pSpecializationInfo
                     });
@@ -154,7 +146,7 @@ namespace jolt {
                       VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO,            // sType
                       nullptr,                                                             // pNext
                       0,                                                                   // flags
-                      VK_FALSE,                                                             // logicOpEnable
+                      VK_FALSE,                                                            // logicOpEnable
                       VK_LOGIC_OP_COPY,                                                    // logicOp
                       static_cast<uint32_t>(m_color_blend_attachment_states.get_length()), // attachmentCount
                       &m_color_blend_attachment_states[0],                                 // pAttachments

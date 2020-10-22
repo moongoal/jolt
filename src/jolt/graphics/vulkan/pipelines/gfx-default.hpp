@@ -13,8 +13,14 @@ namespace jolt {
 
                   public:
                     DefaultGraphicsPipelineConfiguration(
-                      Renderer &renderer, VkPipelineLayout pipeline_layout) :
-                      GraphicsPipelineConfiguration{renderer, pipeline_layout} {}
+                      Renderer &renderer,
+                      VkPipelineLayout pipeline_layout,
+                      VkShaderModule vertex_shader,
+                      VkShaderModule fragment_shader) :
+                      GraphicsPipelineConfiguration{renderer, pipeline_layout} {
+                        m_shader_vert = vertex_shader;
+                        m_shader_frag = fragment_shader;
+                    }
                 };
             } // namespace pipelines
         }     // namespace vulkan
