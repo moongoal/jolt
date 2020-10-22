@@ -8,7 +8,7 @@ namespace jolt {
     namespace graphics {
         namespace vulkan {
             namespace pipelines {
-                class DefaultGraphicsPipelineConfiguration : public GraphicsPipelineConfiguration {
+                class JLTAPI DefaultGraphicsPipelineConfiguration : public GraphicsPipelineConfiguration {
                     virtual void initialize_impl();
 
                   public:

@@ -11,7 +11,7 @@ namespace jolt {
         namespace vulkan {
             class Renderer;
 
-            class ShaderManager : public graphics::ShaderManager {
+            class JLTAPI ShaderManager : public graphics::ShaderManager {
               public:
                 using vulkan_module_table = collections::HashMap<hash::hash_t, VkShaderModule, hash_function>;
 
