@@ -78,57 +78,106 @@ void main_loop(ui::Window const &wnd) {
     rt = jltnew(RenderTarget, renderer);
     renderer.set_render_target(rt);
 
-    // Cmd pool
-    CommandPool cmd_pool{renderer, true, true, gqueue_fam_idx};
+    {
+        // Shaders
+        vfs::VirtualFileSystem vfs;
+        ShaderManager shader_manager{renderer, vfs};
 
-    // Synchro
-    Semaphore sem_acquire{renderer}, sem_present{renderer};
-    Fence fence_acquire{renderer}, fence_submit{renderer};
+        shader_manager.scan_shaders();
+        renderer.set_shader_manager(&shader_manager);
 
-    ActionSynchro submit_synchro;
+        DescriptorManager::pool_size_vector pool_sizes;
 
-    submit_synchro.wait_semaphore_count = 1;
-    submit_synchro.wait_semaphores[0] = sem_acquire;
-    submit_synchro.wait_semaphores_stages[0] = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
+        pool_sizes.push({VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1});
 
-    submit_synchro.signal_semaphores[0] = sem_present;
-    submit_synchro.signal_semaphore_count = 1;
+        DescriptorManager desc_manager{renderer, 1, pool_sizes};
+        DescriptorManager::desc_set_layout_vector desc_set_layouts;
+        DescriptorManager::push_const_range_vector push_const_ranges;
 
-    submit_synchro.fence = fence_submit;
+        VkPipelineLayout pipeline_layout =
+          desc_manager.create_pipeline_layout(desc_set_layouts, push_const_ranges);
 
-    WaitSemaphoreActionSynchro present_synchro;
+        // Pipeline
+        pipelines::DefaultGraphicsPipelineConfiguration pipeline_cfg{renderer, pipeline_layout};
+        GraphicsPipelineManager pipeline_manager{renderer};
 
-    present_synchro.wait_semaphores[0] = sem_present;
-    present_synchro.wait_semaphore_count = 1;
+        pipeline_manager.add_configuration(pipeline_cfg);
 
-    // Command execution
-    do {
-        if(wnd.is_minimized()) {
-            jolt::threading::sleep(50);
-            continue;
-        }
+        pipeline_manager.create_pipelines();
+        VkPipeline pipeline = pipeline_manager.get_pipelines()[0];
 
-        CommandBuffer cmd = cmd_pool.allocate_single_command_buffer(true);
-        renderer.get_presentation_target()->acquire_next_image(&sem_acquire, &fence_acquire);
+        // Cmd pool
+        CommandPool cmd_pool{renderer, true, true, gqueue_fam_idx};
 
-        fence_acquire.wait(500 * ns_to_ms);
-        cmd.begin_record();
+        // Synchro
+        Semaphore sem_acquire{renderer}, sem_present{renderer};
+        Fence fence_acquire{renderer}, fence_submit{renderer};
 
-        cmd.cmd_begin_render_pass(true);
-        cmd.cmd_end_render_pass();
+        ActionSynchro submit_synchro;
 
-        cmd.end_record();
+        submit_synchro.wait_semaphore_count = 1;
+        submit_synchro.wait_semaphores[0] = sem_acquire;
+        submit_synchro.wait_semaphores_stages[0] = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
 
-        cmd.submit(gqueue, submit_synchro);
+        submit_synchro.signal_semaphores[0] = sem_present;
+        submit_synchro.signal_semaphore_count = 1;
 
-        renderer.get_presentation_target()->present_active_image(present_synchro);
-        fence_submit.wait(500 * ns_to_ms);
+        submit_synchro.fence = fence_submit;
 
-        fence_acquire.reset();
-        fence_submit.reset();
-        cmd_pool.free_single_command_buffer(cmd);
-        cmd_pool.reset(false);
-    } while(wnd.cycle() && !renderer.is_lost());
+        WaitSemaphoreActionSynchro present_synchro;
+
+        present_synchro.wait_semaphores[0] = sem_present;
+        present_synchro.wait_semaphore_count = 1;
+
+        VkViewport viewport{
+          0,                                                                              // x
+          0,                                                                              // y
+          static_cast<float>(vk_window->get_surface_capabilities().currentExtent.width),  // width
+          static_cast<float>(vk_window->get_surface_capabilities().currentExtent.height), // height
+          0.0f,
+          1.0f};
+
+        VkRect2D scissor{
+          {0, 0},
+          {vk_window->get_surface_capabilities().currentExtent.width,
+           vk_window->get_surface_capabilities().currentExtent.height}};
+
+        // Command execution
+        do {
+            if(wnd.is_minimized()) {
+                jolt::threading::sleep(50);
+                continue;
+            }
+
+            CommandBuffer cmd = cmd_pool.allocate_single_command_buffer(true);
+            renderer.get_presentation_target()->acquire_next_image(&sem_acquire, &fence_acquire);
+
+            fence_acquire.wait(500 * ns_to_ms);
+            cmd.begin_record();
+            cmd.cmd_begin_render_pass(true);
+
+            vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+            vkCmdSetViewport(cmd, 0, 1, &viewport);
+            vkCmdSetScissor(cmd, 0, 1, &scissor);
+
+            vkCmdDraw(cmd, 3, 1, 0, 0);
+
+            cmd.cmd_end_render_pass();
+            cmd.end_record();
+
+            cmd.submit(gqueue, submit_synchro);
+
+            renderer.get_presentation_target()->present_active_image(present_synchro);
+            fence_submit.wait(500 * ns_to_ms);
+
+            fence_acquire.reset();
+            fence_submit.reset();
+            cmd_pool.free_single_command_buffer(cmd);
+            cmd_pool.reset(false);
+        } while(wnd.cycle() && !renderer.is_lost());
+
+        desc_manager.destroy_pipeline_layout(pipeline_layout);
+    }
 
     jltfree(rt);
     jltfree(pt);

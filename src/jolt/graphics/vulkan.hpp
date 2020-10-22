@@ -14,5 +14,6 @@
 #include <jolt/graphics/vulkan/gfx-pipeline-mgr.hpp>
 #include <jolt/graphics/vulkan/gfx-pipeline-cfg.hpp>
 #include <jolt/graphics/vulkan/descriptor-mgr.hpp>
+#include <jolt/graphics/vulkan/pipelines.hpp>
 
 #endif /* JLT_GRAPHICS_VULKAN_HPP */
