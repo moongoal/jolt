@@ -87,7 +87,7 @@ namespace jolt {
                       VK_FALSE,                                                   // depthClampEnable
                       VK_FALSE,                                                   // rasterizerDiscardEnable
                       VK_POLYGON_MODE_FILL,                                       // polygonMode
-                      VK_CULL_MODE_NONE,                                          // cullMode
+                      VK_CULL_MODE_BACK_BIT,                                      // cullMode
                       VK_FRONT_FACE_COUNTER_CLOCKWISE,                            // frontFace
                       VK_FALSE,                                                   // depthBiasEnable
                       0.0f,                                                       // depthBiasConstantFactor
@@ -146,14 +146,15 @@ namespace jolt {
                       VK_BLEND_FACTOR_ONE, // srcAlphaBlendFactor
                       VK_BLEND_FACTOR_ONE, // dstAlphaBlendFactor
                       VK_BLEND_OP_ADD,     // alphaBlendOp
-                      0                    // colorWriteMask
+                      VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT
+                        | VK_COLOR_COMPONENT_A_BIT // colorWriteMask
                     });
 
                     m_color_blend_state_create_info = {
                       VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO,            // sType
                       nullptr,                                                             // pNext
                       0,                                                                   // flags
-                      VK_FALSE,                                                            // logicOpEnable
+                      VK_FALSE,                                                             // logicOpEnable
                       VK_LOGIC_OP_COPY,                                                    // logicOp
                       static_cast<uint32_t>(m_color_blend_attachment_states.get_length()), // attachmentCount
                       &m_color_blend_attachment_states[0],                                 // pAttachments
@@ -161,6 +162,7 @@ namespace jolt {
                     };
 
                     m_dynamic_states.push(VK_DYNAMIC_STATE_VIEWPORT);
+                    m_dynamic_states.push(VK_DYNAMIC_STATE_SCISSOR);
 
                     m_dynamic_state_create_info = {
                       VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO, // sType
