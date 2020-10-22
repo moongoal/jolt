@@ -33,12 +33,6 @@ namespace jolt {
                  */
                 virtual VkPipelineCacheCreateInfo get_pipeline_cache_create_info() const;
 
-                /**
-                 * Return a pipeline layout creation info structure. The default implementation will return a
-                 * structure for a layout without descriptors or push constant ranges.
-                 */
-                virtual VkPipelineLayoutCreateInfo get_pipeline_layout_create_info() const;
-
               public:
                 /**
                  * Create a new graphics pipeline object.

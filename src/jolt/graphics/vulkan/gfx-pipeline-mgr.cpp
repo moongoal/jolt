@@ -12,18 +12,6 @@ namespace jolt {
                 destroy_pipeline_cache();
             }
 
-            VkPipelineLayoutCreateInfo GraphicsPipelineManager::get_pipeline_layout_create_info() const {
-                return {
-                  VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO, // sType
-                  nullptr,                                       // pNext
-                  0,                                             // flags
-                  0,                                             // setLayoutCount
-                  nullptr,                                       // pSetLayouts
-                  0,                                             // pushConstantRangeCount
-                  nullptr                                        // pPushConstantRanges
-                };
-            }
-
             VkPipelineCacheCreateInfo GraphicsPipelineManager::get_pipeline_cache_create_info() const {
                 return {
                   VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO, // sType
