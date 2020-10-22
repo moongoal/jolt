@@ -21,8 +21,8 @@ namespace jolt {
                       reinterpret_cast<const uint32_t *>(&data[0]) // pCode
                     };
 
-                    VkResult result =
-                      vkCreateShaderModule(m_renderer.get_device(), &cinfo, get_vulkan_allocator(), &module);
+                    VkResult result = vkCreateShaderModule(
+                      get_renderer().get_device(), &cinfo, get_vulkan_allocator(), &module);
 
                     jltassert2(result == VK_SUCCESS, "Unable to create Vulkan shader module");
 
@@ -30,6 +30,12 @@ namespace jolt {
                 }
 
                 return module;
+            }
+
+            ShaderManager::~ShaderManager() {
+                for(auto [hash, module] : m_modules) {
+                    vkDestroyShaderModule(get_renderer().get_device(), module, get_vulkan_allocator());
+                }
             }
         } // namespace vulkan
     }     // namespace graphics

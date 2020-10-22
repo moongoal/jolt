@@ -25,7 +25,7 @@ namespace jolt {
                 cfg_vector m_cfgs;
 
                 void initialize_pipeline_cache();
-                void initialize_pipeline_layout();
+                void destroy_pipeline_cache();
 
                 /**
                  * Return a pipeline cache creation info structure. The default implementation will return a

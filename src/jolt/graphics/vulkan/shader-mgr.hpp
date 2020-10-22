@@ -21,8 +21,11 @@ namespace jolt {
 
               public:
                 ShaderManager(Renderer &renderer, vfs::VirtualFileSystem &vfs);
+                virtual ~ShaderManager();
 
                 VkShaderModule get_vulkan_shader(hash::hash_t const &id);
+
+                Renderer const &get_renderer() const { return m_renderer; }
             };
         } // namespace vulkan
     }     // namespace graphics

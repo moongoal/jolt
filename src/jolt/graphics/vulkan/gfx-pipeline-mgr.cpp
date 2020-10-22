@@ -5,10 +5,12 @@ namespace jolt {
         namespace vulkan {
             GraphicsPipelineManager::GraphicsPipelineManager(Renderer &renderer) : m_renderer{renderer} {
                 initialize_pipeline_cache();
-                initialize_pipeline_layout();
             }
 
-            GraphicsPipelineManager::~GraphicsPipelineManager() { destroy_pipelines(); }
+            GraphicsPipelineManager::~GraphicsPipelineManager() {
+                destroy_pipelines();
+                destroy_pipeline_cache();
+            }
 
             VkPipelineLayoutCreateInfo GraphicsPipelineManager::get_pipeline_layout_create_info() const {
                 return {
@@ -20,13 +22,6 @@ namespace jolt {
                   0,                                             // pushConstantRangeCount
                   nullptr                                        // pPushConstantRanges
                 };
-            }
-
-            void GraphicsPipelineManager::initialize_pipeline_layout() {
-                VkPipelineLayoutCreateInfo pcinfo = get_pipeline_layout_create_info();
-
-                vkCreatePipelineLayout(
-                  get_renderer().get_device(), &pcinfo, get_vulkan_allocator(), &m_pipeline_layout);
             }
 
             VkPipelineCacheCreateInfo GraphicsPipelineManager::get_pipeline_cache_create_info() const {
@@ -47,8 +42,12 @@ namespace jolt {
                 jltassert2(result == VK_SUCCESS, "Unable to create graphics pipeline cache");
             }
 
+            void GraphicsPipelineManager::destroy_pipeline_cache() {
+                vkDestroyPipelineCache(get_renderer().get_device(), m_pipeline_cache, get_vulkan_allocator());
+            }
+
             void GraphicsPipelineManager::create_pipelines() {
-                jltassert2(m_pipelines, "Pipelines already created");
+                jltassert2(m_pipelines == nullptr, "Pipelines already created");
 
                 m_pipelines = jltnew(pipeline_array, m_cfgs.get_length());
 
