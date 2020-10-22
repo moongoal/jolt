@@ -36,6 +36,8 @@ namespace jolt {
                     });
 
                     // Fixed stages
+                    memset(
+                      &m_vertex_input_state_create_info, 0, sizeof(VkPipelineVertexInputStateCreateInfo));
                     m_vertex_input_state_create_info.sType =
                       VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
 
