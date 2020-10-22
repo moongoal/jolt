@@ -223,7 +223,7 @@ namespace jolt {
 
                 for(size_t i = 0; i < views.get_length(); ++i) {
                     VkImageView fb_views[] = {views[i], m_ds_image_view};
-                    constexpr const size_t n_views = sizeof(views) / sizeof(VkImageView);
+                    constexpr const size_t n_views = sizeof(fb_views) / sizeof(VkImageView);
 
                     VkFramebufferCreateInfo cinfo{
                       VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,              // sType
