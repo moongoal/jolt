@@ -36,15 +36,13 @@ namespace jolt {
 
                 Renderer const &get_renderer() const { return m_renderer; }
 
-                VkQueue acquire_queue() const { return m_queue; }
+                VkQueue get_queue() const { return m_queue; }
 
                 ui::Window const &get_ui_window() const { return m_window; }
 
                 VkSurfaceKHR get_surface() const { return m_surface; }
 
-                VkSurfaceCapabilitiesKHR const &get_surface_capabilities() const {
-                    return m_surface_caps;
-                }
+                VkSurfaceCapabilitiesKHR const &get_surface_capabilities() const { return m_surface_caps; }
 
                 VkImageFormatProperties const &get_image_format_properties() const {
                     return m_phy_dev_image_fmt_props;

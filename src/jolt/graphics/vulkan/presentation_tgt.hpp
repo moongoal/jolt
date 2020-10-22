@@ -51,7 +51,7 @@ namespace jolt {
                 ~PresentationTarget() { shutdown(); }
 
                 Renderer const &get_renderer() const { return m_renderer; }
-                VkQueue acquire_queue() const { return m_queue; }
+                VkQueue get_queue() const { return m_queue; }
                 VkSwapchainKHR get_swapchain() const { return m_swapchain; }
 
                 image_array const &get_swapchain_images() const { return *m_swapchain_images; }

@@ -10,9 +10,8 @@ using namespace jolt;
 using namespace jolt::graphics::vulkan;
 
 static constexpr const uint64_t ns_to_ms = 1'000'000;
-Renderer renderer;
 
-void main_loop(ui::Window const &wnd);
+void main_loop(Renderer &renderer);
 
 int main(JLT_MAYBE_UNUSED int argc, JLT_MAYBE_UNUSED char **argv) {
     GraphicsEngineInitializationParams gparams{};
@@ -25,161 +24,116 @@ int main(JLT_MAYBE_UNUSED int argc, JLT_MAYBE_UNUSED char **argv) {
     gparams.wnd = &wnd;
     gparams.n_queues_graphics = 1;
 
-    renderer.initialize(gparams);
-    wnd.show();
+    jolt::main_loop(gparams, main_loop);
 
-    bool exit_loop = false;
-
-    while(!exit_loop) {
-        main_loop(wnd);
-
-        switch(renderer.get_lost_state()) {
-            case jolt::graphics::vulkan::RENDERER_LOST_DEVICE:
-                renderer.reset(gparams);
-                break;
-
-            case jolt::graphics::vulkan::RENDERER_LOST_PRESENT:
-                renderer.reset_lost_state();
-                break; // Restarting the main loop will reset the render/presentation chain
-
-            case jolt::graphics::vulkan::RENDERER_NOT_LOST:
-                exit_loop = true;
-                break;
-
-            default:
-                console.err("Renderer lost state not handled. Resetting the renderer");
-                renderer.reset(gparams);
-                break;
-        }
-    }
-
-    renderer.shutdown();
     shutdown();
 }
 
-void main_loop(ui::Window const &wnd) {
-    // Queue
-    VkQueue gqueue = renderer.acquire_graphics_queue();
-    uint32_t gqueue_fam_idx = renderer.get_queue_family_index(gqueue);
+void main_loop(Renderer &renderer) {
+    // Window
+    Window *const vk_window = renderer.get_window();
+    ui::Window const &ui_window = vk_window->get_ui_window();
 
-    jltassert2(gqueue != VK_NULL_HANDLE, "Null graphics queue");
-    jltassert2(gqueue_fam_idx != JLT_VULKAN_INVALID32, "Invalid graphics queue family index");
+    // Queues
+    VkQueue const gqueue = renderer.get_presentation_target()->get_queue();
+    uint32_t const gqueue_fam_idx = renderer.get_queue_family_index(gqueue);
 
-    // Window & targets
-    Window *vk_window;
-    RenderTarget *rt;
-    PresentationTarget *pt;
-    vk_window = jltnew(Window, renderer, wnd, gqueue);
-    renderer.set_window(vk_window);
+    // Shaders
+    vfs::VirtualFileSystem vfs;
+    ShaderManager shader_manager{renderer, vfs};
 
-    pt = jltnew(PresentationTarget, renderer, gqueue);
-    renderer.set_presentation_target(pt);
+    shader_manager.scan_shaders();
+    renderer.set_shader_manager(&shader_manager);
 
-    rt = jltnew(RenderTarget, renderer);
-    renderer.set_render_target(rt);
+    DescriptorManager::pool_size_vector pool_sizes;
 
-    {
-        // Shaders
-        vfs::VirtualFileSystem vfs;
-        ShaderManager shader_manager{renderer, vfs};
+    pool_sizes.push({VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1});
 
-        shader_manager.scan_shaders();
-        renderer.set_shader_manager(&shader_manager);
+    DescriptorManager desc_manager{renderer, 1, pool_sizes};
+    DescriptorManager::desc_set_layout_vector desc_set_layouts;
+    DescriptorManager::push_const_range_vector push_const_ranges;
 
-        DescriptorManager::pool_size_vector pool_sizes;
+    VkPipelineLayout pipeline_layout =
+      desc_manager.create_pipeline_layout(desc_set_layouts, push_const_ranges);
 
-        pool_sizes.push({VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1});
+    // Pipeline
+    pipelines::DefaultGraphicsPipelineConfiguration pipeline_cfg{renderer, pipeline_layout};
+    GraphicsPipelineManager pipeline_manager{renderer};
 
-        DescriptorManager desc_manager{renderer, 1, pool_sizes};
-        DescriptorManager::desc_set_layout_vector desc_set_layouts;
-        DescriptorManager::push_const_range_vector push_const_ranges;
+    pipeline_manager.add_configuration(pipeline_cfg);
 
-        VkPipelineLayout pipeline_layout =
-          desc_manager.create_pipeline_layout(desc_set_layouts, push_const_ranges);
+    pipeline_manager.create_pipelines();
+    VkPipeline pipeline = pipeline_manager.get_pipelines()[0];
 
-        // Pipeline
-        pipelines::DefaultGraphicsPipelineConfiguration pipeline_cfg{renderer, pipeline_layout};
-        GraphicsPipelineManager pipeline_manager{renderer};
+    // Cmd pool
+    CommandPool cmd_pool{renderer, true, true, gqueue_fam_idx};
 
-        pipeline_manager.add_configuration(pipeline_cfg);
+    // Synchro
+    Semaphore sem_acquire{renderer}, sem_present{renderer};
+    Fence fence_acquire{renderer}, fence_submit{renderer};
 
-        pipeline_manager.create_pipelines();
-        VkPipeline pipeline = pipeline_manager.get_pipelines()[0];
+    ActionSynchro submit_synchro;
 
-        // Cmd pool
-        CommandPool cmd_pool{renderer, true, true, gqueue_fam_idx};
+    submit_synchro.wait_semaphore_count = 1;
+    submit_synchro.wait_semaphores[0] = sem_acquire;
+    submit_synchro.wait_semaphores_stages[0] = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 
-        // Synchro
-        Semaphore sem_acquire{renderer}, sem_present{renderer};
-        Fence fence_acquire{renderer}, fence_submit{renderer};
+    submit_synchro.signal_semaphores[0] = sem_present;
+    submit_synchro.signal_semaphore_count = 1;
 
-        ActionSynchro submit_synchro;
+    submit_synchro.fence = fence_submit;
 
-        submit_synchro.wait_semaphore_count = 1;
-        submit_synchro.wait_semaphores[0] = sem_acquire;
-        submit_synchro.wait_semaphores_stages[0] = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
+    WaitSemaphoreActionSynchro present_synchro;
 
-        submit_synchro.signal_semaphores[0] = sem_present;
-        submit_synchro.signal_semaphore_count = 1;
+    present_synchro.wait_semaphores[0] = sem_present;
+    present_synchro.wait_semaphore_count = 1;
 
-        submit_synchro.fence = fence_submit;
+    VkViewport viewport{
+      0,                                                                              // x
+      0,                                                                              // y
+      static_cast<float>(vk_window->get_surface_capabilities().currentExtent.width),  // width
+      static_cast<float>(vk_window->get_surface_capabilities().currentExtent.height), // height
+      0.0f,
+      1.0f};
 
-        WaitSemaphoreActionSynchro present_synchro;
+    VkRect2D scissor{
+      {0, 0},
+      {vk_window->get_surface_capabilities().currentExtent.width,
+       vk_window->get_surface_capabilities().currentExtent.height}};
 
-        present_synchro.wait_semaphores[0] = sem_present;
-        present_synchro.wait_semaphore_count = 1;
+    // Command execution
+    do {
+        if(ui_window.is_minimized()) {
+            jolt::threading::sleep(50);
+            continue;
+        }
 
-        VkViewport viewport{
-          0,                                                                              // x
-          0,                                                                              // y
-          static_cast<float>(vk_window->get_surface_capabilities().currentExtent.width),  // width
-          static_cast<float>(vk_window->get_surface_capabilities().currentExtent.height), // height
-          0.0f,
-          1.0f};
+        CommandBuffer cmd = cmd_pool.allocate_single_command_buffer(true);
+        renderer.get_presentation_target()->acquire_next_image(&sem_acquire, &fence_acquire);
 
-        VkRect2D scissor{
-          {0, 0},
-          {vk_window->get_surface_capabilities().currentExtent.width,
-           vk_window->get_surface_capabilities().currentExtent.height}};
+        fence_acquire.wait(500 * ns_to_ms);
+        cmd.begin_record();
+        cmd.cmd_begin_render_pass(true);
 
-        // Command execution
-        do {
-            if(wnd.is_minimized()) {
-                jolt::threading::sleep(50);
-                continue;
-            }
+        vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+        vkCmdSetViewport(cmd, 0, 1, &viewport);
+        vkCmdSetScissor(cmd, 0, 1, &scissor);
 
-            CommandBuffer cmd = cmd_pool.allocate_single_command_buffer(true);
-            renderer.get_presentation_target()->acquire_next_image(&sem_acquire, &fence_acquire);
+        vkCmdDraw(cmd, 3, 1, 0, 0);
 
-            fence_acquire.wait(500 * ns_to_ms);
-            cmd.begin_record();
-            cmd.cmd_begin_render_pass(true);
+        cmd.cmd_end_render_pass();
+        cmd.end_record();
 
-            vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
-            vkCmdSetViewport(cmd, 0, 1, &viewport);
-            vkCmdSetScissor(cmd, 0, 1, &scissor);
+        cmd.submit(gqueue, submit_synchro);
 
-            vkCmdDraw(cmd, 3, 1, 0, 0);
+        renderer.get_presentation_target()->present_active_image(present_synchro);
+        fence_submit.wait(500 * ns_to_ms);
 
-            cmd.cmd_end_render_pass();
-            cmd.end_record();
+        fence_acquire.reset();
+        fence_submit.reset();
+        cmd_pool.free_single_command_buffer(cmd);
+        cmd_pool.reset(false);
+    } while(ui_window.cycle() && !renderer.is_lost());
 
-            cmd.submit(gqueue, submit_synchro);
-
-            renderer.get_presentation_target()->present_active_image(present_synchro);
-            fence_submit.wait(500 * ns_to_ms);
-
-            fence_acquire.reset();
-            fence_submit.reset();
-            cmd_pool.free_single_command_buffer(cmd);
-            cmd_pool.reset(false);
-        } while(wnd.cycle() && !renderer.is_lost());
-
-        desc_manager.destroy_pipeline_layout(pipeline_layout);
-    }
-
-    jltfree(rt);
-    jltfree(pt);
-    jltfree(vk_window);
+    desc_manager.destroy_pipeline_layout(pipeline_layout);
 }

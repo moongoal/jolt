@@ -12,8 +12,12 @@
 #include <jolt/graphics/vulkan.hpp>
 
 namespace jolt {
+    typedef void (*jlt_loop_func_t)(graphics::vulkan::Renderer &renderer);
+
     void JLTAPI initialize();
     void JLTAPI shutdown();
+    void JLTAPI
+    main_loop(graphics::vulkan::GraphicsEngineInitializationParams &gparams, jlt_loop_func_t loop_func);
 } // namespace jolt
 
 #endif /* JLT_JOLT_HPP */

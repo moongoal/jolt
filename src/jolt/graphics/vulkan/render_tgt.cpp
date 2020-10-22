@@ -12,12 +12,9 @@ namespace jolt {
                 for(size_t i = 0; i < allowed_fmts_len; ++i) {
                     VkFormatProperties props;
 
-                    vkGetPhysicalDeviceFormatProperties(
-                      m_renderer.get_phy_device(), allowed_fmts[i], &props);
+                    vkGetPhysicalDeviceFormatProperties(m_renderer.get_phy_device(), allowed_fmts[i], &props);
 
-                    if(
-                      props.optimalTilingFeatures
-                      & VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT) {
+                    if(props.optimalTilingFeatures & VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT) {
                         m_ds_image_fmt = allowed_fmts[i];
                         return;
                     }
@@ -58,8 +55,7 @@ namespace jolt {
                   VK_IMAGE_LAYOUT_UNDEFINED                    // initialLayout
                 };
 
-                result = vkCreateImage(
-                  m_renderer.get_device(), &cinfo, get_vulkan_allocator(), &m_ds_image);
+                result = vkCreateImage(m_renderer.get_device(), &cinfo, get_vulkan_allocator(), &m_ds_image);
                 jltassert2(result == VK_SUCCESS, "Unable to create image for depth/stencil buffer");
 
                 { // Image storage
@@ -70,13 +66,10 @@ namespace jolt {
                     vkGetImageMemoryRequirements(m_renderer.get_device(), m_ds_image, &reqs);
 
                     // Check if requirements are satisfied both for device & image
-                    for(uint32_t i = 0;
-                        i < m_renderer.get_phy_device_memory_properties().memoryTypeCount;
+                    for(uint32_t i = 0; i < m_renderer.get_phy_device_memory_properties().memoryTypeCount;
                         ++i) {
                         if(
-                          (m_renderer.get_phy_device_memory_properties()
-                             .memoryTypes[i]
-                             .propertyFlags
+                          (m_renderer.get_phy_device_memory_properties().memoryTypes[i].propertyFlags
                            & VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
                           && (reqs.memoryTypeBits & (1 << i))) {
                             mti = i;
@@ -85,8 +78,7 @@ namespace jolt {
                     }
 
                     jltassert2(
-                      mti != mti_invalid,
-                      "Required image memory type for depth/stencil buffer unavailable");
+                      mti != mti_invalid, "Required image memory type for depth/stencil buffer unavailable");
 
                     VkMemoryAllocateInfo cinfo{
                       VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO, // sType
@@ -97,14 +89,11 @@ namespace jolt {
 
                     result = vkAllocateMemory(
                       m_renderer.get_device(), &cinfo, get_vulkan_allocator(), &m_ds_image_memory);
-                    jltassert2(
-                      result == VK_SUCCESS, "Unable to allocate storage for depth/stencil buffer");
+                    jltassert2(result == VK_SUCCESS, "Unable to allocate storage for depth/stencil buffer");
                 }
 
-                result =
-                  vkBindImageMemory(m_renderer.get_device(), m_ds_image, m_ds_image_memory, 0);
-                jltassert2(
-                  result == VK_SUCCESS, "Unable to bind image memory for depth/stencil buffer");
+                result = vkBindImageMemory(m_renderer.get_device(), m_ds_image, m_ds_image_memory, 0);
+                jltassert2(result == VK_SUCCESS, "Unable to bind image memory for depth/stencil buffer");
 
                 { // Image view
                     VkImageViewCreateInfo cinfo{
@@ -132,8 +121,7 @@ namespace jolt {
 
                     result = vkCreateImageView(
                       m_renderer.get_device(), &cinfo, get_vulkan_allocator(), &m_ds_image_view);
-                    jltassert2(
-                      result == VK_SUCCESS, "Unable to create view for depth/stencil buffer");
+                    jltassert2(result == VK_SUCCESS, "Unable to create view for depth/stencil buffer");
                 }
             }
 
@@ -193,23 +181,34 @@ namespace jolt {
                   0,                               // preserveAttachmentCount
                   nullptr,                         // pPreserveAttachments
                 }};
-                constexpr const uint32_t n_subpasses =
-                  sizeof(subpasses) / sizeof(VkSubpassDescription);
+                constexpr const uint32_t n_subpasses = sizeof(subpasses) / sizeof(VkSubpassDescription);
+
+                collections::Vector<VkSubpassDependency> subpass_deps;
+
+                subpass_deps.push({
+                  VK_SUBPASS_EXTERNAL,                           // srcSubpass
+                  0,                                             // dstSubpass
+                  VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, // srcStageMask
+                  VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, // dstStageMask
+                  0,                                             // srcAccessMask
+                  VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,          // dstAccessMask
+                  0                                              // dependencyFlags
+                });
 
                 VkRenderPassCreateInfo cinfo{
-                  VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO, // sType
-                  nullptr,                                   // pNext
-                  0,                                         // flags
-                  n_attachments,                             // attachmentCount
-                  attachments,                               // pAttachments
-                  n_subpasses,                               // subpassCount
-                  subpasses,                                 // pSubpasses
-                  0,                                         // dependencyCount
-                  nullptr                                    // pDependencies
+                  VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,        // sType
+                  nullptr,                                          // pNext
+                  0,                                                // flags
+                  n_attachments,                                    // attachmentCount
+                  attachments,                                      // pAttachments
+                  n_subpasses,                                      // subpassCount
+                  subpasses,                                        // pSubpasses
+                  static_cast<uint32_t>(subpass_deps.get_length()), // dependencyCount
+                  &subpass_deps[0]                                  // pDependencies
                 };
 
-                result = vkCreateRenderPass(
-                  m_renderer.get_device(), &cinfo, get_vulkan_allocator(), &m_render_pass);
+                result =
+                  vkCreateRenderPass(m_renderer.get_device(), &cinfo, get_vulkan_allocator(), &m_render_pass);
                 jltassert2(result == VK_SUCCESS, "Unable to create render pass");
             }
 
@@ -238,10 +237,7 @@ namespace jolt {
                     };
 
                     result = vkCreateFramebuffer(
-                      m_renderer.get_device(),
-                      &cinfo,
-                      get_vulkan_allocator(),
-                      &(*m_framebuffers)[i]);
+                      m_renderer.get_device(), &cinfo, get_vulkan_allocator(), &(*m_framebuffers)[i]);
                     jltassert2(result == VK_SUCCESS, "Unable to create framebuffer");
                 }
             }
@@ -254,8 +250,7 @@ namespace jolt {
 
                 initialize_depth_stencil_buffer();
                 initialize_render_pass();
-                initialize_framebuffer(
-                  m_renderer.get_presentation_target()->get_swapchain_image_views());
+                initialize_framebuffer(m_renderer.get_presentation_target()->get_swapchain_image_views());
             }
 
             void RenderTarget::shutdown() {
@@ -271,8 +266,7 @@ namespace jolt {
                 vkDestroyRenderPass(m_renderer.get_device(), m_render_pass, get_vulkan_allocator());
 
                 console.debug("Destroying depth/stencil buffer");
-                vkDestroyImageView(
-                  m_renderer.get_device(), m_ds_image_view, get_vulkan_allocator());
+                vkDestroyImageView(m_renderer.get_device(), m_ds_image_view, get_vulkan_allocator());
                 vkFreeMemory(m_renderer.get_device(), m_ds_image_memory, get_vulkan_allocator());
                 vkDestroyImage(m_renderer.get_device(), m_ds_image, get_vulkan_allocator());
             }
@@ -282,8 +276,7 @@ namespace jolt {
                   m_renderer.get_presentation_target()->get_active_swapchain_image_index();
 
                 jltassert2(
-                  active_idx != PresentationTarget::INVALID_SWAPCHAIN_IMAGE,
-                  "Invalid swapchain image");
+                  active_idx != PresentationTarget::INVALID_SWAPCHAIN_IMAGE, "Invalid swapchain image");
 
                 return (*m_framebuffers)[active_idx];
             }
