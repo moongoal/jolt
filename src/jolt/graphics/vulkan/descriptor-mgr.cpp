@@ -62,13 +62,13 @@ namespace jolt {
             VkPipelineLayout DescriptorManager::create_pipeline_layout(
               desc_set_layout_vector const &layouts, push_const_range_vector const &pc_ranges) {
                 VkPipelineLayoutCreateInfo cinfo{
-                  VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO, // sType
-                  nullptr,                                       // pNext
-                  0,                                             // flags
-                  static_cast<uint32_t>(layouts.get_length()),   // setLayoutCount
-                  &layouts[0],                                   // pSetLayouts
-                  static_cast<uint32_t>(pc_ranges.get_length()), // pushConstanteRangeCount
-                  &pc_ranges[0]                                  // pPushConstantRanges
+                  VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,   // sType
+                  nullptr,                                         // pNext
+                  0,                                               // flags
+                  static_cast<uint32_t>(layouts.get_length()),     // setLayoutCount
+                  layouts.get_length() ? &layouts[0] : nullptr,    // pSetLayouts
+                  static_cast<uint32_t>(pc_ranges.get_length()),   // pushConstanteRangeCount
+                  pc_ranges.get_length() ? &pc_ranges[0] : nullptr // pPushConstantRanges
                 };
 
                 VkPipelineLayout pipeline_layout;
