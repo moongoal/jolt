@@ -48,7 +48,7 @@ namespace jolt {
              */
             void dispose() {
                 if(m_data) {
-                    memory::free_array(m_data);
+                    memory::free_array(m_data, m_length);
 
                     m_data = nullptr;
                 }
@@ -77,7 +77,7 @@ namespace jolt {
              * @param lst The initializer list of items containing the initial state.
              */
             JLT_NODISCARD Vector(const std::initializer_list<value_type> &lst) :
-              Vector(lst.begin(), lst.size()) {}
+              Vector{lst.begin(), lst.size()} {}
 
             /**
              * Create a new empty instance of this class.
@@ -115,10 +115,10 @@ namespace jolt {
                 add_all(begin, end);
             }
 
-            JLT_NODISCARD Vector(const Vector<value_type> &other) : Vector(other.m_data, other.m_length) {}
+            JLT_NODISCARD Vector(const Vector<value_type> &other) : Vector{other.m_data, other.m_length} {}
 
             JLT_NODISCARD Vector(Vector<value_type> &&other) :
-              m_data{other.m_data}, m_length{other.m_length} {
+              m_data{other.m_data}, m_length{other.m_length}, m_alloc_flags{other.m_alloc_flags} {
                 other.m_data = nullptr;
             }
 
@@ -248,7 +248,9 @@ namespace jolt {
                 size_t const old_capacity = get_capacity();
 
                 if(new_capacity > old_capacity) {
-                    m_data = memory::reallocate(m_data, new_capacity);
+                    memory::push_force_flags(m_alloc_flags);
+                    m_data = memory::reallocate(m_data, new_capacity, m_length);
+                    memory::pop_force_flags();
                 }
             }
 

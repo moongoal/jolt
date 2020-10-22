@@ -75,7 +75,7 @@ namespace jolt {
             bool add_all(It const begin, It const end) {
                 bool result = true;
 
-                for(It it = begin; it != end; ++it) { result &= add(*it); }
+                for(It it = begin; it != end; ++it) { result = result && add(*it); }
 
                 return result;
             }

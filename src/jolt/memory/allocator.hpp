@@ -247,14 +247,15 @@ namespace jolt {
          * first.
          *
          * @param ptr A pointer to the beginning of the memory location to free.
-         * @param n The number of elements in the array.
+         * @param dn The number of elements to the stroy in the array. Set to -1 to destroy all the elements.
          */
         template<typename T>
-        void free_array(T *const ptr) {
+        void free_array(T *const ptr, long long const dn = -1) {
             auto const len_ptr = reinterpret_cast<size_t *>(ptr) - 1;
-            size_t const n = *len_ptr;
 
             if constexpr(!std::is_void<T>::value && !std::is_trivial<T>::value) {
+                size_t const n = dn >= 0 ? dn : *len_ptr;
+
                 for(size_t i = 0; i < n; ++i) { ptr[i].~T(); }
             }
 
@@ -293,20 +294,22 @@ namespace jolt {
          *
          * @param ptr The pointer to the memory region to reallcate.
          * @param new_length The new number of elements in the memory region.
+         * @param move_n The number of elements to move-construct (if T is not POD). Set to -1 to move all
+         * the elements.
          *
          * @return A possibly new pointer to the reallocated memory region.
          */
         template<typename T>
-        JLT_NODISCARD T *reallocate(T *const ptr, size_t const new_length) {
-            AllocatorSlot &slot = get_allocator_slot();
-            AllocHeader &hdr = *get_alloc_header(ptr); // store old length
-            threading::LockGuard lock{slot.m_lock};
+        JLT_NODISCARD T *reallocate(T *const ptr, size_t const new_length, long long const move_n = -1) {
             auto const old_len_ptr = reinterpret_cast<size_t *>(ptr) - 1;
-            size_t const old_length = *old_len_ptr;
+            AllocatorSlot &slot = get_allocator_slot();
+            AllocHeader &hdr = *get_alloc_header(old_len_ptr); // store old length
+            threading::LockGuard lock{slot.m_lock};
             size_t const new_size = new_length * sizeof(T) + sizeof(size_t);
 
             if constexpr(!std::is_trivial<T>::value) {
-                if(will_relocate(ptr, new_length)) {
+                if(will_relocate(old_len_ptr, new_size)) {
+                    size_t const old_length = move_n >= 0 ? move_n : *old_len_ptr;
                     T *const data_new = allocate_array<T>(new_length, hdr.m_flags, hdr.m_alignment);
 
                     for(size_t i = 0; i < min(new_length, old_length); ++i) {
@@ -319,7 +322,7 @@ namespace jolt {
                 }
             }
 
-            return reinterpret_cast<T *>(_reallocate(ptr, new_size));
+            return reinterpret_cast<T *>(_reallocate(old_len_ptr, new_size));
         }
     } // namespace memory
 } // namespace jolt
