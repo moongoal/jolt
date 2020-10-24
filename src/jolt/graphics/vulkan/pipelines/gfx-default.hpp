@@ -1,6 +1,7 @@
 #ifndef JLT_GRAPHICS_VULKAN_PIPELINES_GFX_DEFAULT_HPP
 #define JLT_GRAPHICS_VULKAN_PIPELINES_GFX_DEFAULT_HPP
 
+#include <type_traits>
 #include <jolt/graphics/vulkan/defs.hpp>
 #include <jolt/graphics/vulkan/gfx-pipeline-cfg.hpp>
 

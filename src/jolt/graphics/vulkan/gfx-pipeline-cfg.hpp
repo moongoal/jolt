@@ -15,6 +15,8 @@ namespace jolt {
              */
             class JLTAPI GraphicsPipelineConfiguration {
               public:
+                using vertex_binding_descriptions = collections::Vector<VkVertexInputBindingDescription>;
+                using vertex_attribute_descriptions = collections::Vector<VkVertexInputAttributeDescription>;
                 using shader_stage_cinfos = collections::Vector<VkPipelineShaderStageCreateInfo>;
                 using viewports = collections::Vector<VkViewport>;
                 using scissors = collections::Vector<VkRect2D>;
@@ -48,15 +50,18 @@ namespace jolt {
                 VkPipelineColorBlendStateCreateInfo m_color_blend_state_create_info;
                 VkPipelineDynamicStateCreateInfo m_dynamic_state_create_info;
                 VkPipelineTessellationStateCreateInfo m_tessellation_state_create_info;
+
+              public:
                 shader_stage_cinfos m_shader_stage_create_infos;
                 color_blend_attachment_states m_color_blend_attachment_states;
                 viewports m_viewports;
                 scissors m_scissors;
                 dynamic_states m_dynamic_states;
+                vertex_binding_descriptions m_vertex_binding_descriptions;
+                vertex_attribute_descriptions m_vertex_attribute_descriptions;
                 VkShaderModule m_shader_vert;
                 VkShaderModule m_shader_frag;
-
-              public:
+                
                 /**
                  * Create a new graphics pipeline configuration.
                  *

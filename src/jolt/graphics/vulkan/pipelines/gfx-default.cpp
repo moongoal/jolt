@@ -28,10 +28,19 @@ namespace jolt {
                     });
 
                     // Fixed stages
-                    memset(
-                      &m_vertex_input_state_create_info, 0, sizeof(VkPipelineVertexInputStateCreateInfo));
-                    m_vertex_input_state_create_info.sType =
-                      VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+                    m_vertex_input_state_create_info = {
+                      VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO, // sType
+                      nullptr,                                                   // pNext
+                      0,                                                         // flags
+                      static_cast<uint32_t>(
+                        m_vertex_binding_descriptions.get_length()), // vertexBindingDescriptionCount
+                      m_vertex_binding_descriptions.get_length() ? &m_vertex_binding_descriptions[0]
+                                                                 : nullptr, // pVertexBindingDescriptions
+                      static_cast<uint32_t>(
+                        m_vertex_attribute_descriptions.get_length()), // vertexAttributeDescriptionCount
+                      m_vertex_attribute_descriptions.get_length() ? &m_vertex_attribute_descriptions[0]
+                                                                   : nullptr // pVertexAttributeDescription
+                    };
 
                     m_input_assembly_state_cinfo = {
                       VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO, // sType
