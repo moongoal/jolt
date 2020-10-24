@@ -106,9 +106,9 @@ namespace jolt {
             JLT_NODISCARD constexpr StaticArray(std::initializer_list<value_type> lst) {
                 auto it = lst.begin();
                 auto const it_end = lst.end();
-                size_t n_elements = it_end - it;
+                size_t const n_elements = it_end - it;
 
-                jltassert(n_elements >= N);
+                jltassert(n_elements == N);
 
                 for(size_t i = 0; i < N; ++i) { memory::construct(&m_data[i], *(it++)); }
             }

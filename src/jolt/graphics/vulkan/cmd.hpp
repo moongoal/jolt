@@ -106,6 +106,7 @@ namespace jolt {
                 CommandBuffer allocate_single_command_buffer(bool const primary);
 
                 void free_command_buffers(CommandBuffer *buffers, uint32_t const n);
+                void free_raw_command_buffers(VkCommandBuffer *buffers, uint32_t const n);
 
                 void free_single_command_buffer(CommandBuffer &buffer);
             };
@@ -149,7 +150,8 @@ namespace jolt {
                   VkCommandBufferUsageFlags flags = 0, CommandBufferRecordParams *const params = nullptr);
                 void end_record();
 
-                void cmd_begin_render_pass(bool const inline_commands);
+                void cmd_begin_render_pass(
+                  bool const inline_commands, VkClearValue const *const clearColor = nullptr);
                 void cmd_end_render_pass();
 
                 void submit(VkQueue const queue, ActionSynchro const &synchro);

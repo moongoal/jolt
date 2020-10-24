@@ -30,6 +30,14 @@ namespace jolt {
                 operator handle_type() const { return m_handle; }
                 operator size_type() const { return m_offset; }
 
+                bool operator==(DeviceAlloc const &other) const {
+                    return m_handle == other.m_handle && m_offset == other.m_offset && m_size == other.m_size;
+                }
+
+                bool operator!=(DeviceAlloc const &other) const {
+                    return m_handle != other.m_handle || m_offset != other.m_offset || m_size != other.m_size;
+                }
+
                 handle_type get_handle() const { return m_handle; }
                 size_type get_size() const { return m_size; }
                 size_type get_offset() const { return m_offset; }
@@ -303,7 +311,7 @@ namespace jolt {
                   VkDeviceSize const size,
                   VkMemoryPropertyFlags const mem_flags,
                   VkBufferUsageFlags const usage) :
-                  MemoryHeap(renderer, size, mem_flags),
+                  MemoryHeap{renderer, size, mem_flags},
                   m_total_alloc_size{0} {
                     m_freelist.add({0, size});
                     initialize(usage);

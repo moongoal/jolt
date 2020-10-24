@@ -64,7 +64,7 @@ namespace jolt {
 
                         m_total_alloc_size += total_size;
 
-                        return BufferDeviceAlloc(m_buffer, ret_ptr, size);
+                        return BufferDeviceAlloc{m_buffer, ret_ptr, total_size};
                     }
                 }
 

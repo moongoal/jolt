@@ -89,7 +89,11 @@ namespace jolt {
 
                 for(size_t i = 0; i < n; ++i) { raw_buffers[i] = buffers[i].get_buffer(); }
 
-                vkFreeCommandBuffers(m_renderer.get_device(), m_pool, n, raw_buffers);
+                free_raw_command_buffers(raw_buffers, n);
+            }
+
+            void CommandPool::free_raw_command_buffers(VkCommandBuffer *buffers, uint32_t const n) {
+                vkFreeCommandBuffers(m_renderer.get_device(), m_pool, n, buffers);
             }
 
             void CommandPool::free_single_command_buffer(CommandBuffer &buffer) {
@@ -138,18 +142,18 @@ namespace jolt {
                 jltassert2(result == VK_SUCCESS, "Unable to end recording of the command buffer");
             }
 
-            void CommandBuffer::cmd_begin_render_pass(bool const inline_commands) {
+            void CommandBuffer::cmd_begin_render_pass(
+              bool const inline_commands, VkClearValue const *const clear_color) {
                 RenderTarget const &tgt = *m_renderer.get_render_target();
                 VkExtent2D const &win_extent =
                   m_renderer.get_window()->get_surface_capabilities().currentExtent;
 
                 VkClearValue clear_values[2] = {};
 
-                clear_values[0].color.float32[0] = 0.0f;
-                clear_values[0].color.float32[1] = 1.0f;
-                clear_values[0].color.float32[2] = 0.0f;
-                clear_values[0].color.float32[3] = 0.0f;
-
+                if(clear_color) {
+                    clear_values[0] = *clear_color;
+                }
+                
                 VkRenderPassBeginInfo binfo{
                   VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO, // sType
                   nullptr,                                  // pNext
