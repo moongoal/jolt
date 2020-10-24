@@ -23,7 +23,7 @@
  *
  * @see jolt::memory::allocate_array().
  */
-#define jltallocarray(object_type, n, ...) jolt::memory::allocate_array<object_type>(n, __VA_ARGS__)
+#define jltallocarray(object_type, n) jolt::memory::allocate_array<object_type>(n)
 
 /**
  * Construct an already allocated object.
@@ -251,7 +251,8 @@ namespace jolt {
          */
         template<typename T>
         void free_array(T *const ptr, long long const dn = -1) {
-            auto const len_ptr = reinterpret_cast<size_t *>(ptr) - 1;
+            using T_no_cv = typename std::remove_cv<T>::type;
+            auto const len_ptr = reinterpret_cast<size_t *>(const_cast<T_no_cv *>(ptr)) - 1;
 
             if constexpr(!std::is_void<T>::value && !std::is_trivial<T>::value) {
                 size_t const n = dn >= 0 ? dn : *len_ptr;

@@ -77,9 +77,18 @@ find_library(XXHASH_LIBRARY xxhash REQUIRED)
 include(FindVulkan)
 find_package(Vulkan REQUIRED)
 find_package(glm CONFIG REQUIRED)
+find_package(libpng CONFIG REQUIRED)
 
 target_include_directories(libjolt PUBLIC ${XXHASH_INCLUDE_DIR})
-target_link_libraries(libjolt PRIVATE ${XXHASH_LIBRARY} PUBLIC Vulkan::Vulkan glm)
+target_link_libraries(
+    libjolt
+    PRIVATE
+         ${XXHASH_LIBRARY}
+         png
+    PUBLIC
+        Vulkan::Vulkan
+        glm
+)
 
 add_subdirectory(${PATH_TESTS})
 add_subdirectory(${PATH_SAMPLES})
