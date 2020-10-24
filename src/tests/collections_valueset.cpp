@@ -11,7 +11,9 @@ SETUP { jolt::threading::initialize(); }
 TEST(ctor) {
     Vector v{{1, 2, 2, 3, 3, 4, 5}};
 
-    ValueSet<int> s1, s3{{1, 2, 3, 3, 4, 5}}, s4{v.begin(), v.end()};
+    ValueSet<int> s1;
+    ValueSet<int> s3{{1, 2, 3, 3, 4, 5}};
+    ValueSet<int> s4{v.begin(), v.end()};
 
     assert2(s1.get_length() == 0, "Empty size");
     assert2(s3.get_length() == 5, "Initializer list size");

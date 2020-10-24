@@ -23,7 +23,7 @@ namespace jolt {
           public:
             JLT_NODISCARD explicit ValueSet() = default;
 
-            JLT_NODISCARD ValueSet(const std::initializer_list<T> &lst) : ValueSet(lst.begin(), lst.end()) {}
+            JLT_NODISCARD ValueSet(const std::initializer_list<T> &lst) : ValueSet{lst.begin(), lst.end()} {}
 
             template<typename It>
             JLT_NODISCARD ValueSet(It const begin, It const end) : ValueSet{} {
@@ -75,7 +75,11 @@ namespace jolt {
             bool add_all(It const begin, It const end) {
                 bool result = true;
 
-                for(It it = begin; it != end; ++it) { result = result && add(*it); }
+                for(It it = begin; it != end; ++it) {
+                    bool const add_result = add(*it);
+
+                    result = result && add_result;
+                }
 
                 return result;
             }
