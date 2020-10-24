@@ -1,4 +1,5 @@
 #include <jolt/memory/allocator.hpp>
+#include <jolt/input/input.hpp>
 #include <jolt/collections/hashmap.hpp>
 #include <jolt/debug.hpp>
 #include "window.hpp"
@@ -148,6 +149,22 @@ namespace jolt {
 #else // JLT_WITH_MULTI_WINDOWS
                     PostQuitMessage(0);
 #endif // JLT_WITH_MULTI_WINDOWS
+                }
+                    return 0;
+
+                case WM_SYSKEYDOWN:
+                case WM_KEYDOWN: {
+                    if(wparam >= VK_BACK && wparam <= VK_LAUNCH_APP2) {
+                        input::key_down(static_cast<input::KeyCode>(wparam - JLT_KEYCODE_MIN));
+                    }
+                }
+                    return 0;
+
+                case WM_SYSKEYUP:
+                case WM_KEYUP: {
+                    if(wparam >= VK_BACK && wparam <= VK_LAUNCH_APP2) {
+                        input::key_up(static_cast<input::KeyCode>(wparam - JLT_KEYCODE_MIN));
+                    }
                 }
                     return 0;
 

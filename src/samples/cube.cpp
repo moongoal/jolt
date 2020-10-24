@@ -137,15 +137,22 @@ void update(RenderState &state) {
       std::chrono::duration<float, std::chrono::seconds::period>(current_time - start_time).count();
     uint32_t const width = state.renderer->get_window()->get_surface_capabilities().currentExtent.width;
     uint32_t const height = state.renderer->get_window()->get_surface_capabilities().currentExtent.height;
+    static float fov_deg = 45.0f;
+
+    if(input::is_key_down(input::KeyCode::Add)) {
+        fov_deg = max(fov_deg - 1, 15.0f);
+    } else if(input::is_key_down(input::KeyCode::Subtract)) {
+        fov_deg = min(fov_deg + 1, 70.0f);
+    }
 
     state.ubo->model =
       glm::rotate(glm::mat4(1.0f), elapsed_time * glm::radians(90.0f), glm::vec3(0.0, -1.0f, 0.0f));
     state.ubo->view =
       glm::lookAt(glm::vec3(0.0f, 0.0f, -2.5f), glm::vec3(0.0f), glm::vec3(0.0f, -1.0f, 0.0f));
     state.ubo->proj = glm::perspective(
-      glm::radians(45.0f), static_cast<float>(width) / static_cast<float>(height), 0.1f, 10.0f);
+      glm::radians(fov_deg), static_cast<float>(width) / static_cast<float>(height), 0.1f, 10.0f);
 
-    state.ubo->proj[1][1] *= -1;
+    state.ubo->proj[1][1] *= -1; // Correct for vulkan having -y upwards
 }
 
 int main(JLT_MAYBE_UNUSED int argc, JLT_MAYBE_UNUSED char **argv) {

@@ -10,6 +10,7 @@
 #include <jolt/vfs/vfs.hpp>
 #include <jolt/ui/window.hpp>
 #include <jolt/graphics/vulkan.hpp>
+#include <jolt/input/input.hpp>
 
 namespace jolt {
     typedef void (*jlt_loop_func_t)(graphics::vulkan::Renderer &renderer);
