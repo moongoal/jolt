@@ -126,11 +126,11 @@ namespace jolt {
 
             VkDeviceSize UploadOp::host_begin_next_transfer() {
                 auto data_ptr = reinterpret_cast<uint8_t const *>(m_xfer.data.const_data);
-                VkDeviceSize const bufsz =
-                  min(m_staging.get_buffer_size(), m_xfer.size + m_xfer.offset - m_cur_offset);
+                VkDeviceSize const rel_offset = m_cur_offset - m_xfer.offset;
+                VkDeviceSize const bufsz = min(m_staging.get_buffer_size(), m_xfer.size - rel_offset);
                 VkResult result;
 
-                memcpy(m_staging.get_buffer_ptr(), data_ptr + m_cur_offset, bufsz);
+                memcpy(m_staging.get_buffer_ptr(), data_ptr + rel_offset, bufsz);
 
                 if(!m_staging.is_coherent()) {
                     VkMappedMemoryRange mrange{
