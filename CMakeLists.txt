@@ -60,8 +60,10 @@ target_compile_options(
 target_compile_definitions(libjolt
     PRIVATE
         JLT_INTERNAL
+    PUBLIC
         GLM_FORCE_UNRESTRICTED_GENTYPE
         GLM_FORECE_DEPTH_ZERO_TO_ONE
+        GLM_FORCE_RADIANS
     PUBLIC NOMINMAX
 )
 
