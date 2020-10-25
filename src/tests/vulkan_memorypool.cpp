@@ -3,11 +3,10 @@
 
 using namespace jolt;
 using namespace jolt::graphics::vulkan;
+using namespace jolt::graphics::vulkan::memory;
 
-constexpr size_t const Nobjs = 128; //< Object number.
-constexpr size_t const Sobjs = 128; //< Object size.
-
-using TestPool = ObjectPool<Sobjs, Nobjs>;
+constexpr size_t const n_objs = 128; //< Object number.
+constexpr size_t const s_obj = 128;  //< Object size.
 
 Renderer renderer;
 ui::Window *ui_window;
@@ -33,14 +32,14 @@ CLEANUP {
 }
 
 TEST(ctor) {
-    TestPool pool{renderer, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT};
+    ObjectPool pool{renderer, s_obj, n_objs, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 0};
 
     assert2(!pool.is_full(), "Should not be full");
     assert2(pool.get_bitmap().get_length() == 2, "Bitmap slot list not length 2");
 }
 
 TEST(allocate) {
-    TestPool pool{renderer, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT};
+    ObjectPool pool{renderer, s_obj, n_objs, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 0};
 
     VkDeviceSize const alloc1 = pool.allocate();
     VkDeviceSize const alloc2 = pool.allocate();
@@ -53,7 +52,7 @@ TEST(allocate) {
 }
 
 TEST(allocate__invalid) {
-    ObjectPool<Sobjs, 1> pool{renderer, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT};
+    ObjectPool pool{renderer, s_obj, 1, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 0};
 
     assert2(!pool.is_full(), "Should not be full");
 
@@ -68,7 +67,7 @@ TEST(allocate__invalid) {
 }
 
 TEST(free) {
-    ObjectPool<Sobjs, 1> pool{renderer, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT};
+    ObjectPool pool{renderer, s_obj, 1, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 0};
 
     assert2(!pool.is_full(), "Should not be full");
 

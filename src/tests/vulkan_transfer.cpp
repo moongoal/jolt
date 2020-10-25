@@ -4,6 +4,7 @@
 
 using namespace jolt;
 using namespace jolt::graphics::vulkan;
+using namespace jolt::graphics::vulkan::memory;
 
 VkDeviceSize const STAGING_BUFFER_SIZE = 1024;
 
@@ -51,7 +52,7 @@ TEST(transfer_to_buffer__single_chunk__single_queue) {
     VkQueue const queue = renderer.acquire_graphics_queue();
     renderer.release_queue(queue);
 
-    BufferDeviceAlloc const buffer = arena->allocate(STAGING_BUFFER_SIZE, 1);
+    DeviceAlloc const buffer = arena->allocate(STAGING_BUFFER_SIZE, 1);
     StagingBuffer stg{renderer, queue, STAGING_BUFFER_SIZE};
     CommandPool pool{renderer, true, false, renderer.get_queue_family_index(queue)};
 
@@ -123,7 +124,7 @@ TEST(transfer_to_buffer__multi_chunk__single_queue) {
     VkQueue const queue = renderer.acquire_graphics_queue();
     renderer.release_queue(queue);
 
-    BufferDeviceAlloc const buffer = arena->allocate(data_sz, 1);
+    DeviceAlloc const buffer = arena->allocate(data_sz, 1);
     StagingBuffer stg{renderer, queue, STAGING_BUFFER_SIZE};
     CommandPool pool{renderer, true, false, renderer.get_queue_family_index(queue)};
 
@@ -200,7 +201,7 @@ TEST(transfer_to_buffer__single_chunk__multi_queue) {
         ignore();
     }
 
-    BufferDeviceAlloc const buffer = arena->allocate(STAGING_BUFFER_SIZE, 1);
+    DeviceAlloc const buffer = arena->allocate(STAGING_BUFFER_SIZE, 1);
     StagingBuffer stg{renderer, xfer_queue, STAGING_BUFFER_SIZE};
     CommandPool pool{renderer, true, false, renderer.get_queue_family_index(gfx_queue)};
 
@@ -279,7 +280,7 @@ TEST(transfer_to_buffer__multi_chunk__multi_queue) {
         ignore();
     }
 
-    BufferDeviceAlloc const buffer = arena->allocate(data_sz, 1);
+    DeviceAlloc const buffer = arena->allocate(data_sz, 1);
     StagingBuffer stg{renderer, xfer_queue, STAGING_BUFFER_SIZE};
     CommandPool pool{renderer, true, false, renderer.get_queue_family_index(gfx_queue)};
 

@@ -13,6 +13,7 @@
 
 using namespace jolt;
 using namespace jolt::graphics::vulkan;
+using namespace jolt::graphics::vulkan::memory;
 
 static constexpr const uint64_t ns_to_ms = 1'000'000;
 
@@ -31,8 +32,8 @@ struct RenderState {
     VkPipeline pipeline;
     VkPipelineLayout pipeline_layout;
     VkQueue graphics_queue;
-    BufferDeviceAlloc *vertex_buffer_alloc;
-    BufferDeviceAlloc *index_buffer_alloc;
+    DeviceAlloc *vertex_buffer_alloc;
+    DeviceAlloc *index_buffer_alloc;
     UniformBufferObject *ubo;
 };
 
@@ -181,7 +182,7 @@ void main_loop(Renderer &renderer) {
     uint32_t const gqueue_fam_idx = renderer.get_queue_family_index(gqueue);
 
     // Memory
-    graphics::vulkan::Arena gpu_allocator{
+    Arena gpu_allocator{
       renderer,
       1024,
       VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
@@ -189,13 +190,11 @@ void main_loop(Renderer &renderer) {
         | VK_BUFFER_USAGE_TRANSFER_DST_BIT};
 
     // Buffers
-    BufferDeviceAlloc cube_verts_buf =
-      gpu_allocator.allocate(sizeof(cube_verts), alignof(decltype(cube_verts)));
-    BufferDeviceAlloc cube_index_buf =
-      gpu_allocator.allocate(sizeof(cube_faces), alignof(decltype(cube_faces)));
+    DeviceAlloc cube_verts_buf = gpu_allocator.allocate(sizeof(cube_verts), alignof(decltype(cube_verts)));
+    DeviceAlloc cube_index_buf = gpu_allocator.allocate(sizeof(cube_faces), alignof(decltype(cube_faces)));
 
-    jltassert2(cube_verts_buf != InvalidBufferDeviceAlloc, "Not enough memory to allocate vertex buffer.");
-    jltassert2(cube_index_buf != InvalidBufferDeviceAlloc, "Not enough memory to allocate index buffer.");
+    jltassert2(cube_verts_buf != InvalidDeviceAlloc, "Not enough memory to allocate vertex buffer.");
+    jltassert2(cube_index_buf != InvalidDeviceAlloc, "Not enough memory to allocate index buffer.");
 
     {
         StagingBuffer staging_buf{renderer, gqueue, 256};

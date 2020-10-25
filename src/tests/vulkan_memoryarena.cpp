@@ -3,6 +3,7 @@
 
 using namespace jolt;
 using namespace jolt::graphics::vulkan;
+using namespace jolt::graphics::vulkan::memory;
 
 constexpr VkDeviceSize const HEAP_SIZE = 16 * 1024 * 1024;
 
@@ -66,7 +67,7 @@ TEST(allocate__invalid) {
 
     VkDeviceSize const alloc1 = arena.allocate(HEAP_SIZE + 1, 1);
 
-    assert(alloc1 == InvalidBufferDeviceAlloc);
+    assert(alloc1 == InvalidDeviceAlloc);
 }
 
 TEST(allocate__free__max) {
