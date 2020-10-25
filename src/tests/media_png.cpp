@@ -16,7 +16,7 @@ SETUP {
 CLEANUP { shutdown(); }
 
 TEST(load_image_png) {
-    io::FileStream stream{JLT_BUILD_DIR "/../assets/images/png-load-test.png", io::Mode::MODE_READ};
+    io::FileStream stream{JLT_ASSETS_DIR "/images/png-load-test.png", io::Mode::MODE_READ};
     Image img = load_image_png(stream);
     stream.close();
 

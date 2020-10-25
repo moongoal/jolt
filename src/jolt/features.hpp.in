@@ -4,7 +4,10 @@
 #cmakedefine JLT_WITH_MEM_CHECKS
 #cmakedefine JLT_WITH_DEBUG_LOGGING
 #cmakedefine JLT_WITH_MULTI_WINDOWS
+
 #cmakedefine JLT_BUILD_DIR "@JLT_BUILD_DIR@"
+#cmakedefine JLT_ASSETS_DIR "@JLT_ASSETS_DIR@"
+
 #cmakedefine JLT_BUILD_VDIR "@JLT_BUILD_VDIR@"
 
 #endif // JLT_FEATURES_HPP
