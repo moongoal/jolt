@@ -23,7 +23,7 @@ namespace jolt {
             using const_iterator = base_iterator<const T>;
 
           private:
-            pointer const m_ptr; //< Pointer to the data.
+            pointer m_ptr; //< Pointer to the data.
 
           public:
             JLT_NODISCARD explicit constexpr Array(size_t const length) :
