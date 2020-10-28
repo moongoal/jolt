@@ -197,32 +197,26 @@ void main_loop(Renderer &renderer) {
     jltassert2(cube_index_buf != InvalidDeviceAlloc, "Not enough memory to allocate index buffer.");
 
     {
-        StagingBuffer staging_buf{renderer, gqueue, 256};
-        Transfer transfer;
+        TransferFactory xfer_factory{renderer, gqueue};
 
-        transfer.data.data = cube_verts;
-        transfer.size = static_cast<VkDeviceSize>(sizeof(cube_verts));
-        transfer.offset = cube_verts_buf;
-        transfer.subject.buffer = cube_verts_buf;
-        transfer.src_queue = gqueue;
-        transfer.dst_queue = gqueue;
-        transfer.src_access_mask = VK_ACCESS_MEMORY_WRITE_BIT;
-        transfer.dst_access_mask = VK_ACCESS_MEMORY_READ_BIT;
-        transfer.src_stage_mask = VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT;
-        transfer.dst_stage_mask = VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT;
+        TransferDescriptor desc_verts;
+        desc_verts.resource_type = TransferResourceType::Buffer;
+        desc_verts.handle.buffer = cube_verts_buf;
+        desc_verts.info.buffer_info.offset = cube_verts_buf;
+        desc_verts.data.upload_data = cube_verts;
+        desc_verts.size = static_cast<VkDeviceSize>(sizeof(cube_verts));
 
-        BufferUploadOp vert_upload_op = staging_buf.upload_buffer(transfer);
+        TransferDescriptor desc_indices;
+        desc_indices.resource_type = TransferResourceType::Buffer;
+        desc_indices.handle.buffer = cube_index_buf;
+        desc_indices.info.buffer_info.offset = cube_index_buf;
+        desc_indices.data.upload_data = cube_faces;
+        desc_indices.size = static_cast<VkDeviceSize>(sizeof(cube_faces));
 
-        vert_upload_op.transfer();
+        xfer_factory.add_resource_transfer(desc_verts);
+        xfer_factory.add_resource_transfer(desc_indices);
 
-        transfer.data.data = cube_faces;
-        transfer.size = static_cast<VkDeviceSize>(sizeof(cube_faces));
-        transfer.offset = cube_index_buf;
-        transfer.subject.buffer = cube_index_buf;
-
-        BufferUploadOp idx_upload_op = staging_buf.upload_buffer(transfer);
-
-        idx_upload_op.transfer();
+        xfer_factory.build_upload_transfer().transfer_all();
     }
 
     // Shaders

@@ -714,14 +714,17 @@ namespace jolt {
             }
 
             uint32_t Renderer::get_memory_type_index(
-              VkMemoryPropertyFlags const requirements, VkMemoryPropertyFlags const exclusions) const {
+              VkMemoryPropertyFlags const requirements,
+              VkMemoryPropertyFlags const exclusions,
+              uint32_t const mem_bits) const {
                 for(uint32_t mem_type_idx = 0; mem_type_idx < m_phy_mem_props.memoryTypeCount;
                     ++mem_type_idx) {
                     VkMemoryType const &mem_type = m_phy_mem_props.memoryTypes[mem_type_idx];
 
                     if(
-                      (mem_type.propertyFlags & requirements) == requirements
-                      && (mem_type.propertyFlags & exclusions) == 0) {
+                      ((1UL << mem_type_idx) & mem_bits)
+                      && (mem_type.propertyFlags & requirements) == requirements
+                      && !(mem_type.propertyFlags & exclusions)) {
                         return mem_type_idx;
                     }
                 }

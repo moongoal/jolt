@@ -23,8 +23,7 @@ namespace jolt {
                  * @param renderer The renderer the fence was produced from.
                  * @param fence The fence.
                  */
-                Fence(Renderer const &renderer, VkFence fence) :
-                  m_renderer{renderer}, m_fence{fence} {}
+                Fence(Renderer const &renderer, VkFence fence) : m_renderer{renderer}, m_fence{fence} {}
 
                 /**
                  * Create a new fence.
@@ -33,12 +32,15 @@ namespace jolt {
                  * @param signaled A value stating whether to initialise the fence to the signaled
                  * state.
                  */
-                explicit Fence(Renderer const &renderer, bool const signaled = false) :
-                  m_renderer{renderer} {
+                explicit Fence(Renderer const &renderer, bool const signaled = false) : m_renderer{renderer} {
                     create(signaled);
                 }
 
-                Fence(const Fence &other) = delete;
+                Fence(Fence const &) = delete;
+                
+                Fence(Fence &&other) : m_renderer{other.m_renderer}, m_fence{other.m_fence} {
+                    other.m_fence = VK_NULL_HANDLE;
+                }
 
                 ~Fence() { dispose(); }
 
@@ -90,10 +92,7 @@ namespace jolt {
                  * @return True if all (any) fences are signalled, false if not.
                  */
                 static bool wait_multiple(
-                  Fence *fences,
-                  uint32_t const n,
-                  uint64_t const timeout = 0,
-                  bool const all = true);
+                  Fence *fences, uint32_t const n, uint64_t const timeout = 0, bool const all = true);
 
                 operator VkFence() const { return m_fence; }
             };
@@ -113,12 +112,8 @@ namespace jolt {
                  * @param semaphore The semaphore.
                  * @param type The semaphore type.
                  */
-                Semaphore(
-                  Renderer const &renderer,
-                  VkSemaphore semaphore,
-                  VkSemaphoreType const type) :
-                  m_renderer{renderer},
-                  m_semaphore{semaphore}, m_type{type} {}
+                Semaphore(Renderer const &renderer, VkSemaphore semaphore, VkSemaphoreType const type) :
+                  m_renderer{renderer}, m_semaphore{semaphore}, m_type{type} {}
 
                 /**
                  * Create a new semaphore.
@@ -205,8 +200,7 @@ namespace jolt {
             };
 
             struct WaitSemaphoreActionSynchro {
-                uint32_t wait_semaphore_count =
-                  0; //< Number of elements pointed to by `wait_semaphores`.
+                uint32_t wait_semaphore_count = 0; //< Number of elements pointed to by `wait_semaphores`.
                 VkSemaphore wait_semaphores[JLT_MAX_SEMAPHORES]; /*< Semaphores to wait before
                                                                     performing the action. */
                 VkPipelineStageFlags
@@ -216,11 +210,9 @@ namespace jolt {
             };
 
             struct SignalSemaphoreActionSynchro {
-                uint32_t signal_semaphore_count =
-                  0; //< Number of elements pointed to by `signalSemaphores`.
-                VkSemaphore
-                  signal_semaphores[JLT_MAX_SEMAPHORES]; /*< Semaphores to be signeled after
-                                                            the action has been completed. */
+                uint32_t signal_semaphore_count = 0; //< Number of elements pointed to by `signalSemaphores`.
+                VkSemaphore signal_semaphores[JLT_MAX_SEMAPHORES]; /*< Semaphores to be signeled after
+                                                                      the action has been completed. */
             };
 
             struct SemaphoreActionSynchro :
@@ -228,8 +220,7 @@ namespace jolt {
               public SignalSemaphoreActionSynchro {};
 
             struct ActionSynchro : public SemaphoreActionSynchro {
-                VkFence fence =
-                  VK_NULL_HANDLE; //< The fence to signal after the action has been completed.
+                VkFence fence = VK_NULL_HANDLE; //< The fence to signal after the action has been completed.
             };
         } // namespace vulkan
     }     // namespace graphics

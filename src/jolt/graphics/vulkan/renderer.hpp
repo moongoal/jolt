@@ -249,12 +249,15 @@ namespace jolt {
                  * @param requirements A bitmask of device memory requirements.
                  * @param exclusions Requirements to exclude. Any returned result will not have
                  * these flags included.
+                 * @param mem_bits A bitmask specifying the valid memory type indices.
                  *
                  * @return The memory type index for the requirements or JLT_VULKAN_INVALID32 if no
                  * available memory type meets the requirements.
                  */
                 uint32_t get_memory_type_index(
-                  VkMemoryPropertyFlags const requirements, VkMemoryPropertyFlags const exclusions) const;
+                  VkMemoryPropertyFlags const requirements,
+                  VkMemoryPropertyFlags const exclusions,
+                  uint32_t const mem_bits = UINT32_MAX) const;
             };
 
             VkAllocationCallbacks JLTAPI *get_vulkan_allocator();

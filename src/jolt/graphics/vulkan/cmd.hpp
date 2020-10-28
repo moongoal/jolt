@@ -51,7 +51,9 @@ namespace jolt {
                 }
 
                 CommandPool(CommandPool const &) = delete;
-                CommandPool(CommandPool &&) = default;
+                CommandPool(CommandPool &&other) : m_renderer{other.m_renderer}, m_pool{other.m_pool} {
+                    other.m_pool = VK_NULL_HANDLE;
+                }
 
                 ~CommandPool() { dispose(); }
 

@@ -15,5 +15,9 @@
 #include <jolt/graphics/vulkan/gfx-pipeline-cfg.hpp>
 #include <jolt/graphics/vulkan/descriptor-mgr.hpp>
 #include <jolt/graphics/vulkan/pipelines.hpp>
+#include <jolt/graphics/vulkan/staging-buffer.hpp>
+#include <jolt/graphics/vulkan/upload-transfer.hpp>
+#include <jolt/graphics/vulkan/download-transfer.hpp>
+#include <jolt/graphics/vulkan/transfer-factory.hpp>
 
 #endif /* JLT_GRAPHICS_VULKAN_HPP */

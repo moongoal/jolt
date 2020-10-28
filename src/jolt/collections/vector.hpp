@@ -343,9 +343,9 @@ namespace jolt {
             /**
              * Remove and return an item from the end of the vector.
              */
-            reference pop() {
+            value_type pop() {
                 jltassert(m_length);
-                return *(m_data + (--m_length));
+                return std::move(*(m_data + (--m_length)));
             }
 
             /**
