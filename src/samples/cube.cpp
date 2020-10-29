@@ -13,7 +13,6 @@
 
 using namespace jolt;
 using namespace jolt::graphics::vulkan;
-using namespace jolt::graphics::vulkan::memory;
 
 static constexpr const uint64_t ns_to_ms = 1'000'000;
 
@@ -32,8 +31,8 @@ struct RenderState {
     VkPipeline pipeline;
     VkPipelineLayout pipeline_layout;
     VkQueue graphics_queue;
-    DeviceAlloc *vertex_buffer_alloc;
-    DeviceAlloc *index_buffer_alloc;
+    Buffer *cube_buffer;
+    VkDeviceSize cube_buffer_index_offset;
     UniformBufferObject *ubo;
 };
 
@@ -72,31 +71,33 @@ struct VertexAttr {
     }
 };
 
-collections::StaticArray<VertexAttr, 8> cube_verts{
-  {{-0.25f, -0.25f, -0.25f}, {1.0f, 0.0f, 0.0f, 1.0f}}, // 0
-  {{-0.25f, 0.25f, -0.25f}, {0.0f, 1.0f, 0.0f, 1.0f}},  // 1
-  {{0.25f, 0.25f, -0.25f}, {0.0f, 0.0f, 1.0f, 1.0f}},   // 2
-  {{0.25f, -0.25f, -0.25f}, {1.0f, 1.0f, 0.0f, 1.0f}},  // 3
-  {{-0.25f, -0.25f, 0.25f}, {1.0f, 0.0f, 1.0f, 1.0f}},  // 4
-  {{-0.25f, 0.25f, 0.25f}, {0.0f, 1.0f, 1.0f, 1.0f}},   // 5
-  {{0.25f, 0.25f, 0.25f}, {0.0f, 1.0f, 1.0f, 1.0f}},    // 6
-  {{0.25f, -0.25f, 0.25f}, {0.0f, 1.0f, 1.0f, 1.0f}}    // 7
-};
+struct {
+    collections::StaticArray<VertexAttr, 8> verts{
+      {{-0.25f, -0.25f, -0.25f}, {1.0f, 0.0f, 0.0f, 1.0f}}, // 0
+      {{-0.25f, 0.25f, -0.25f}, {0.0f, 1.0f, 0.0f, 1.0f}},  // 1
+      {{0.25f, 0.25f, -0.25f}, {0.0f, 0.0f, 1.0f, 1.0f}},   // 2
+      {{0.25f, -0.25f, -0.25f}, {1.0f, 1.0f, 0.0f, 1.0f}},  // 3
+      {{-0.25f, -0.25f, 0.25f}, {1.0f, 0.0f, 1.0f, 1.0f}},  // 4
+      {{-0.25f, 0.25f, 0.25f}, {0.0f, 1.0f, 1.0f, 1.0f}},   // 5
+      {{0.25f, 0.25f, 0.25f}, {0.0f, 1.0f, 1.0f, 1.0f}},    // 6
+      {{0.25f, -0.25f, 0.25f}, {0.0f, 1.0f, 1.0f, 1.0f}}    // 7
+    };
 
-collections::StaticArray<uint16_t, 12 * 3> cube_faces{
-  0, 1, 3, // front 1
-  1, 2, 3, // front 2
-  1, 5, 2, // bottom 1
-  2, 5, 6, // bottom 2
-  7, 6, 4, // back 1
-  4, 6, 5, // back 2
-  4, 5, 0, // left 1
-  0, 5, 1, // left 2
-  4, 0, 7, // top 1
-  7, 0, 3, // top 2
-  3, 2, 7, // right 1
-  7, 2, 6  // right 2
-};
+    collections::StaticArray<uint16_t, 12 * 3> faces{
+      0, 1, 3, // front 1
+      1, 2, 3, // front 2
+      1, 5, 2, // bottom 1
+      2, 5, 6, // bottom 2
+      7, 6, 4, // back 1
+      4, 6, 5, // back 2
+      4, 5, 0, // left 1
+      0, 5, 1, // left 2
+      4, 0, 7, // top 1
+      7, 0, 3, // top 2
+      3, 2, 7, // right 1
+      7, 2, 6  // right 2
+    };
+} cube;
 
 void main_loop(Renderer &renderer);
 
@@ -112,16 +113,15 @@ void render(RenderState &state, collections::Vector<VkCommandBuffer> &out_cmds) 
     vkCmdPushConstants(
       cmd, state.pipeline_layout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(UniformBufferObject), state.ubo);
 
-    VkBuffer vertex_buf = *state.vertex_buffer_alloc;
-    VkBuffer index_buf = *state.index_buffer_alloc;
-    VkDeviceSize vertex_offset = *state.vertex_buffer_alloc;
-    VkDeviceSize index_offset = *state.index_buffer_alloc;
+    VkBuffer vertex_buf = state.cube_buffer->get_buffer();
+    VkBuffer index_buf = state.cube_buffer->get_buffer();
+    VkDeviceSize vertex_offset = 0;
+    VkDeviceSize index_offset = state.cube_buffer_index_offset;
 
     vkCmdBindVertexBuffers(cmd, 0, 1, &vertex_buf, &vertex_offset);
     vkCmdBindIndexBuffer(cmd, index_buf, index_offset, VK_INDEX_TYPE_UINT16);
 
-    // vkCmdDraw(cmd, 3, 1, 0, 0);
-    vkCmdDrawIndexed(cmd, cube_faces.get_length(), 1, 0, 0, 0);
+    vkCmdDrawIndexed(cmd, cube.faces.get_length(), 1, 0, 0, 0);
 
     cmd.cmd_end_render_pass();
     cmd.end_record();
@@ -182,39 +182,26 @@ void main_loop(Renderer &renderer) {
     uint32_t const gqueue_fam_idx = renderer.get_queue_family_index(gqueue);
 
     // Memory
-    Arena gpu_allocator{
-      renderer,
-      1024,
-      VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-      VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT
-        | VK_BUFFER_USAGE_TRANSFER_DST_BIT};
+    BufferAllocator gpu_allocator{renderer};
+    VkMemoryPropertyFlags const buf_flags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+    VkBufferUsageFlags const buf_usage =
+      VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+    VkDeviceSize cube_buf_size = sizeof(cube);
 
     // Buffers
-    DeviceAlloc cube_verts_buf = gpu_allocator.allocate(sizeof(cube_verts), alignof(decltype(cube_verts)));
-    DeviceAlloc cube_index_buf = gpu_allocator.allocate(sizeof(cube_faces), alignof(decltype(cube_faces)));
-
-    jltassert2(cube_verts_buf != InvalidDeviceAlloc, "Not enough memory to allocate vertex buffer.");
-    jltassert2(cube_index_buf != InvalidDeviceAlloc, "Not enough memory to allocate index buffer.");
+    Buffer cube_buffer = gpu_allocator.allocate(cube_buf_size, buf_flags, buf_usage);
 
     {
         TransferFactory xfer_factory{renderer, gqueue};
 
         TransferDescriptor desc_verts;
         desc_verts.resource_type = TransferResourceType::Buffer;
-        desc_verts.handle.buffer = cube_verts_buf;
-        desc_verts.info.buffer_info.offset = cube_verts_buf;
-        desc_verts.data.upload_data = cube_verts;
-        desc_verts.size = static_cast<VkDeviceSize>(sizeof(cube_verts));
-
-        TransferDescriptor desc_indices;
-        desc_indices.resource_type = TransferResourceType::Buffer;
-        desc_indices.handle.buffer = cube_index_buf;
-        desc_indices.info.buffer_info.offset = cube_index_buf;
-        desc_indices.data.upload_data = cube_faces;
-        desc_indices.size = static_cast<VkDeviceSize>(sizeof(cube_faces));
+        desc_verts.handle.buffer = cube_buffer.get_buffer();
+        desc_verts.info.buffer_info.offset = 0;
+        desc_verts.data.upload_data = &cube;
+        desc_verts.size = static_cast<VkDeviceSize>(sizeof(cube));
 
         xfer_factory.add_resource_transfer(desc_verts);
-        xfer_factory.add_resource_transfer(desc_indices);
 
         xfer_factory.build_upload_transfer().transfer_all();
     }
@@ -317,8 +304,8 @@ void main_loop(Renderer &renderer) {
     state.pipeline = pipeline;
     state.pipeline_layout = pipeline_layout;
     state.graphics_queue = gqueue;
-    state.vertex_buffer_alloc = &cube_verts_buf;
-    state.index_buffer_alloc = &cube_index_buf;
+    state.cube_buffer = &cube_buffer;
+    state.cube_buffer_index_offset = offsetof(decltype(cube), faces);
     state.ubo = &ubo;
 
     collections::Vector<VkCommandBuffer> cmd_bufs;
@@ -350,5 +337,6 @@ void main_loop(Renderer &renderer) {
         cmd_bufs.clear();
     } while(ui_window.cycle() && !renderer.is_lost());
 
+    gpu_allocator.free(cube_buffer);
     desc_manager.destroy_pipeline_layout(pipeline_layout);
 }

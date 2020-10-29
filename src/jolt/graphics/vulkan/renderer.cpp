@@ -315,19 +315,20 @@ namespace jolt {
                 queue_fam_prop_array q_fam_props{n_families};
                 vkGetPhysicalDeviceQueueFamilyProperties(m_phy_device, &n_families, q_fam_props);
 
-                VkPhysicalDeviceVulkan12Features features12 = {};
-                features12.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES;
+                m_phy_req_feats12 = {};
+                m_phy_req_feats12.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES;
 
-                VkPhysicalDeviceFeatures2 features{};
+                m_phy_req_feats = {};
+                m_phy_req_feats.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+                m_phy_req_feats.pNext = &m_phy_req_feats12;
+                m_phy_req_feats.features.logicOp = VK_TRUE;
+                m_phy_req_feats.features.fillModeNonSolid = VK_TRUE;
+                m_phy_req_feats.features.wideLines = VK_TRUE;
+                m_phy_req_feats.features.alphaToOne = VK_TRUE;
 
-                features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
-                features.pNext = &features12;
-                features.features.logicOp = VK_TRUE;
-                features.features.fillModeNonSolid = VK_TRUE;
-                features.features.wideLines = VK_TRUE;
-                features.features.alphaToOne = VK_TRUE;
-
-                features12.separateDepthStencilLayouts = VK_TRUE;
+                m_phy_req_feats12.separateDepthStencilLayouts = VK_TRUE;
+                m_phy_req_feats.features.samplerAnisotropy =
+                  get_phy_device_features().features.samplerAnisotropy;
 
                 queue_ci_vector q_cinfo = select_device_queues(
                   q_fam_props, params.n_queues_graphics, params.n_queues_transfer, params.n_queues_compute);
@@ -351,7 +352,7 @@ namespace jolt {
                 // Create the device & queues
                 VkDeviceCreateInfo cinfo{
                   VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,        // sType
-                  &features,                                   // pNext
+                  &m_phy_req_feats,                            // pNext
                   0,                                           // flags
                   static_cast<uint32_t>(q_cinfo.get_length()), // queueCreateInfoCount
                   &q_cinfo[0],                                 // pQueueCreateInfos

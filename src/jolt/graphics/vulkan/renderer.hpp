@@ -60,6 +60,8 @@ namespace jolt {
                 VkPhysicalDeviceVulkan11Features m_phy_feats11{};
                 VkPhysicalDeviceVulkan12Features m_phy_feats12{};
                 VkPhysicalDeviceMemoryProperties m_phy_mem_props{};
+                VkPhysicalDeviceVulkan12Features m_phy_req_feats12;
+                VkPhysicalDeviceFeatures2 m_phy_req_feats;
 
                 mutable queue_info_array *m_queues = nullptr;
                 Window *m_window = nullptr;
@@ -99,6 +101,10 @@ namespace jolt {
                 VkDevice get_device() const { return m_device; }
 
                 const VkPhysicalDeviceFeatures2 &get_phy_device_features() const { return m_phy_feats; }
+
+                const VkPhysicalDeviceFeatures2 &get_enabled_phy_device_features() const {
+                    return m_phy_req_feats;
+                }
 
                 const VkPhysicalDeviceProperties2 &get_phy_device_properties() const { return m_phy_props; }
 

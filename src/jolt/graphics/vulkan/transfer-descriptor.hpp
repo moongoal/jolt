@@ -22,15 +22,10 @@ namespace jolt::graphics::vulkan {
         } buffer_info;
 
         struct {
-            VkExtent3D extent; //< Extent for the transferred images.
-
-            /**
-             * Transfer image layout. For upload operations, this member specifies
-             * the final image layout. For download operations, this member specifies the initial layout.
-             */
-            VkImageLayout layout;
-
-            VkImageAspectFlags aspect; //< Image aspect.
+            VkExtent3D extent;            //< Extent for the transferred images.
+            VkImageLayout initial_layout; //< Initial transition layout.
+            VkImageLayout final_layout;   //< Final transition layout.
+            VkImageAspectFlags aspect;    //< Image aspect.
         } image_info;
     };
 

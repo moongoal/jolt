@@ -11,6 +11,7 @@ namespace jolt::graphics::vulkan {
         virtual void transfer_image(TransferDescriptor const &descriptor);
         virtual void transfer_buffer(TransferDescriptor const &descriptor);
         virtual void transfer_end();
+        virtual void transfer_begin();
 
       public:
         UploadTransfer(Renderer &renderer, VkQueue queue) : Transfer{renderer, queue} {}

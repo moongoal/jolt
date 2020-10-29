@@ -22,13 +22,27 @@
 			"#ifndef JLT_$1_HPP",
 			"#define JLT_$1_HPP",
 			"",
-			"namespace jolt {",
-			"    namespace $2 {",
-			"        $0",
-			"    }",
+			"namespace jolt::$2 {",
+			"    $0",
 			"}",
 			"",
 			"#endif /* JLT_$1_HPP */"
+		]
+	},
+	"Vulkan Header File": {
+		"scope": "cpp",
+		"prefix": "vkhdr",
+		"body": [
+			"#ifndef JLT_GRAPHICS_VULKAN_$1_HPP",
+			"#define JLT_GRAPHICS_VULKAN_$1_HPP",
+			"",
+			"#include <jolt/graphics/vulkan/defs.hpp>",
+			"",
+			"namespace jolt::graphics::vulkan$2 {",
+			"    $0",
+			"}",
+			"",
+			"#endif /* JLT_GRAPHICS_VULKAN_$1_HPP */"
 		]
 	}
 }

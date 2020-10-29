@@ -8,7 +8,8 @@
 #include <jolt/graphics/vulkan/cmd.hpp>
 #include <jolt/graphics/vulkan/synchro.hpp>
 #include <jolt/graphics/vulkan/renderer.hpp>
-#include <jolt/graphics/vulkan/memory.hpp>
+#include <jolt/graphics/vulkan/buffer.hpp>
+#include <jolt/graphics/vulkan/buffer-allocator.hpp>
 #include <jolt/graphics/vulkan/transfer.hpp>
 #include <jolt/graphics/vulkan/shader-mgr.hpp>
 #include <jolt/graphics/vulkan/gfx-pipeline-mgr.hpp>
@@ -19,5 +20,8 @@
 #include <jolt/graphics/vulkan/upload-transfer.hpp>
 #include <jolt/graphics/vulkan/download-transfer.hpp>
 #include <jolt/graphics/vulkan/transfer-factory.hpp>
+#include <jolt/graphics/vulkan/texture.hpp>
+#include <jolt/graphics/vulkan/texture-builder.hpp>
+#include <jolt/graphics/vulkan/texture-allocator.hpp>
 
 #endif /* JLT_GRAPHICS_VULKAN_HPP */
