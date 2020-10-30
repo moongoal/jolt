@@ -12,7 +12,8 @@ namespace jolt {
 
             class JLTAPI DescriptorManager {
               public:
-                using desc_set_layout_vector = collections::Vector<VkDescriptorSetLayout>;
+                using descriptor_set_vector = collections::Vector<VkDescriptorSet>;
+                using descriptor_set_layout_vector = collections::Vector<VkDescriptorSetLayout>;
                 using push_const_range_vector = collections::Vector<VkPushConstantRange>;
                 using descriptor_set_layout_binding_vector =
                   collections::Vector<VkDescriptorSetLayoutBinding>;
@@ -42,6 +43,11 @@ namespace jolt {
                 VkDescriptorPool get_descriptor_pool() const { return m_descriptor_pool; }
                 Renderer const &get_renderer() const { return m_renderer; }
 
+                descriptor_set_vector
+                allocate_descriptor_sets(descriptor_set_layout_vector const &descriptor_set_layouts);
+
+                void free_descriptor_sets(descriptor_set_vector const &descriptor_sets);
+
                 /**
                  * Create a new descriptor set layout.
                  *
@@ -64,7 +70,7 @@ namespace jolt {
                  * @param pc_ranges The push constant ranges.
                  */
                 VkPipelineLayout create_pipeline_layout(
-                  desc_set_layout_vector const &layouts, push_const_range_vector const &pc_ranges);
+                  descriptor_set_layout_vector const &layouts, push_const_range_vector const &pc_ranges);
 
                 /**
                  * Destroy a pipeline layout.

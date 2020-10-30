@@ -1,3 +1,10 @@
+/**
+ * Texture application sample.
+ *
+ * Image credits:
+ *  "Forest, Poland" by Rogge, Britta
+ *  https://search.creativecommons.org/photos/5ba82209-432c-4184-8b77-3db6d79bd2cb
+ */
 #include <jolt/debug.hpp>
 #include <jolt/graphics/vulkan.hpp>
 
@@ -81,7 +88,7 @@ namespace jolt::graphics::vulkan {
           nullptr,                             // pNext
           0,                                   // flags
           VK_IMAGE_TYPE_2D,                    // imageType
-          VK_FORMAT_R8G8B8A8_UINT,             // format
+          VK_FORMAT_R8G8B8A8_SRGB,             // format
           {
             // extent
             width,  // width
@@ -108,7 +115,7 @@ namespace jolt::graphics::vulkan {
           0,                                        // flags
           VK_NULL_HANDLE,                           // image
           VK_IMAGE_VIEW_TYPE_2D,                    // viewType
-          VK_FORMAT_R8G8B8A8_UINT,                  // format
+          VK_FORMAT_R8G8B8A8_SRGB,                  // format
           {
             // components
             VK_COMPONENT_SWIZZLE_IDENTITY, // r

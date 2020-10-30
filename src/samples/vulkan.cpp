@@ -60,7 +60,7 @@ void main_loop(Renderer &renderer) {
     pool_sizes.push({VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1});
 
     DescriptorManager desc_manager{renderer, 1, pool_sizes};
-    DescriptorManager::desc_set_layout_vector desc_set_layouts;
+    DescriptorManager::descriptor_set_layout_vector desc_set_layouts;
     DescriptorManager::push_const_range_vector push_const_ranges;
 
     VkPipelineLayout pipeline_layout =

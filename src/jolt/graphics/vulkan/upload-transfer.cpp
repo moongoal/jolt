@@ -72,7 +72,9 @@ namespace jolt::graphics::vulkan {
         synchro.fence = fence;
 
         cmd_buffer.submit(get_queue(), synchro);
+
         m_uploaded_image_descriptors.push(descriptor);
+        fence.wait(SYNCHRO_WAIT_MAX);
     }
 
     void UploadTransfer::transfer_buffer(TransferDescriptor const &descriptor) {
@@ -128,6 +130,7 @@ namespace jolt::graphics::vulkan {
         synchro.fence = fence;
 
         cmd_buffer.submit(get_queue(), synchro);
+        fence.wait(SYNCHRO_WAIT_MAX);
     }
 
     void UploadTransfer::transfer_end() {
@@ -248,33 +251,30 @@ namespace jolt::graphics::vulkan {
 #endif // _DEBUG
                     abort();
             }
-
-            uint32_t const buf_barriers_count = buf_barriers.get_length();
-            VkBufferMemoryBarrier const *const buf_barriers_ptr =
-              buf_barriers_count ? &buf_barriers[0] : nullptr;
-
-            uint32_t const img_barriers_count = img_barriers.get_length();
-            VkImageMemoryBarrier const *const img_barriers_ptr =
-              img_barriers_count ? &img_barriers[0] : nullptr;
-
-            vkCmdPipelineBarrier(
-              cmd_buf,
-              VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
-              VK_PIPELINE_STAGE_TRANSFER_BIT,
-              VK_DEPENDENCY_BY_REGION_BIT,
-              0,
-              nullptr,
-              buf_barriers_count,
-              buf_barriers_ptr,
-              img_barriers_count,
-              img_barriers_ptr);
-
-            cmd_buf.end_record();
-
-            ActionSynchro synchro{};
-            synchro.fence = fence;
-
-            cmd_buf.submit(get_queue(), synchro);
         }
+
+        uint32_t const buf_barriers_count = buf_barriers.get_length();
+        VkBufferMemoryBarrier const *const buf_barriers_ptr = buf_barriers_count ? &buf_barriers[0] : nullptr;
+
+        uint32_t const img_barriers_count = img_barriers.get_length();
+        VkImageMemoryBarrier const *const img_barriers_ptr = img_barriers_count ? &img_barriers[0] : nullptr;
+
+        vkCmdPipelineBarrier(
+          cmd_buf,
+          VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+          VK_PIPELINE_STAGE_TRANSFER_BIT,
+          VK_DEPENDENCY_BY_REGION_BIT,
+          0,
+          nullptr,
+          buf_barriers_count,
+          buf_barriers_ptr,
+          img_barriers_count,
+          img_barriers_ptr);
+
+        cmd_buf.end_record();
+
+        ActionSynchro synchro{};
+        synchro.fence = fence;
+        cmd_buf.submit(get_queue(), synchro);
     }
 } // namespace jolt::graphics::vulkan

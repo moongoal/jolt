@@ -43,7 +43,6 @@ namespace jolt::graphics::vulkan {
     bool Transfer::transfer_next() {
         if(!m_staging_buffer) {
             create_staging_buffer();
-
             transfer_begin();
         }
 

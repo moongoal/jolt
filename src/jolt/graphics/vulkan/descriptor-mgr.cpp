@@ -60,7 +60,7 @@ namespace jolt {
             }
 
             VkPipelineLayout DescriptorManager::create_pipeline_layout(
-              desc_set_layout_vector const &layouts, push_const_range_vector const &pc_ranges) {
+              descriptor_set_layout_vector const &layouts, push_const_range_vector const &pc_ranges) {
                 VkPipelineLayoutCreateInfo cinfo{
                   VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,   // sType
                   nullptr,                                         // pNext
@@ -78,6 +78,36 @@ namespace jolt {
                 jltassert2(result == VK_SUCCESS, "Unable to create pipeline layout");
 
                 return pipeline_layout;
+            }
+
+            DescriptorManager::descriptor_set_vector DescriptorManager::allocate_descriptor_sets(
+              descriptor_set_layout_vector const &descriptor_set_layouts) {
+                descriptor_set_vector sets{descriptor_set_layouts.get_length()};
+
+                VkDescriptorSetAllocateInfo ainfo{
+                  VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,             // sType
+                  nullptr,                                                    // pNext
+                  m_descriptor_pool,                                          // descriptorPool
+                  static_cast<uint32_t>(descriptor_set_layouts.get_length()), // descriptorSetCount
+                  &descriptor_set_layouts[0]                                  // pSetLayouts
+                };
+
+                sets.set_length(descriptor_set_layouts.get_length());
+
+                VkResult result = vkAllocateDescriptorSets(m_renderer.get_device(), &ainfo, &sets[0]);
+                jltassert2(result == VK_SUCCESS, "Unable to allocate descriptor sets");
+
+                return sets;
+            }
+
+            void DescriptorManager::free_descriptor_sets(descriptor_set_vector const &descriptor_sets) {
+                if(descriptor_sets.get_length()) {
+                    vkFreeDescriptorSets(
+                      m_renderer.get_device(),
+                      m_descriptor_pool,
+                      static_cast<uint32_t>(descriptor_sets.get_length()),
+                      &descriptor_sets[0]);
+                }
             }
         } // namespace vulkan
     }     // namespace graphics
