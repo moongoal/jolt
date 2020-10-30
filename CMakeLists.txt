@@ -73,13 +73,22 @@ target_include_directories(libjolt PUBLIC ${PATH_SRC})
 find_path(XXHASH_INCLUDE_DIR xxhash.h REQUIRED)
 find_library(XXHASH_LIBRARY xxhash REQUIRED)
 
+# cgltf
+find_path(CGLTF_INCLUDE_DIRS "cgltf.h")
+
 # Vulkan
 include(FindVulkan)
 find_package(Vulkan REQUIRED)
 find_package(glm CONFIG REQUIRED)
 find_package(libpng CONFIG REQUIRED)
 
-target_include_directories(libjolt PUBLIC ${XXHASH_INCLUDE_DIR})
+target_include_directories(
+    libjolt
+    PRIVATE
+        ${XXHASH_INCLUDE_DIR}
+        ${CGLTF_INCLUDE_DIRS}
+)
+
 target_link_libraries(
     libjolt
     PRIVATE
