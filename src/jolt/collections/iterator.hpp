@@ -48,26 +48,26 @@ namespace jolt {
             template<typename A, typename B>
             Iterator(Iterator<A, B> &&other) : m_ptr{other.m_ptr} {}
 
-            Iterator operator++() {
+            Iterator &operator++() {
                 next();
 
                 return *this;
             }
 
-            JLT_NODISCARD Iterator &operator++(int) {
+            JLT_NODISCARD Iterator operator++(int) {
                 Iterator other = *this;
                 next();
 
                 return other;
             }
 
-            Iterator operator--() {
+            Iterator &operator--() {
                 previous();
 
                 return *this;
             }
 
-            JLT_NODISCARD Iterator &operator--(int) {
+            JLT_NODISCARD Iterator operator--(int) {
                 Iterator other = *this;
 
                 previous();
@@ -93,18 +93,18 @@ namespace jolt {
             }
 
             template<typename It>
-            JLT_NODISCARD constexpr bool operator==(const It other) const {
-                return m_ptr == other.get_pointer();
+            JLT_NODISCARD constexpr bool operator==(const It &other) const {
+                return m_ptr == other.m_ptr;
             }
 
             template<typename It>
-            JLT_NODISCARD constexpr bool operator!=(const It other) const {
-                return m_ptr != other.get_pointer();
+            JLT_NODISCARD constexpr bool operator!=(const It &other) const {
+                return m_ptr != other.m_ptr;
             }
 
             template<typename It>
-            JLT_NODISCARD constexpr size_t operator-(const It other) const {
-                return m_ptr - other.m_ptr;
+            JLT_NODISCARD constexpr size_t operator-(const It &other) const {
+                return F::count_elements(this->m_ptr, other.m_ptr);
             }
 
             JLT_NODISCARD constexpr auto &operator*() { return F::resolve(m_ptr); }
@@ -125,6 +125,18 @@ namespace jolt {
                 return choose(1, choose(-1, 0, left < right), left > right);
             }
             JLT_NODISCARD static constexpr item_type &resolve(T *const cur) { return *cur; }
+
+            /**
+             * Count the number of items between two iterators.
+             *
+             * @param from The iterator from which to start the count. Must be positioned before `to`.
+             * @param to The iterator where to stop the count. Must be positioned after `from`.
+             *
+             * @return The number of elements between `from` and `to`.
+             */
+            JLT_NODISCARD static constexpr size_t count_elements(T const *const from, T const *const to) {
+                return to - from;
+            }
         };
     } // namespace collections
 } // namespace jolt

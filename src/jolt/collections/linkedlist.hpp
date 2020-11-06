@@ -20,6 +20,14 @@ namespace jolt {
                 return result;
             }
 
+            static constexpr Node *backward(Node *const cur, size_t const n) {
+                Node *result = cur;
+
+                for(size_t i = 0; i < n; ++i) { result = result->get_previous(); }
+
+                return result;
+            }
+
             JLT_NODISCARD static constexpr int compare(const Node *const left, const Node *const right) {
                 return left != right;
             }
@@ -28,10 +36,23 @@ namespace jolt {
             JLT_NODISCARD static constexpr auto &resolve(NodeT *const node) {
                 return node->get_value();
             }
+
+            JLT_NODISCARD static constexpr size_t
+            count_elements(Node const *const from, Node const *const to) {
+                if(from == to && from == nullptr) {
+                    return 0;
+                }
+
+                size_t count = 1;
+
+                for(Node const *n = from; n != to && n; n = n->get_next()) { ++count; }
+
+                return count;
+            }
         };
 
         /**
-         * Singly linked list.
+         * Doubly linked list.
          *
          * @tparam T The type of item contained in each node of the list.
          */
@@ -52,12 +73,15 @@ namespace jolt {
 
               private:
                 value_type m_value;
-                Node *m_next;
+                Node mutable *m_next;
+                Node mutable *m_prev;
 
               public:
-                JLT_NODISCARD Node(const_reference value, Node *next) : m_value{value}, m_next{next} {}
+                JLT_NODISCARD Node(const_reference value, Node *const next, Node *const prev) :
+                  m_value{value}, m_next{next}, m_prev{prev} {}
 
-                JLT_NODISCARD Node *get_next() const { return const_cast<Node *>(m_next); }
+                JLT_NODISCARD Node *get_next() const { return m_next; }
+                JLT_NODISCARD Node *get_previous() const { return m_prev; }
                 JLT_NODISCARD reference get_value() { return m_value; }
                 JLT_NODISCARD const_reference get_value() const { return m_value; }
                 void set_value(const_reference value) { m_value = value; }
@@ -88,7 +112,7 @@ namespace jolt {
              * @param lst The initializer list.
              */
             JLT_NODISCARD LinkedList(const std::initializer_list<value_type> &lst) :
-              LinkedList(lst.begin(), lst.end()) {}
+              LinkedList{lst.begin(), lst.end()} {}
 
             /**
              * Create a new instance of this class.
@@ -141,16 +165,26 @@ namespace jolt {
             Node *add_after(const_reference item, Node *const where) {
                 memory::push_force_flags(m_alloc_flags);
 
-                Node *const new_node =
-                  memory::allocate_and_construct<Node>(item, where ? where->m_next : nullptr);
+                Node *const new_node = memory::allocate_and_construct<Node>(item, nullptr, nullptr);
 
-                if(!where) {
+                if(where) {
+                    new_node->m_prev = where;
+                    new_node->m_next = where->m_next;
+
+                    where->m_next = new_node;
+
+                    if(new_node->m_next) {
+                        new_node->m_next->m_prev = new_node;
+                    }
+                } else {
                     Node *const old_first = m_first;
 
                     m_first = new_node;
                     new_node->m_next = old_first;
-                } else {
-                    where->m_next = new_node;
+
+                    if(old_first) {
+                        old_first->m_prev = new_node;
+                    }
                 }
 
                 if(where == m_last) {
@@ -225,14 +259,23 @@ namespace jolt {
              * @param node The node to remove.
              */
             void remove(Node &node) {
-                Node *prev = find_previous_node(node);
+                Node *const prev = node.get_previous();
 
                 if(prev) {
                     prev->m_next = node.m_next;
+
+                    if(node.m_next) {
+                        node.m_next->m_prev = prev;
+                    }
                 } else {
                     jltassert2(
                       m_first == &node, "Attempting to remove a node that is not part of this linked list");
+
                     m_first = node.m_next;
+
+                    if(m_first) {
+                        m_first->m_prev = nullptr;
+                    }
                 }
 
                 if(m_last == &node) {
@@ -242,23 +285,6 @@ namespace jolt {
                 --m_length;
 
                 jolt::memory::free(&node);
-            }
-
-            /**
-             * Find the previous node of a given node.
-             *
-             * @param node The node for which to find the previous.
-             *
-             * @return A pointer to the previous node or `nullptr` if none was found.
-             */
-            Node *find_previous_node(const Node &node) {
-                for(Node *result = m_first; result; result = result->m_next) {
-                    if(result->get_next() == &node) {
-                        return result;
-                    }
-                }
-
-                return nullptr;
             }
 
             /**

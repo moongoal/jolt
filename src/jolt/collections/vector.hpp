@@ -112,7 +112,7 @@ namespace jolt {
             JLT_NODISCARD Vector(It const begin, It const end) :
               m_data{memory::allocate_array<value_type>(end - begin)}, m_length{end - begin},
               m_alloc_flags{memory::get_current_force_flags()} {
-                add_all(begin, end);
+                add_all(begin, end, 0);
             }
 
             JLT_NODISCARD Vector(const Vector<value_type> &other) : Vector{other.m_data, other.m_length} {}
@@ -286,7 +286,11 @@ namespace jolt {
              */
             template<typename It>
             void add_all(It const begin, It const end, size_t const position) {
-                add_all(begin.get_pointer(), end - begin, position);
+                size_t pos = position;
+
+                ensure_capacity(end - begin);
+
+                for(auto it = begin; it != end; ++it) { add(*it, pos++); }
             }
 
             /**
