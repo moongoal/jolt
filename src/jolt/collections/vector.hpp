@@ -110,7 +110,7 @@ namespace jolt {
 
             template<typename It>
             JLT_NODISCARD Vector(It const begin, It const end) :
-              m_data{memory::allocate_array<value_type>(end - begin)}, m_length{end - begin},
+              m_data{memory::allocate_array<value_type>(end - begin)}, m_length{0},
               m_alloc_flags{memory::get_current_force_flags()} {
                 add_all(begin, end, 0);
             }

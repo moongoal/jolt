@@ -141,6 +141,9 @@ namespace jolt {
                     overall_result &= (result != test_result::FAILURE);
                 }
 
+                std::cerr << "*********************************************************************"
+                          << std::endl;
+
                 if(m_cleanup) {
                     std::cerr << "Tearing down..." << std::endl;
                     m_cleanup->run();
