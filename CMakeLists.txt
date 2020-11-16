@@ -55,6 +55,7 @@ target_compile_options(
         -Wpedantic
         -Wall
         -Wextra
+        -Wno-error=unknown-attributes
 )
 
 target_compile_definitions(libjolt
