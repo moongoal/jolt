@@ -33,7 +33,7 @@ To run the tests:
 
     ctest --output-on-failure
 
-This needs to be run inside `build/tests`.
+This needs to be run inside `build/src/tests`.
 
 
 ## Cleaning up
